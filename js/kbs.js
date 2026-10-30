@@ -111,7 +111,7 @@
     const cur = KK.app.settings.currency;
     const factory = kb.factory.map((m) => FACTORY[m]).filter(Boolean).concat(kb.lubed ? ['factory-lubed switches'] : []);
     const spec = (k, v) => `<div class="spec"><span>${k}</span><b>${v}</b></div>`;
-    const meter = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar"><i style="left:${Math.round(v * 100)}%"></i></div><span>${r}</span></div>`;
+    const meter = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar" style="--v:${Math.round(v * 100)}%"><i></i></div><span>${r}</span></div>`;
     $('#kbInfo').innerHTML = `
       <div class="kbd-title">${esc(kb.title)}</div>
       <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · from ${C.money(kb.price, cur)} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>

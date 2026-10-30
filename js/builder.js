@@ -97,7 +97,7 @@
 
   /* --------------------------------- signature --------------------------------- */
   function meters(m) {
-    const row = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar"><i style="left:${Math.round(v * 100)}%"></i></div><span>${r}</span></div>`;
+    const row = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar" style="--v:${Math.round(v * 100)}%"><i></i></div><span>${r}</span></div>`;
     return row('deep', 'high', m.pitch) + row('quiet', 'loud', m.volume) + row('thock', 'clack', m.clack);
   }
 
@@ -280,7 +280,7 @@
       <div class="summary">
         <div class="sum-name">
           <input class="search name-input" id="buildName" maxlength="40" placeholder="name your build" value="${esc(prof ? prof.name : app.suggestName())}" spellcheck="false" autocomplete="off">
-          <button class="btn sm${dirty ? ' primary' : ''}" data-act="save">${prof ? (dirty ? 'save changes' : 'saved ✓') : 'save build'}</button>
+          <button class="btn sm${dirty ? ' primary nudge' : ''}" data-act="save">${prof ? (dirty ? 'save changes' : 'saved ✓') : 'save build'}</button>
           ${prof ? '<button class="btn sm ghost" data-act="saveNew">save as new</button>' : ''}
           <span class="hint">${prof ? (dirty ? 'unsaved changes' : 'saved builds appear on the home screen') : 'not saved yet'}</span>
         </div>
