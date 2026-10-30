@@ -1,0 +1,183 @@
+# Kuya Keyb PH
+
+A minimalist typing game: build a mechanical keyboard, then type the falling words. Every keystroke is synthesized live from the parts you picked. The look is deep navy with gold, set in JetBrains Mono.
+
+## Run it locally
+
+No build step and no install. Either:
+
+- **Double-click `index.html`**. It opens straight from disk in Chrome, Edge or Firefox.
+- Or serve the folder with any static server, for example the VS Code "Live Server" extension, or `npx serve .` if you have Node.
+
+Click or press any key once the page opens. Browsers block audio until you interact with the page.
+
+## Accounts (local for now)
+
+The home page is just the logo, the wordmark, and **log in / sign up** (username and password).
+
+- Accounts live only in this browser's localStorage.
+- Passwords are salted and hashed with PBKDF2-SHA256 via Web Crypto, so they're never stored as plain text.
+- This is not real security: anyone with access to the browser profile can read or wipe the data. Replace `js/auth.js` with a server API before publishing.
+- Each account has its own current build, saved builds, level progress and vs-AI record. Saving a build only saves it to the signed-in account.
+- Builds made before accounts existed are given to the first account created on that browser.
+
+## Full keyboards
+
+There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 1,462 prebuilt boards from 81 brands. Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. The boards come from three sources:
+
+| source | boards | how |
+|---|---|---|
+| mechanicalkeyboards.com | 1,097 | the store's product feed |
+| the makers' own stores: Keychron, Lemokey, YUNZII, EPOMAKER, Royal Kludge, Ajazz, Attack Shark, HyperX, Glorious, GravaStar | 271 | each store's product feed, minus boards already listed above, accessories, kits, numpads, membrane boards and regional-layout duplicates |
+| gaming brands without a public feed: Razer, Logitech G, Corsair, SteelSeries, ASUS ROG, NuPhy, Redragon, Akko, Cherry, HyperX, Turtle Beach, Cooler Master, Drop, Mountain, DrunkDeer, Aula, MSI | 94 | entered by hand from the makers' spec pages and reviews |
+
+The link on each board goes to the store it came from. Hand-entered boards use MSRP in USD. Where a maker's page has no photo the card shows the board's colors instead.
+
+- **Pick a board, its color and its switch, then play it as sold.** There are no mods. You can also save it to your builds.
+- **The look:** each color option shows the store's real photo. The rendered board takes its case, alpha, mod and accent colors from that photo, and its legend style from the maker. Individually colored keys are found in the photo too: a WASD or arrow cluster (located by its inverted-T shape, so it works on angled shots), and a lone colored Esc, Enter or spacebar on straight-on shots. The Esc/Enter accent is only kept when a cap of that color actually shows in the photo.
+- **The sound** is built from exactly the parts listed on the product page:
+  - case material, plate, mount
+  - factory foam and lubed stabilizers or switches
+  - stock keycap profile and material
+  - the chosen switch
+- **Switch names** from the stores map to the switch model:
+  - Specific overrides come first: Varmilo EC V2, Keychron Super and Silk POM, Gateron Jupiter, Kailh Prestige, Matias, and Cherry MX *Nature* White, which is linear.
+  - The gaming brands' own switches have overrides too: Razer Green / Yellow / Orange and optical, Logitech GL / GX, Corsair MLX / OPX / MGX, SteelSeries OmniPoint / OptiPoint / QX2, ROG NX / RX / HFX, and HyperX Aqua. Magnetic (Hall effect) switches are tagged magnetic; Razer's analog *optical* switches are not.
+  - A type word in the name wins over the color guess, so "Linear Violet" is linear even though violet usually means tactile.
+  - Otherwise the closest catalog switch is used, or one is synthesized from the name.
+- **Topre** (HHKB, Realforce) gets its own rubber-dome sound: rounded, muted, no spring ping, with a stronger upstroke.
+- The data is in `js/data-keyboards.js`. For store boards, specs are parsed from the product descriptions and colors are sampled from each color variant's photo. Hand-entered boards have hand-picked colors.
+
+## vs AI
+
+Pick **vs AI** next to **single player** on the home page or the build summary, then choose a difficulty:
+
+| difficulty | word speed | AI typist |
+|---|---|---|
+| easy | level 3 | ≈40 wpm, makes typos |
+| medium | level 4 | ≈60 wpm, steady |
+| hard | level 5 | ≈90 wpm, rarely slips |
+
+- You play on the left and the AI on the right. Both fields get the same words at the same moments.
+- The AI behaves like a person: a reaction delay before each word, uneven typing rhythm, typos that it backspaces, occasional lapses, and it sometimes grabs power-ups.
+- When a side overflows, its screen is destroyed:
+  - cracks spread from an impact point and glass shards burst out
+  - the remaining words tumble off the screen
+  - the page quakes, and the field turns dark and glitchy
+  - a huge diagonal **OVERFLOW** slams in; the explosion and breaking glass hit first, then the announcer shouts "OVERFLOOOW!" in the clear, through a clean vocal chain
+  - the round result appears after the moment plays out (about 2.6 s)
+- A match is **best of 3**, with 3-minute rounds. A round ends when someone's overflow bar fills. If both survive the 3 minutes, the higher score wins.
+- **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 60% of a missed word's damage, rising with each tier to 100% at WOW. The AI's combos hit you the same way.
+- Your win/loss record per difficulty is saved to your account.
+
+## How it plays
+
+1. **Build**: choose the base (layout, case material and color, plate, mount), the switches (586 from keybumps.com), the keycaps (727 sets from mechanicalkeyboards.com), and any mods and lube.
+2. **Summary**: a write-up of how the board sounds, an estimated price (USD by default, PHP or EUR optional), and shop links for every part. Name and save the build here. Saved builds appear on the home screen after a refresh, where you can load, rename or delete them.
+3. **Play (survival)**: each level lasts 2 minutes.
+   - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the 2 minutes to unlock the next level.
+   - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
+   - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
+   - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
+   - A spec sheet of your build sits beside the in-game keyboard.
+   - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.
+   - A fight-game announcer shouts your switch's word on combos: 5x "Creamy!", 10x "Double Creamy!", 15x "Triple Creamy!", 20x "Ultra Creaaammmyyyy!", and "WOW!!!" at 25x and every 5 after. The word is "Creamy" for linear or silent switches, "Thocky" for tactile and "Clicky" for clicky.
+     - The lines were rendered offline with the Windows "Microsoft David" voice (raised pitch, slowed stressed words) and are embedded in `js/data-announcer.js`.
+     - At playback they get an arcade treatment: grit, chest and presence EQ, heavy compression, a stadium hall, ping-pong echoes, and a boom-and-fanfare stinger that grows with each tier.
+     - To use your own recorded voice, replace the base64 WAVs in that file. Keep the same keys.
+   - **Power-ups**: type a glowing word to grab its power.
+     - ❄ **freeze** stops all words for 4s.
+     - ◷ **slow** makes words fall at 40% speed for 7s.
+     - ×2 **double** doubles your score for 10s.
+     - ✕ **erase** clears the screen and scores every word on it.
+   - `space` / `enter` clears what you've typed, `esc` pauses.
+
+Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer).
+
+## How the keycaps are drawn
+
+Legends follow each maker's style as seen in the mechanicalkeyboards.com product photos. The styles are `LEGEND_STYLES` in `js/catalog.js`:
+
+| style | font | look |
+|---|---|---|
+| GMK | Inter Bold | grotesk legends, stacked shifted symbols, arrow-icon mods |
+| Ducky | Montserrat | "1!" side by side |
+| Leopold | Rajdhani | squarish legends |
+| HHKB / Topre | — | centered legends, lowercase mods |
+| Akko and similar cute sets | Fredoka | rounded |
+| Traitors and Hangul sets | — | kana / jamo sub-legends |
+| everyone else | Arimo | Helvetica-style |
+
+Blank sets have no legends, and side-print sets print on the front edge.
+
+Colors come from the set's name. When the name has no colors, they're sampled from the set's product photo (`js/data-keycap-colors.js`).
+
+## How the keyboard sound works
+
+Nothing is sampled. Each press is modeled as a series of contact events, and each event excites a bank of resonant modes:
+
+| event | shaped by |
+|---|---|
+| stem friction (scratch) | lube, housing material (POM / UHMWPE self-lubricate), films |
+| tactile bump | switch bump strength, thick lube dulls it |
+| click | click-jacket (MX Blue style, clicks on press **and** release), click-bar (Kailh BOX / Choc, one crisp click), Zeal leaf |
+| bottom-out | keycap profile & material (main pitch/ring), housing (nylon deep, PC bright), long-pole stems (sharper), plate stiffness, mount softness |
+| case cavity / metallic ping | case material, layout size, case/plate foam, tape mod, desk mat |
+| spring ping | lube choice, force-break mod |
+| stabilizer rattle | stab lube, holee mod, case material |
+| top-out on release | spring weight, films, silent dampers |
+
+Each event is built from short noise-excited resonances and fast-decaying modes, the way plastic actually behaves, not from long-ringing tones. The bottom-out is split into three layers that you hear separately:
+
+- **Clack:** bright plastic formants around 1.1–5.5 kHz.
+- **Thock:** the low body around 360–1600 Hz, plus a ~1 kHz "tok" so it still comes through on laptop speakers.
+- **Contact snap:** its brightness depends on how hard the contact is.
+
+Hollowness isn't a note of its own: the first 12 ms of each strike drive the case's resonances, and that response is mixed back under the dry strike. Those resonances are the shell's first few bending modes (higher ones die faster, as in a damped plate; plastic shells ring about 16 ms, foam shortens them) and the standing waves of the air inside the case, which come from its inside length and depth. Each key excites them in a different mix. A stock plastic tray-mount board rings out in about 40 ms to −30 dB, instead of a single 500 Hz tone ringing for well over 100 ms like a drum.
+
+Clicks are mixed outside the keycap low-pass, so they cut through: MX-style click jackets give a thin tick near 8–10 kHz, Kailh click bars a louder, fuller snap near 3–4 kHz. Each key size (alpha, wide, spacebar) renders 6 variants. Each key also gets its own slight pitch offset and a stereo position. Switch housing material, stem type and factory lube are inferred from each switch's name and brand.
+
+## Music
+
+A procedural **lo-fi chill radio** with six tracks:
+
+| track | BPM | chords | keys / lead | drums | ambience |
+|---|---|---|---|---|---|
+| rainy window | 72 | Fmaj9 Em7 Dm9 Cmaj9 | Rhodes + pad / kalimba | boom-bap | rain |
+| late night ramen | 80 | Dm9 G13 Cmaj9 A7♭9 | Rhodes / vibraphone | busy, swung | vinyl |
+| jeepney sunset | 86 | E♭maj9 Cm9 Fm9 B♭13 | nylon guitar / Rhodes | boom-bap | vinyl |
+| sari-sari dusk | 74 | Am9 Fmaj9 Cmaj9 G6 | felt piano + pad / vibes | half-time | night crickets |
+| study session | 70 | Gmaj9 Bm7 Em9 Cmaj9♯11 | felt piano / Rhodes | boom-bap | light rain |
+| typhoon season | 66 | Cm9 A♭maj9 E♭maj9 G7alt | Rhodes + pad / kalimba | half-time | heavy rain |
+
+Everything is synthesized:
+
+- **Instruments:** FM Rhodes, felt piano, Karplus-Strong nylon guitar, kalimba, vibraphone, a warm sine bass, soft pads, and dusty drums.
+- **Lo-fi treatment:** swung drums, a kick-pumped "sidechain", tape wow and flutter, saturation, a warm low-pass, and vinyl crackle.
+- **Structure:** each track opens with a drum-less intro, and its melody comes and goes between loops.
+- **Playlist:** tracks play in order. Each new level or vs round switches to a different one.
+- **Footer:** **♫ track name** shows what's playing. Click it to skip to the next track.
+
+## Files
+
+```
+index.html
+css/style.css
+js/util.js            helpers + localStorage (global and per-user keys)
+js/auth.js            local sign up / log in (PBKDF2-hashed passwords)
+js/data-*.js          switches, keycap sets, word lists (english + tagalog)
+js/catalog.js         parts, sound multipliers, switch/keycap inference
+js/audio-core.js      audio context, buses, DSP primitives
+js/keysound.js        keyboard sound model + playback
+js/music.js           lo-fi radio engine (6 tracks)
+js/sfx.js             game sound effects
+js/keyboard-view.js   keyboard renderer
+js/builder.js         build flow
+js/kbs.js             full (prebuilt) keyboards screen
+js/game.js            game engine: Board (one field), solo mode, vs AI mode, AI typist
+js/main.js            screens, overlay, input, settings
+```
+
+## Publishing later
+
+It's a fully static site, so any static host works: GitHub Pages, Netlify, Cloudflare Pages or Vercel. Upload the folder as-is. The UI font (JetBrains Mono) and the keycap legend fonts load from Google Fonts. Without a connection the UI falls back to the system monospace font (Cascadia Mono or Consolas on Windows).

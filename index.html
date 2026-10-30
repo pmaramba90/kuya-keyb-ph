@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kuya Keyb PH</title>
+  <meta name="description" content="Build your dream mechanical keyboard, then type the falling words. Every keystroke sounds like the board you built.">
+  <meta name="theme-color" content="#0f1a2e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='7' width='28' height='18' rx='4' fill='%23e2b714'/%3E%3Cg fill='%230f1a2e'%3E%3Crect x='6' y='11' width='4' height='3' rx='1'/%3E%3Crect x='12' y='11' width='4' height='3' rx='1'/%3E%3Crect x='18' y='11' width='4' height='3' rx='1'/%3E%3Crect x='24' y='11' width='3' height='3' rx='1'/%3E%3Crect x='9' y='18' width='14' height='3' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- keycap legend fonts, one per maker style (see LEGEND_STYLES in js/catalog.js) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Arimo:wght@400;700&family=Montserrat:wght@600&family=Rajdhani:wght@600;700&family=Fredoka:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-screen="title">
+  <div id="app">
+    <header class="top">
+      <a class="logo" id="logo" href="#" aria-label="Kuya Keyb PH home">
+        <svg class="logo-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="7" width="28" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/><g fill="currentColor"><rect x="6.5" y="11.5" width="3" height="3" rx=".8"/><rect x="11.5" y="11.5" width="3" height="3" rx=".8"/><rect x="16.5" y="11.5" width="3" height="3" rx=".8"/><rect x="21.5" y="11.5" width="3" height="3" rx=".8"/><rect x="9" y="18" width="14" height="3" rx=".8"/></g></svg>
+        <span class="logo-text"><span class="logo-top">build · type · thock</span><span class="logo-main">kuya keyb <b>ph</b></span></span>
+      </a>
+      <nav class="nav">
+        <button class="nav-btn" data-go="build" title="build your keyboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>build</span>
+        </button>
+        <button class="nav-btn" data-go="kbs" title="full keyboards">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 10h2M10 10h2M14 10h2M18 10h0M7 14h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>keyboards</span>
+        </button>
+        <button class="nav-btn" data-go="play" title="play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>
+          <span>play</span>
+        </button>
+        <span class="nav-user" id="navUser"></span>
+      </nav>
+    </header>
+
+    <main>
+      <!-- home: minimal logo + wordmark; sign in / sign up when logged out -->
+      <section class="screen active" id="scr-title">
+        <div class="home">
+          <svg class="home-logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="7" width="28" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><g fill="currentColor"><rect x="6.5" y="11.5" width="3" height="3" rx=".8"/><rect x="11.5" y="11.5" width="3" height="3" rx=".8"/><rect x="16.5" y="11.5" width="3" height="3" rx=".8"/><rect x="21.5" y="11.5" width="3" height="3" rx=".8"/><rect x="9" y="18" width="14" height="3" rx=".8"/></g></svg>
+          <h1 class="home-word">kuya keyb <b>ph</b></h1>
+          <p class="home-tag">build your board · type the falling words</p>
+
+          <form class="auth" id="authForm" autocomplete="on" hidden>
+            <div class="auth-tabs">
+              <button type="button" class="auth-tab on" data-mode="login">log in</button>
+              <button type="button" class="auth-tab" data-mode="signup">sign up</button>
+            </div>
+            <input class="search" id="authUser" name="username" placeholder="username" autocomplete="username" spellcheck="false" maxlength="20">
+            <input class="search" id="authPass" name="password" type="password" placeholder="password" autocomplete="current-password">
+            <input class="search" id="authPass2" type="password" placeholder="confirm password" autocomplete="new-password" hidden>
+            <button class="btn primary" type="submit" id="authGo">log in</button>
+            <div class="auth-err" id="authErr"></div>
+            <p class="hint">accounts are saved only in this browser for now</p>
+          </form>
+
+          <div class="home-in" id="homeIn" hidden>
+            <p class="home-hi" id="homeHi"></p>
+            <div class="title-actions">
+              <button class="btn primary" id="btnSolo">single player</button>
+              <button class="btn primary" id="btnVs">vs AI</button>
+            </div>
+            <div class="title-actions">
+              <button class="btn" id="btnBuild">build a new keyboard</button>
+              <button class="btn" id="btnKbs">full keyboards</button>
+              <button class="btn" id="btnQuick" hidden>continue last build</button>
+            </div>
+            <div class="saved" id="savedWrap" hidden>
+              <div class="grp-h">your saved builds</div>
+              <div class="saved-list" id="savedList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- builder -->
+      <section class="screen" id="scr-build">
+        <div class="steps" id="steps"></div>
+        <div class="stage">
+          <div class="stage-kb" id="buildKb"></div>
+          <aside class="stage-side" id="buildSig"></aside>
+        </div>
+        <div class="step-body" id="stepBody"></div>
+        <div class="step-nav">
+          <button class="btn ghost" id="prevStep">← back</button>
+          <div class="type-hint">type anywhere to hear your board</div>
+          <button class="btn primary" id="nextStep">next →</button>
+        </div>
+      </section>
+
+      <!-- full keyboards: prebuilt boards as sold, no mods -->
+      <section class="screen" id="scr-kbs">
+        <div class="kbs-head">
+          <div class="grp-h">full keyboards <span class="sub">prebuilt and gaming boards from mechanicalkeyboards.com and the makers' stores · pick one, pick its switch, play</span></div>
+          <div class="filters kbs-filters">
+            <input class="search" id="kbQ" autocomplete="off" spellcheck="false">
+            <select class="select" id="kbBrand"></select>
+            <div class="chips" id="kbSizes"></div>
+            <div class="chips" id="kbTypes"></div>
+            <span class="count" id="kbCount"></span>
+          </div>
+        </div>
+        <div class="kbs-wrap">
+          <div class="kbs-list" id="kbList"></div>
+          <aside class="kbs-detail" id="kbDetail">
+            <div id="kbInfo"></div>
+            <div class="kbd-render" id="kbRender"></div>
+            <div id="kbSound"></div>
+            <div class="kbd-actions" id="kbActions"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- single player -->
+      <section class="screen" id="scr-game">
+        <div class="hud">
+          <div class="hud-l">
+            <div class="hud-lbl" id="hudLevel">level 1</div>
+            <div class="hud-total"><span class="hud-lbl">total score</span><span id="hudTotal">0</span></div>
+            <div class="hud-mini">level <span id="hudScore">0</span> · acc <span id="hudAcc">100%</span></div>
+          </div>
+          <div class="hud-time" id="hudTime">2:00</div>
+          <div class="hud-r">
+            <div class="cmeter" id="cmeter">
+              <div class="cm-main"><span class="cm-fire"></span><span class="cm-count">0x</span><span class="cm-x">combo</span></div>
+              <div class="cm-tier">no combo yet</div>
+              <div class="cm-bar"><i class="cm-fill"></i></div>
+              <div class="cm-next">next: creamy at 5x</div>
+            </div>
+          </div>
+        </div>
+        <div class="meter-row" id="overflow">
+          <span class="hud-lbl">overflow</span>
+          <div class="overflow"><div class="ofill"></div></div>
+          <span class="opct">0%</span>
+        </div>
+        <div class="powers" id="powers"></div>
+        <div class="field" id="field">
+          <div class="deadline"></div>
+          <div class="toast"></div>
+        </div>
+        <div class="typed" id="typed"><span class="caret"></span></div>
+        <div class="game-bottom">
+          <div class="game-kb" id="gameKb"></div>
+          <aside class="game-build" id="gameBuild"></aside>
+        </div>
+      </section>
+
+      <!-- vs AI: two fields, you on the left, the AI on the right -->
+      <section class="screen" id="scr-vs">
+        <div class="vs-top">
+          <div class="vs-side"><span class="hud-lbl" id="vsNameL">you</span><b id="vsScoreL">0</b></div>
+          <div class="vs-center">
+            <div class="hud-lbl" id="vsRound">round 1 · best of 3</div>
+            <div class="hud-time" id="vsTime">3:00</div>
+            <div class="vs-wins" id="vsWins"></div>
+          </div>
+          <div class="vs-side r"><span class="hud-lbl" id="vsNameR">ai</span><b id="vsScoreR">0</b></div>
+        </div>
+        <div class="vs-lanes">
+          <div class="lane" id="laneL">
+            <div class="lane-head">
+              <div class="meter-row"><span class="hud-lbl">overflow</span><div class="overflow"><div class="ofill"></div></div><span class="opct">0%</span></div>
+              <div class="cmeter mini">
+                <div class="cm-main"><span class="cm-fire"></span><span class="cm-count">0x</span><span class="cm-x">combo</span></div>
+                <div class="cm-tier">no combo yet</div>
+                <div class="cm-bar"><i class="cm-fill"></i></div>
+                <div class="cm-next"></div>
+              </div>
+            </div>
+            <div class="powers"></div>
+            <div class="field" id="vsFieldL"><div class="deadline"></div><div class="toast"></div></div>
+            <div class="typed" id="vsTypedL"><span class="caret"></span></div>
+          </div>
+          <div class="lane ai" id="laneR">
+            <div class="lane-head">
+              <div class="meter-row"><span class="hud-lbl">overflow</span><div class="overflow"><div class="ofill"></div></div><span class="opct">0%</span></div>
+              <div class="cmeter mini">
+                <div class="cm-main"><span class="cm-fire"></span><span class="cm-count">0x</span><span class="cm-x">combo</span></div>
+                <div class="cm-tier">no combo yet</div>
+                <div class="cm-bar"><i class="cm-fill"></i></div>
+                <div class="cm-next"></div>
+              </div>
+            </div>
+            <div class="powers"></div>
+            <div class="field" id="vsFieldR"><div class="deadline"></div><div class="toast"></div></div>
+            <div class="typed ai" id="vsTypedR"><span class="caret"></span></div>
+          </div>
+        </div>
+        <div class="game-bottom">
+          <div class="game-kb" id="vsKb"></div>
+          <aside class="game-build" id="vsBuild"></aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <div class="keys-hint" id="keysHint"><span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; misses fill the overflow bar</div>
+      <div class="vol">
+        <label title="music volume">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/></svg>
+          <span>music</span>
+          <input type="range" id="volMusic" min="0" max="100" step="1" aria-label="music volume">
+        </label>
+        <label title="keyboard & sound effects volume">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 10h2M10 10h2M14 10h2M8 14h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>sfx</span>
+          <input type="range" id="volSfx" min="0" max="100" step="1" aria-label="sound effects volume">
+        </label>
+        <button class="foot-btn now-playing" id="nowPlaying" title="lo-fi radio · click for the next track">♫ lo-fi radio</button>
+        <button class="foot-btn" id="toggleKb" title="show keyboard while playing">kb: on</button>
+      </div>
+    </footer>
+  </div>
+
+  <div class="overlay" id="overlay" hidden><div class="ov-card" id="ovCard"></div></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data-switches.js"></script>
+  <script src="js/data-keycaps.js"></script>
+  <script src="js/data-keycap-colors.js"></script>
+  <script src="js/data-keyboards.js"></script>
+  <script src="js/data-words.js"></script>
+  <script src="js/data-announcer.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/audio-core.js"></script>
+  <script src="js/keysound.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/keyboard-view.js"></script>
+  <script src="js/builder.js"></script>
+  <script src="js/kbs.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
