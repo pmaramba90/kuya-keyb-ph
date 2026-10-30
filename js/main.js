@@ -281,6 +281,8 @@
     });
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
+  const HINT_SOLO = $('#keysHint').innerHTML;
+  const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
   app.show = function (name) {
     if (!app.user) name = 'title'; // everything past the home page needs an account
@@ -297,8 +299,10 @@
     if (name === 'game') {
       app.gameKb.update(app.build);
       renderGameBuild($('#gameBuild'));
+      $('#keysHint').innerHTML = HINT_SOLO;
     }
     if (name === 'vs') {
+      $('#keysHint').innerHTML = HINT_VS;
       app.vsKb.update(app.build);
       renderGameBuild($('#vsBuild'));
       $('#vsSubL').textContent = $('#vsSubR').textContent = '';
@@ -386,8 +390,7 @@
     $('#vsSubR').title = `${opp.d.board} · ${opp.d.sw} · ${opp.d.caps}`;
     // both keyboards side by side under the lanes
     document.body.classList.add('pvp');
-    if (!app.keysHint) app.keysHint = $('#keysHint').innerHTML;
-    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; alt-tab keeps the match running';
+    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; misses lower their overflow &nbsp;·&nbsp; alt-tab keeps the match running';
     $('#vsOpp').hidden = false;
     $('#vsWhoL').textContent = app.userName();
     $('#vsWhoR').textContent = m.oppName;
@@ -402,7 +405,7 @@
   app.pvpDone = function () {
     document.body.classList.remove('pvp');
     $('#vsOpp').hidden = true;
-    if (app.keysHint) $('#keysHint').innerHTML = app.keysHint;
+    $('#keysHint').innerHTML = HINT_VS;
     if (!app.pvpPrev) return;
     app.build = app.pvpPrev.build;
     app.profileId = app.pvpPrev.profileId;

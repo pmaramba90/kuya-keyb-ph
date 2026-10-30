@@ -101,6 +101,10 @@
     } else if (type === 'erase') {
       noise(0, 0.6, 0.22, 6000, 80);
       tone(160, 0, 0.5, { type: 'square', to: 40, vol: 0.07, lp: 1200 });
+    } else if (type === 'subtract') {
+      // the overflow draining away
+      [88, 84, 79, 76, 72, 67].forEach((n, k) => note(n, k * 0.05, 0.1, { vol: 0.04, type: 'triangle' }));
+      tone(1400, 0, 0.45, { type: 'sine', to: 260, vol: 0.04 });
     }
   };
   // vs mode: your combo flies at the AI / the AI's combo lands on you

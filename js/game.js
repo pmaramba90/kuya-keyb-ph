@@ -24,7 +24,26 @@
     slow: { label: '◷ slow', secs: 7, weight: 1 },
     double: { label: '×2 double', secs: 10, weight: 1 },
     erase: { label: '✕ erase', secs: 0, weight: 0.7 },
+    subtract: { label: '− subtract', secs: 10, weight: 0.8 }, // each word typed lowers your overflow
   };
+  const SUBTRACT = 0.05; // overflow taken off per word while subtract is on
+
+  // word sizes: the smaller the word, the more it's worth (so small + long is the jackpot)
+  const SIZES = [
+    { fs: 0.72, mult: 2, weight: 0.2 },
+    { fs: 0.86, mult: 1.5, weight: 0.25 },
+    { fs: 1, mult: 1, weight: 0.35 },
+    { fs: 1.3, mult: 0.7, weight: 0.2 },
+  ];
+  const NORMAL = 2;
+  const sizeFor = (roll) => {
+    for (let i = 0; i < SIZES.length; i++) if ((roll -= SIZES[i].weight) <= 0) return i;
+    return NORMAL;
+  };
+
+  // vs modes: a miss doesn't fill your own bar — it lowers your opponent's by this
+  // share of a miss's damage
+  const MISS_RELIEF = 0.5;
 
   /* ---------------------------------- words ---------------------------------- */
   const POOLS = {};
@@ -54,7 +73,7 @@
   // depends on what's on either field, so the two streams stay identical.
   function makeSpawn(run) {
     const p = run.p, byLen = pool(run.lang), rnd = run.rnd;
-    const roll = rnd(), pick = rnd();
+    const roll = rnd(), pick = rnd(), sizeRoll = rnd();
     let power = null;
     const busy = run.kind === 'pvp' ? run.sincePower < 8 : run.boards.some((b) => b.words.some((w) => w.power));
     run.sincePower = (run.sincePower || 0) + 1;
@@ -71,7 +90,7 @@
       if (!text || run.recent.includes(text)) continue;
       run.recent.push(text);
       if (run.recent.length > 40) run.recent.shift();
-      return { text, power, xf: rnd(), vf: 0.8 + rnd() * 0.4 };
+      return { text, power, xf: rnd(), vf: 0.8 + rnd() * 0.4, sz: power ? NORMAL : sizeFor(sizeRoll) };
     }
     return null;
   }
@@ -124,6 +143,7 @@
       this.meterEl = o.meter || null;
       this.overflowEl = o.overflow || null;
       this.ai = !!o.ai;
+      this.missFills = o.missFills !== false; // vs modes: misses don't fill your own bar
       this.word = o.word;
       this.p = o.p;
       this.hooks = o.hooks || {};
@@ -141,7 +161,7 @@
       Object.assign(this, {
         words: [], buffer: '', bar: 0, combo: 0, maxCombo: 0, score: 0,
         keys: 0, correct: 0, done: 0, missed: 0, powersUsed: 0, dead: false,
-        fx: { freeze: 0, slow: 0, double: 0 },
+        fx: { freeze: 0, slow: 0, double: 0, subtract: 0 },
       });
       this.field.classList.remove('frozen', 'slowed', 'doubled');
       this.measure();
@@ -184,14 +204,16 @@
       return 1 + Math.min(this.combo, 40) * 0.05;
     }
 
+    // longer words and smaller words are worth more (w.mult: the size's multiplier)
     points(w, heightBonus) {
-      return Math.round(w.text.length * 10 * this.mult() * (heightBonus ? 1 + 0.5 * U.clamp(1 - w.y / this.H, 0, 1) : 1) * (this.fx.double > 0 ? 2 : 1));
+      return Math.round(w.text.length * 10 * (w.mult || 1) * this.mult() * (heightBonus ? 1 + 0.5 * U.clamp(1 - w.y / this.H, 0, 1) : 1) * (this.fx.double > 0 ? 2 : 1));
     }
 
     spawn(ev) {
       if (!ev || this.dead || this.words.length >= this.p.maxOn || this.fx.freeze > 0) return;
       if (this.words.some((x) => x.text === ev.text)) return;
-      const width = ev.text.length * this.charW;
+      const sz = SIZES[ev.sz] ? ev.sz : NORMAL;
+      const width = ev.text.length * this.charW * SIZES[sz].fs;
       const span = Math.max(10, this.W - width - 20);
       let x = 10;
       for (let t = 0; t < 10; t++) {
@@ -200,11 +222,12 @@
       }
       const el = document.createElement('div');
       el.className = 'fw' + (ev.power ? ' pw pw-' + ev.power : '');
+      el.style.setProperty('--fs', SIZES[sz].fs);
       el.innerHTML = (ev.power ? `<span class="pl">${POWERS[ev.power].label}</span>` : '') + '<span class="t"></span><span class="r"></span>';
       el.lastChild.textContent = ev.text;
       this.field.appendChild(el);
       const v = ((this.H - 30) / this.p.fall) * ev.vf * (1 - Math.max(0, ev.text.length - 5) * 0.03);
-      const w = { text: ev.text, x, y: -30, v, el, width, power: ev.power, t: el.querySelector('.t'), r: el.querySelector('.r') };
+      const w = { text: ev.text, x, y: -30, v, el, width, power: ev.power, sz, mult: SIZES[sz].mult, t: el.querySelector('.t'), r: el.querySelector('.r') };
       el.style.transform = `translate(${x}px, ${w.y}px)`;
       this.words.push(w);
       if (this.buffer) this.refreshMatches();
@@ -270,6 +293,10 @@
       this.done++;
       this.buffer = '';
       this.bar = Math.max(0, this.bar - this.p.heal);
+      if (this.fx.subtract > 0 && this.bar > 0) {
+        this.bar = Math.max(0, this.bar - SUBTRACT);
+        this.popup(this.W - 70, 40, `−${Math.round(SUBTRACT * 100)}% overflow`, 'relief');
+      }
       w.t.textContent = w.text;
       w.r.textContent = '';
       this.removeWord(w, 'done');
@@ -287,14 +314,15 @@
     miss(w) {
       this.missed++;
       this.combo = 0;
-      this.bar = Math.min(1, this.bar + this.p.missDamage + w.text.length * 0.003);
+      if (this.missFills) this.bar = Math.min(1, this.bar + this.p.missDamage + w.text.length * 0.003);
       const g = this.goodPrefix(this.buffer);
       this.removeWord(w, 'dead');
       this.popup(w.x + w.width / 2, this.H - 56, 'miss', 'neg');
       if (!this.ai) {
         KK.sfx.miss();
-        if (this.bar >= 0.75) KK.sfx.danger();
+        if (this.missFills && this.bar >= 0.75) KK.sfx.danger();
       }
+      this.emit('missed', w);
       this.shake('shake');
       // if this was the word being typed (and nothing else shares that start), drop the input
       if (this.buffer && (!g || (w.text.startsWith(g) && !this.words.some((o) => o.text.startsWith(g))))) this.buffer = '';
@@ -315,6 +343,15 @@
       this.renderBar();
       this.emit('change');
       this.checkDead();
+    }
+
+    // the opponent missed a word: your overflow comes down
+    relieve(amount) {
+      if (this.dead || this.bar <= 0) return;
+      this.bar = Math.max(0, this.bar - amount);
+      this.popup(this.W / 2, 24, `−${Math.round(amount * 100)}% overflow · they missed`, 'relief');
+      this.renderBar();
+      this.emit('change');
     }
 
     checkDead() {
@@ -625,7 +662,7 @@
     };
     $('#hudLevel').textContent = 'level ' + level;
     soloHud(true);
-    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 2:00");
+    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 2:00 · smaller words score more");
   };
 
   function soloHud(force) {
@@ -698,14 +735,14 @@
     const you = new Board({
       field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
       meter: laneL.querySelector('.cmeter'), overflow: laneL.querySelector('.meter-row'), miniMeter: true,
-      word: KK.keysound.comboKey(KK.app.build), p,
-      hooks: { combo: (b, t) => { announce(b, t); attack(b, run.ai, t); }, change: () => vsHud(), dead: () => roundEnd() },
+      word: KK.keysound.comboKey(KK.app.build), p, missFills: false,
+      hooks: { combo: (b, t) => { announce(b, t); attack(b, run.ai, t); }, missed: () => run.running && run.ai.relieve(p.missDamage * MISS_RELIEF), change: () => vsHud(), dead: () => roundEnd() },
     });
     const ai = new Board({
       field: $('#vsFieldR'), typed: $('#vsTypedR'), powers: laneR.querySelector('.powers'),
       meter: laneR.querySelector('.cmeter'), overflow: laneR.querySelector('.meter-row'), miniMeter: true,
-      ai: true, word: AI_WORD[diff], p,
-      hooks: { combo: (b, t) => { b.toast(KK.voice.label(b.word, t), 'combo t-' + t); attack(b, run.you, t); }, change: () => vsHud(), dead: () => roundEnd() },
+      ai: true, word: AI_WORD[diff], p, missFills: false,
+      hooks: { combo: (b, t) => { b.toast(KK.voice.label(b.word, t), 'combo t-' + t); attack(b, run.you, t); }, missed: () => run.running && run.you.relieve(p.missDamage * MISS_RELIEF), change: () => vsHud(), dead: () => roundEnd() },
     });
     run = {
       kind: 'vs', diff, lang, level, p, you, ai, boards: [you, ai], bot: new AIPlayer(ai, diff), rnd: Math.random,
@@ -733,7 +770,7 @@
     Object.assign(run, { time: ROUND_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: ROUND_SECONDS, running: false, paused: false, hud: {} });
     vsHud(true);
     KK.music.duck(false);
-    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 3:00 · combos attack the AI's overflow bar`);
+    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 3:00 · your combos fill the AI's overflow, your misses lower it · smaller words score more`);
   }
 
   // combo milestone → the opponent's overflow bar rises: a bit less than a miss at
@@ -967,12 +1004,13 @@
       let g = '';
       for (let n = buf.length; n > 0 && !g; n--) if (ws.some((w) => w[0].startsWith(buf.slice(0, n)))) g = buf.slice(0, n);
       const live = new Set();
-      ws.forEach(([text, x, y, power]) => {
+      ws.forEach(([text, x, y, power, sz]) => {
         live.add(text);
         let e = this.els.get(text);
         if (!e) {
           const el = document.createElement('div');
           el.className = 'fw' + (power ? ' pw pw-' + power : '');
+          el.style.setProperty('--fs', (SIZES[sz] || SIZES[NORMAL]).fs);
           el.innerHTML = (power && POWERS[power] ? `<span class="pl">${POWERS[power].label}</span>` : '') + '<span class="t"></span><span class="r"></span>';
           this.field.appendChild(el);
           e = { el, text, t: el.querySelector('.t'), r: el.querySelector('.r') };
@@ -1039,7 +1077,8 @@
       field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
       meter: laneL.querySelector('.cmeter'), overflow: laneL.querySelector('.meter-row'), miniMeter: true,
       word: KK.keysound.comboKey(KK.app.build), p,
-      hooks: { combo: (b, t) => { announce(b, t); sendHit(t); }, change: () => vsHud(), dead: () => roundEnd() },
+      missFills: false,
+      hooks: { combo: (b, t) => { announce(b, t); sendHit(t); }, missed: () => sendRelief(), change: () => vsHud(), dead: () => roundEnd() },
     });
     const opp = new RemoteView(laneR, $('#vsFieldR'), $('#vsTypedR'), m.oppWord || 'creamy');
     const r = (run = {
@@ -1062,6 +1101,7 @@
     r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
       KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
       if (r !== run || !h || h.r !== run.round || !run.running || run.you.dead) return;
+      if (h.relief) return run.you.relieve(h.relief); // they missed a word
       flyAttack('to-l', h.n, h.dmg);
       takeHit(h.dmg, h.label);
     }));
@@ -1078,8 +1118,8 @@
     const b = run.you;
     KK.net.ref(`${run.base}/live/${run.m.me}`).set({
       r: run.round, sc: b.score, bar: +b.bar.toFixed(3), c: b.combo, mc: b.maxCombo, buf: b.buffer, dead: b.dead ? 1 : 0,
-      w: b.words.map((w) => [w.text, +(w.x / (b.W || 1)).toFixed(3), +(w.y / (b.H || 1)).toFixed(3), w.power || 0]),
-      fx: { freeze: +b.fx.freeze.toFixed(1), slow: +b.fx.slow.toFixed(1), double: +b.fx.double.toFixed(1) },
+      w: b.words.map((w) => [w.text, +(w.x / (b.W || 1)).toFixed(3), +(w.y / (b.H || 1)).toFixed(3), w.power || 0, w.sz]),
+      fx: { freeze: +b.fx.freeze.toFixed(1), slow: +b.fx.slow.toFixed(1), double: +b.fx.double.toFixed(1), subtract: +b.fx.subtract.toFixed(1) },
       at: KK.net.now(),
     });
   }
@@ -1102,6 +1142,12 @@
     flyAttack('to-r', a.n, a.dmg);
     KK.sfx.attack();
     KK.net.ref(`${run.base}/hits/${run.m.opp}`).push({ r: run.round, n: a.n, dmg: +a.dmg.toFixed(4), label: a.label });
+  }
+
+  // you missed a word: their overflow comes down (they apply it on their side)
+  function sendRelief() {
+    if (!run.running || run.opp.dead) return;
+    KK.net.ref(`${run.base}/hits/${run.m.opp}`).push({ r: run.round, relief: +(run.p.missDamage * MISS_RELIEF).toFixed(4) });
   }
 
   function startRoundPvp() {
@@ -1140,7 +1186,7 @@
         if (r !== run || run.over) return;
         run.oppAt = KK.net.now() + 4000; // the countdown
         KK.music.duck(false);
-        KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos attack their overflow bar`, () => KK.voice.call('fight'));
+        KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos fill their overflow, your misses lower it · smaller words score more`, () => KK.voice.call('fight'));
       };
       if (round === 1) vsIntro(go);
       else go();

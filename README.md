@@ -68,6 +68,7 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
   - a huge diagonal **OVERFLOW** slams in; the explosion and breaking glass hit first, then the announcer shouts "OVERFLOOOW!" in the clear, through a clean vocal chain
   - the round result appears after the moment plays out (about 2.6 s)
 - A match is **best of 3**, with 3-minute rounds. A round ends when someone's overflow bar fills. If both survive the 3 minutes, the higher score wins.
+- **Your overflow bar only fills from the other side's combos.** Missing a word doesn't fill your own bar in vs modes. Instead it lowers your **opponent's** bar by about 5% (half a miss's damage), so every miss helps the other side.
 - **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 60% of a missed word's damage, rising with each tier to 100% at WOW. The AI's combos hit you the same way.
 - Your win/loss record per difficulty is saved to your account.
 
@@ -109,6 +110,7 @@ The config values are public by design. The database rules are what keep each pl
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
    - A spec sheet of your build sits beside the in-game keyboard.
    - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.
+   - **Word sizes**: words fall in four sizes, and the smaller the word, the more it's worth: tiny ×2, small ×1.5, normal ×1, large ×0.7. Longer words score more too, so small long words are the jackpot (an 8-letter word scores 160 tiny vs 56 large).
    - A fight-game announcer shouts your switch's word on combos: 5x "Creamy!", 10x "Double Creamy!", 15x "Triple Creamy!", 20x "Ultra Creaaammmyyyy!", and "WOW!!!" at 25x and every 5 after. The word is "Creamy" for linear or silent switches, "Thocky" for tactile and "Clicky" for clicky.
      - The lines were rendered offline with the Windows "Microsoft David" voice (raised pitch, slowed stressed words) and are embedded in `js/data-announcer.js`.
      - At playback they get an arcade treatment: grit, chest and presence EQ, heavy compression, a stadium hall, ping-pong echoes, and a boom-and-fanfare stinger that grows with each tier.
@@ -118,6 +120,7 @@ The config values are public by design. The database rules are what keep each pl
      - ◷ **slow** makes words fall at 40% speed for 7s.
      - ×2 **double** doubles your score for 10s.
      - ✕ **erase** clears the screen and scores every word on it.
+     - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s.
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
 Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer).
