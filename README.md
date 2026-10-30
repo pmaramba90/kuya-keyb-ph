@@ -95,7 +95,7 @@ Without setup, vs players works between tabs of one browser, which is handy for 
 
 1. At https://console.firebase.google.com create a project. Then **Build → Authentication → Get started → Email/Password → Enable**.
 2. **Build → Realtime Database → Create database**: pick the Singapore (`asia-southeast1`) location and start in **locked mode**. Under **Rules**, paste `database.rules.json` and publish.
-3. **Authentication → Settings → Authorized domains**: add `pmaramba90.github.io` (and later `kuyakeybph.com`).
+3. **Authentication → Settings → Authorized domains**: add the site's domains (`kuyakeybph.com`, `www.kuyakeybph.com`, and `pmaramba90.github.io` for the old link).
 4. **Project settings → Your apps → Web (</>)**: register an app and copy its `firebaseConfig`. Paste it into `js/net-config.js` as `window.KK_FIREBASE = { ... }`. It must include `databaseURL`.
 
 The config values are public by design. The database rules are what keep each player's data their own. Usernames become sign-in emails on `players.kuyakeybph.com`; nothing is ever sent to them.
@@ -217,4 +217,11 @@ js/main.js            screens, overlay, input, settings
 
 ## Publishing
 
-It's live at https://pmaramba90.github.io/kuya-keyb-ph/ (GitHub Pages, deployed from `main`). It's a fully static site, so any static host works. Online play needs the Firebase setup above. The UI font (JetBrains Mono) and the keycap legend fonts load from Google Fonts. Without a connection the UI falls back to the system monospace font (Cascadia Mono or Consolas on Windows).
+It's live at **https://kuyakeybph.com**, served by GitHub Pages from `main` (repo `pmaramba90/kuya-keyb-ph`). Every push redeploys in about a minute.
+
+- The domain is registered at Namecheap. DNS has four `A` records on `@` (185.199.108.153, .109.153, .110.153, .111.153) and `www` as a `CNAME` to `pmaramba90.github.io`. The `CNAME` file in the repo holds the custom domain.
+- HTTPS is a free Let's Encrypt certificate that GitHub renews automatically. `www`, plain `http` and the old `pmaramba90.github.io/kuya-keyb-ph/` all redirect to https://kuyakeybph.com.
+- The domain is verified on the GitHub account (TXT `_github-pages-challenge-pmaramba90`), so no one else can claim it for their Pages site.
+- Firebase Auth lists `kuyakeybph.com` and `www.kuyakeybph.com` as authorized domains.
+
+It's a fully static site, so any static host works. Online play needs the Firebase setup above. The UI font (JetBrains Mono) and the keycap legend fonts load from Google Fonts. Without a connection the UI falls back to the system monospace font (Cascadia Mono or Consolas on Windows).
