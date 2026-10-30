@@ -560,9 +560,12 @@
     const st = !KK.online.isOnline(pres) ? 'offline' : pres.state === 'match' ? 'in a match' : 'online';
     const name = (u && u.display) || (pres && pres.display) || (u && u.name) || 'player';
     const sub = [pf && pf.nickname && `“${pf.nickname}”`, pf && [pf.city, pf.country].filter(Boolean).join(', '), st].filter(Boolean).join(' · ');
+    app.viewName = name;
     $('#userHi').innerHTML = `<span class="av-wrap">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
       <div class="user-who"><div class="dash-name">${esc(name)}</div><div class="hint">${esc(sub)}</div></div>
+      <span class="user-rel" id="userRel"></span>
       ${st === 'online' ? `<button class="btn primary sm" id="userChallenge">challenge</button>` : ''}`;
+    app.renderUserRel();
     const all = bs || {};
     const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
     const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
@@ -574,7 +577,32 @@
     const ch = $('#userChallenge');
     if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
   };
-  $('#userBack').addEventListener('click', () => app.show(app.userFrom || 'friends'));
+  $('#userBack').addEventListener('click', () => (app.userFrom === 'lobby' ? KK.online.openLobby() : app.show(app.userFrom || 'friends')));
+
+  // you and the player whose page this is: add friend → request sent → friends
+  app.renderUserRel = () => {
+    const el = $('#userRel');
+    if (!el || !app.viewUid) return;
+    el.innerHTML = {
+      none: '<button class="btn primary sm" data-rel="add">add friend</button>',
+      sent: '<button class="btn sm" disabled>request sent</button>',
+      received: '<button class="btn primary sm" data-rel="accept">accept friend request</button>',
+      friend: '<span class="rel-friend">✓ friends</span>',
+    }[KK.social.relation(app.viewUid)] || '';
+  };
+  $('#userHi').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-rel]');
+    if (!b) return;
+    b.blur();
+    b.disabled = true;
+    const uid = app.viewUid;
+    const done = b.dataset.rel === 'add' ? KK.social.sendRequest(uid, app.viewName) : KK.social.accept(uid);
+    Promise.resolve(done).catch((err) => {
+      console.warn('kkph friends', err);
+      b.disabled = false;
+      b.textContent = "couldn't send · try again";
+    });
+  });
   $('#userFeatSound').addEventListener('click', (e) => {
     const b = e.target.closest('[data-act="demo"]');
     if (!b) return;

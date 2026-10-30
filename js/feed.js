@@ -21,6 +21,9 @@
   let buildsCache = {}; // owner uid → promise of their builds (fresh each time home opens)
 
   const ME = () => me && me.uid;
+  // the one moderator: can delete anyone's post (the database rules say the same)
+  const MOD = 'akosipolnew1';
+  const canDelete = (uid) => uid === ME() || (me && me.name === MOD);
   const newId = () => N.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   F.ago = function (at) {
@@ -58,6 +61,14 @@
   // follow your posts and your friends' (called again whenever your friends change)
   F.sync = function () {
     if (!me) return;
+    // the moderator sees every post on the site
+    if (me.name === MOD) {
+      if (!subs['*']) subs['*'] = N.ref('posts').on((v) => {
+        posts = v || {};
+        if (KK.app.screen === 'home') renderPosts();
+      });
+      return;
+    }
     const want = new Set([me.uid, ...KK.social.friendIds()]);
     Object.keys(subs).forEach((uid) => {
       if (want.has(uid)) return;
@@ -77,6 +88,7 @@
 
   F.render = function () {
     buildsCache = {};
+    popSig = ''; // redraw: the builds may have changed
     renderPosts();
     renderPopular();
   };
@@ -136,12 +148,8 @@
 
   /* ------------------------------ popular keyboards ------------------------------ */
   const buildsOf = (owner) => (buildsCache[owner] = buildsCache[owner] || N.ref('builds/' + owner).once().catch(() => null));
-  const swatch = (b) => {
-    const c = C.keycapById[b.keycap].colors;
-    return `<span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>`;
-  };
 
-  let popToken = 0;
+  let popToken = 0, popSig = '';
   async function renderPopular() {
     const token = ++popToken;
     const list = [];
@@ -157,15 +165,27 @@
       if (k && k.build) top.push(Object.assign(x, { k }));
     }
     if (token !== popToken || KK.app.screen !== 'home') return;
-    $('#feedPopular').innerHTML = top.length
+    // the same five in the same order, unchanged: keep the drawn boards (hearts update in place)
+    const sig = JSON.stringify(top.map((x) => [x.owner, x.pid, x.k.name, x.k.updated, nameOf(x.owner)]));
+    if (sig === popSig && document.querySelector('#feedPopular .pop-card')) return;
+    popSig = sig;
+    const box = $('#feedPopular');
+    box.innerHTML = top.length
       ? top.map((x, i) => {
           const b = C.sanitizeBuild(x.k.build);
           return `<div class="pop-card" data-user="${esc(x.owner)}" title="open ${esc(nameOf(x.owner))}'s profile">
-            <span class="pop-rank">${i + 1}</span>${swatch(b)}
-            <span class="kb-text"><b>${esc(x.k.name || 'keyboard')}</b><span>${esc(nameOf(x.owner))} · ${esc(KK.keysound.writeup(b).headline)}</span></span>
-            ${F.heart(x.owner, x.pid)}</div>`;
+            <div class="pop-head"><span class="pop-rank">${i + 1}</span>
+              <span class="kb-text"><b>${esc(x.k.name || 'keyboard')}</b><span>${esc(nameOf(x.owner))} · ${esc(KK.keysound.writeup(b).headline)}</span></span>
+              ${F.heart(x.owner, x.pid)}</div>
+            <div class="pop-kb"></div></div>`;
         }).join('')
       : '<p class="hint">no hearts yet. Heart the keyboards you like on players\' profiles and the favourites show up here.</p>';
+    // each keyboard drawn whole, scaled down to fit the column
+    box.querySelectorAll('.pop-kb').forEach((el, i) => {
+      const v = KK.kbview.create(el, { maxU: 22, legends: false });
+      v.update(C.sanitizeBuild(top[i].k.build));
+      requestAnimationFrame(() => v.fit());
+    });
   }
 
   /* --------------------------------- reviews --------------------------------- */
@@ -193,6 +213,27 @@
   const rating = (v) => U.clamp(Math.round((+v || 0) * 2) / 2, 0, 5);
   const stars = (r) => `<span class="rstars" title="${r} out of 5"><span class="st-bg">★★★★★</span><span class="st-fg" style="width:${r * 20}%">★★★★★</span></span>`;
 
+  // where to buy it: Amazon, Lazada or Shopee only (their short links too). Returns
+  // the store's name, or null for anything else, so no other links get into the feed.
+  const SHOPS = [
+    [/(^|\.)(amazon\.[a-z.]+|amzn\.(to|asia|eu)|a\.co)$/, 'Amazon'],
+    [/(^|\.)lazada\.[a-z.]+$/, 'Lazada'],
+    [/(^|\.)(shopee\.[a-z.]+|shope\.ee|shp\.ee)$/, 'Shopee'],
+  ];
+  function shopOf(link) {
+    if (typeof link !== 'string' || link.length > 500) return null;
+    let u;
+    try {
+      u = new URL(link);
+    } catch (e) {
+      return null;
+    }
+    if (u.protocol !== 'https:' || u.username || u.password) return null;
+    const hit = SHOPS.find(([re]) => re.test(u.hostname.toLowerCase()));
+    return hit ? hit[1] : null;
+  }
+  F.shopOf = shopOf;
+
   /* ---------------------------------- posts ---------------------------------- */
   function renderPosts() {
     const all = [];
@@ -206,17 +247,18 @@
   function postHtml({ uid, id, p }) {
     const review = p.type === 'review';
     const it = review && itemById(p.kind, p.item);
-    const r = rating(p.rating);
+    const r = rating(p.rating), shop = review && shopOf(p.link);
     return `<article class="post">
       <div class="post-head">
         <span class="post-av" data-user="${esc(uid)}">${KK.social.avatarImg(uid, 'sm')}</span>
         <div class="post-who"><b data-user="${esc(uid)}">${esc(nameOf(uid))}</b><span>${review ? 'wrote a review' : 'posted'} · ${F.ago(p.at)}</span></div>
-        ${uid === ME() ? `<button class="picon" data-del="${esc(id)}" title="delete">✕</button>` : ''}
+        ${canDelete(uid) ? `<button class="picon" data-del="${esc(id)}" data-uid="${esc(uid)}" title="${uid === ME() ? 'delete' : 'delete (moderator)'}">✕</button>` : ''}
       </div>
       ${it ? `<div class="rev">
         ${it.img ? `<img class="rev-img" src="${esc(thumb(it.img))}" alt="" loading="lazy" onerror="this.remove()">` : ''}
         <div class="rev-what"><span class="rev-kind">${KINDS[p.kind].label}</span><b>${esc(it.name)}</b><span class="hint">${esc(it.sub || '')}</span>
-        <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span></div></div></div>` : ''}
+        <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span></div></div>
+        ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>` : ''}
       ${p.text ? `<p class="post-text">${esc(String(p.text).slice(0, 1000))}</p>` : ''}
     </article>`;
   }
@@ -233,7 +275,8 @@
         return;
       }
       KK.sfx.ui();
-      return N.ref(`posts/${me.uid}/${del.dataset.del}`).remove().catch((err) => console.warn('kkph posts', err));
+      if (!canDelete(del.dataset.uid)) return;
+      return N.ref(`posts/${del.dataset.uid}/${del.dataset.del}`).remove().catch((err) => console.warn('kkph posts', err));
     }
     const u = e.target.closest('[data-user]');
     if (u) {
@@ -282,6 +325,8 @@
         <div class="rev-chosen" id="revChosen" hidden></div>
         <div class="grp-h">your rating</div>
         <div class="rev-rating"><span class="rstars stars-in" id="revStars" tabindex="0" role="slider" aria-label="rating out of 5" aria-valuemin="0.5" aria-valuemax="5" aria-valuenow="0"><span class="st-bg">★★★★★</span><span class="st-fg" style="width:0">★★★★★</span></span><b id="revNum">tap the stars · halves count</b></div>
+        <div class="grp-h">where to buy it <span class="sub">optional · Amazon, Lazada or Shopee link</span></div>
+        <input class="search rev-link" id="revLink" type="text" inputmode="url" autocomplete="off" maxlength="500" spellcheck="false" placeholder="https://www.lazada.com.ph/products/…">
         <div class="grp-h">your review</div>` : ''}
       <textarea class="search comp-text" id="compText" maxlength="1000" rows="${mode === 'review' ? 4 : 3}" placeholder="${mode === 'review' ? 'how does it sound, feel, look? worth the price?' : "what's on your mind? a build, a switch, a match…"}"></textarea>
       <div class="comp-foot"><span class="hint" id="compMsg"></span><button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
@@ -387,7 +432,11 @@
     if (comp.mode === 'review') {
       if (!comp.item) return compMsg('pick what you are reviewing');
       if (!comp.rating) return compMsg('give it a rating');
+      let link = $('#revLink').value.trim();
+      if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+      if (link && !shopOf(link)) return compMsg('the link has to be an https Amazon, Lazada or Shopee page');
       Object.assign(data, { kind: comp.kind, item: comp.item, rating: comp.rating });
+      if (link) data.link = link;
     }
     const btn = form.querySelector('[type="submit"]');
     btn.disabled = true;

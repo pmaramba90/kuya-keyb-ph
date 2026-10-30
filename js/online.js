@@ -235,7 +235,7 @@
     const d = describe(x.build);
     const busy = p.state === 'match' || !!outgoing;
     return `<div class="pl-card">
-      <div class="pl-head"><span class="av-wrap">${KK.social.avatarImg(uid, 'sm')}<i class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></i></span><b>${esc(p.display || p.name)}</b>
+      <div class="pl-head"><span class="av-wrap pl-link" data-user="${esc(uid)}" title="view profile">${KK.social.avatarImg(uid, 'sm')}<i class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></i></span><b class="pl-link" data-user="${esc(uid)}" title="view profile">${esc(p.display || p.name)}</b>
         <span class="sub">${p.state === 'match' ? 'in a match' : 'online'}</span>
         <button class="btn primary sm" data-ch="${esc(uid)}"${busy ? ' disabled' : ''}>challenge</button></div>
       <div class="pb">${swatch(d)}
@@ -252,6 +252,8 @@
     beatNow();
   });
   $('#lobbyList').addEventListener('click', (e) => {
+    const u = e.target.closest('[data-user]');
+    if (u) return KK.app.showUser(u.dataset.user, 'lobby'); // their profile
     const b = e.target.closest('[data-ch]');
     if (!b || b.disabled) return;
     b.blur();

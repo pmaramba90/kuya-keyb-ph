@@ -76,6 +76,7 @@
       friends = v || {};
       Object.keys(friends).forEach(loadInfo);
       renderFriends();
+      changed();
       KK.feed.sync(); // the feed follows your friends' posts
     }));
     offs.push(N.ref('friendReqs/' + me.uid).on((v) => {
@@ -85,11 +86,13 @@
       const n = Object.keys(reqs).length;
       $('#friendsBadge').hidden = !n;
       $('#friendsBadge').textContent = n || '';
+      changed();
     }));
     offs.push(N.ref('sentReqs/' + me.uid).on((v) => {
       sent = v || {};
       watchSent();
       renderFriends();
+      changed();
     }));
     KK.online.onPresence(renderFriends);
     renderNav();
@@ -100,6 +103,7 @@
     offs = [];
     sent = {};
     watchSent();
+    justSent.clear();
     me = null;
     friends = {};
     reqs = {};
@@ -260,13 +264,16 @@
     try {
       const uid = await findUid(name);
       if (!uid) return msg(`no player called “${name}”`);
+      if (e.submitter && e.submitter.dataset.view) {
+        $('#addFriendName').value = '';
+        msg('');
+        return KK.app.showUser(uid, 'friends'); // just look
+      }
       if (friends[uid]) return msg(`${name} is already your friend`);
-      if (sent[uid]) return msg(`you've already sent ${name} a request`);
+      if (S.relation(uid) === 'sent') return msg(`you've already sent ${name} a request`);
       $('#addFriendName').value = '';
       if (reqs[uid]) return S.accept(uid); // they asked you first
-      await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
-      N.ref(`sentReqs/${me.uid}/${uid}`).set({ name, at: N.now() }).catch((err) => console.warn('kkph friends', err));
-      KK.sfx.select();
+      await S.sendRequest(uid, name);
       reqTab = 'out';
       msg(`friend request sent to ${name}`);
     } catch (err) {
@@ -284,6 +291,38 @@
     return Object.keys(all).find((k) => all[k] && N.normalize(all[k].name) === name) || null;
   }
 
+  // you → them: their copy (they answer it) and yours (your "requests sent")
+  const justSent = new Set(); // sent this session, in case your copy can't be saved
+  S.sendRequest = async function (uid, name) {
+    await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
+    justSent.add(uid);
+    let off = null;
+    off = N.ref(`friendReqs/${uid}/${me.uid}`).on((v) => {
+      if (v != null || !justSent.has(uid)) return;
+      justSent.delete(uid); // answered (or cancelled)
+      if (off) off();
+      changed();
+    });
+    N.ref(`sentReqs/${me.uid}/${uid}`).set({ name: String(name || '').slice(0, 30), at: N.now() }).catch((err) => console.warn('kkph friends', err));
+    KK.sfx.select();
+    changed();
+  };
+
+  // you and them: 'me' | 'friend' | 'sent' (waiting on them) | 'received' (waiting on you) | 'none'
+  S.relation = function (uid) {
+    if (!me) return 'none';
+    if (uid === me.uid) return 'me';
+    if (friends[uid]) return 'friend';
+    if (reqs[uid]) return 'received';
+    if (sent[uid] || justSent.has(uid)) return 'sent';
+    return 'none';
+  };
+
+  // a player's page shows your friendship with them; keep it current
+  function changed() {
+    if (KK.app.screen === 'user') KK.app.renderUserRel();
+  }
+
   S.accept = async function (uid) {
     try {
       await N.ref('').update({ [`friends/${me.uid}/${uid}`]: N.now(), [`friends/${uid}/${me.uid}`]: N.now(), [`friendReqs/${me.uid}/${uid}`]: null });
@@ -295,7 +334,10 @@
     }
   };
   S.decline = (uid) => N.ref(`friendReqs/${me.uid}/${uid}`).remove();
-  S.cancel = (uid) => N.ref('').update({ [`friendReqs/${uid}/${me.uid}`]: null, [`sentReqs/${me.uid}/${uid}`]: null });
+  S.cancel = (uid) => {
+    justSent.delete(uid);
+    return N.ref('').update({ [`friendReqs/${uid}/${me.uid}`]: null, [`sentReqs/${me.uid}/${uid}`]: null });
+  };
 
   // a sent request stays listed while it's pending: once they accept or decline (their
   // copy is gone), drop yours
