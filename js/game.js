@@ -10,6 +10,7 @@
    *   vs AI — you (left) against an AI typist (right), best of 3 three-minute rounds.
    *           Both fields get the same word stream; combo milestones attack the
    *           opponent's overflow bar (harder at higher tiers).
+   *   vs players (pvp) — the same rules against another person online (see below).
    * A Board is one playing field (words, input, combo, overflow, power-ups).
    */
   const G = (KK.game = {});
@@ -48,24 +49,29 @@
     };
   };
 
-  // one spawn event; in vs mode the same event is sent to both fields
+  // one spawn event; in vs mode the same event is sent to both fields. Against another
+  // player both sides draw from the same seeded generator, and the number of draws never
+  // depends on what's on either field, so the two streams stay identical.
   function makeSpawn(run) {
-    const p = run.p, byLen = pool(run.lang);
+    const p = run.p, byLen = pool(run.lang), rnd = run.rnd;
+    const roll = rnd(), pick = rnd();
     let power = null;
-    if (run.elapsed > 4 && Math.random() < 0.1 && !run.boards.some((b) => b.words.some((w) => w.power))) {
+    const busy = run.kind === 'pvp' ? run.sincePower < 8 : run.boards.some((b) => b.words.some((w) => w.power));
+    run.sincePower = (run.sincePower || 0) + 1;
+    if (run.elapsed > 4 && roll < 0.1 && !busy) {
       const entries = Object.entries(POWERS);
-      let r = Math.random() * entries.reduce((s, [, x]) => s + x.weight, 0);
+      let r = pick * entries.reduce((s, [, x]) => s + x.weight, 0);
       for (const [k, x] of entries) if ((r -= x.weight) <= 0) { power = k; break; }
+      run.sincePower = 0;
     }
     for (let tries = 0; tries < 25; tries++) {
-      const len = power ? 4 + Math.floor(Math.random() * 3) : p.minLen + Math.floor(Math.pow(Math.random(), 1.4) * (p.maxLen - p.minLen + 1));
+      const len = power ? 4 + Math.floor(rnd() * 3) : p.minLen + Math.floor(Math.pow(rnd(), 1.4) * (p.maxLen - p.minLen + 1));
       const list = byLen[len] || byLen[Math.min(len, 9)] || byLen[5];
-      if (!list) continue;
-      const text = list[Math.floor(Math.random() * list.length)];
-      if (run.recent.includes(text)) continue;
+      const text = list ? list[Math.floor(rnd() * list.length)] : null;
+      if (!text || run.recent.includes(text)) continue;
       run.recent.push(text);
       if (run.recent.length > 40) run.recent.shift();
-      return { text, power, xf: Math.random(), vf: 0.8 + Math.random() * 0.4 };
+      return { text, power, xf: rnd(), vf: 0.8 + rnd() * 0.4 };
     }
     return null;
   }
@@ -548,7 +554,7 @@
     if (run.spawnT <= 0 && run.time > 1.2) {
       const ev = makeSpawn(run);
       run.boards.forEach((b) => b.spawn(ev));
-      run.spawnT = run.burst > 0 ? 0.45 : run.p.spawn * (0.75 + Math.random() * 0.5);
+      run.spawnT = run.burst > 0 ? 0.45 : run.p.spawn * (0.75 + run.rnd() * 0.5);
       if (run.burst > 0) run.burst--;
     }
   }
@@ -560,7 +566,7 @@
 
   G.isRunning = () => !!(run && run.running);
   G.mode = () => run && run.kind;
-  G.human = () => run && (run.kind === 'vs' ? run.you : run.board);
+  G.human = () => run && (run.kind === 'solo' ? run.board : run.you);
   // test hooks
   G._state = () => {
     const b = G.human();
@@ -579,7 +585,7 @@
       hooks: { combo: announce, change: () => soloHud(), dead: () => soloEnd(false) },
     });
     run = {
-      kind: 'solo', level, lang, p, board, boards: [board], startTotal: startTotal || 0,
+      kind: 'solo', level, lang, p, board, boards: [board], startTotal: startTotal || 0, rnd: Math.random,
       time: LEVEL_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: LEVEL_SECONDS,
       running: false, paused: false, hud: {},
       tick(dt) {
@@ -675,7 +681,7 @@
       hooks: { combo: (b, t) => { b.toast(KK.voice.label(b.word, t), 'combo t-' + t); attack(b, run.you, t); }, change: () => vsHud(), dead: () => roundEnd() },
     });
     run = {
-      kind: 'vs', diff, lang, level, p, you, ai, boards: [you, ai], bot: new AIPlayer(ai, diff),
+      kind: 'vs', diff, lang, level, p, you, ai, boards: [you, ai], bot: new AIPlayer(ai, diff), rnd: Math.random,
       round: 0, wins: [0, 0], history: [], running: false, paused: false, hud: {},
       tick(dt) {
         spawnTick(dt);
@@ -705,28 +711,40 @@
 
   // combo milestone → the opponent's overflow bar rises: a bit less than a miss at
   // 5x, growing with the tier (60% of a miss … 100% at WOW)
-  function attack(from, to, tier) {
-    if (!run || !run.running || to.dead) return;
+  function attackOf(from, tier) {
     const n = tier === 'wow' ? 5 : tier;
-    const dmg = run.p.missDamage * (0.5 + 0.1 * n);
-    const label = KK.voice.label(from.word, tier).replace(/!+$/, '');
+    return { n, dmg: run.p.missDamage * (0.5 + 0.1 * n), label: KK.voice.label(from.word, tier).replace(/!+$/, '') };
+  }
+  function flyAttack(dir, n, dmg) {
     const fly = document.createElement('div');
-    fly.className = 'attack ' + (from === run.you ? 'to-r' : 'to-l') + ' t-' + n;
+    fly.className = 'attack ' + dir + ' t-' + n;
     fly.textContent = `${n === 5 ? 'WOW' : n + '×'} −${Math.round(dmg * 100)}%`;
     $('#scr-vs .vs-lanes').appendChild(fly);
     setTimeout(() => fly.remove(), 700);
-    if (from === run.you) KK.sfx.attack();
+  }
+  // lands on the left field ~when the flying label arrives
+  function takeHit(dmg, label) {
     setTimeout(() => {
       if (!run || !run.running) return;
-      to.damage(dmg, label + ' attack');
-      if (to === run.you) KK.sfx.hit();
+      run.you.damage(dmg, label + ' attack');
+      KK.sfx.hit();
     }, 420);
   }
 
+  function attack(from, to, tier) {
+    if (!run || !run.running || to.dead) return;
+    const a = attackOf(from, tier);
+    flyAttack(from === run.you ? 'to-r' : 'to-l', a.n, a.dmg);
+    if (from === run.you) {
+      KK.sfx.attack();
+      setTimeout(() => run && run.running && to.damage(a.dmg, a.label + ' attack'), 420);
+    } else takeHit(a.dmg, a.label);
+  }
+
   function vsHud(force) {
-    if (!run || run.kind !== 'vs') return;
+    if (!run || run.kind === 'solo') return;
     const h = run.hud;
-    const vals = { time: U.fmtTime(run.time), l: run.you.score.toLocaleString(), r: run.ai.score.toLocaleString() };
+    const vals = { time: U.fmtTime(run.time), l: run.you.score.toLocaleString(), r: (run.ai || run.opp).score.toLocaleString() };
     if (force || h.time !== vals.time) $('#vsTime').textContent = h.time = vals.time;
     if (force || h.l !== vals.l) $('#vsScoreL').textContent = h.l = vals.l;
     if (force || h.r !== vals.r) $('#vsScoreR').textContent = h.r = vals.r;
@@ -810,6 +828,7 @@
   }
 
   function roundEnd() {
+    if (run && run.kind === 'pvp') return roundEndPvp();
     if (!run || run.kind !== 'vs' || !run.running) return;
     run.running = false;
     const dead = run.boards.filter((b) => b.dead);
@@ -873,9 +892,340 @@
     );
   }
 
+  /* ------------------------------- vs players ------------------------------- */
+  // The other player's lane is a live view of their field: they simulate it and
+  // publish a snapshot ~7 times a second, and we draw it. Both sides draw the same
+  // words from the match seed; combo attacks travel as hits that the receiver applies
+  // to its own field; each round's winner is worked out from both players' results,
+  // so both screens always agree. There's no pausing against a person.
+  const LIVE_MS = 140;
+  const STALE_MS = 12000; // no snapshot for this long mid-round → they're gone
+  const esc = U.esc;
+
+  class RemoteView {
+    constructor(lane, field, typed, word) {
+      Object.assign(this, { lane, field, typedEl: typed, word, els: new Map(), words: [] });
+      this.meterEl = lane.querySelector('.cmeter');
+      this.overflowEl = lane.querySelector('.meter-row');
+      this.powersEl = lane.querySelector('.powers');
+      this.meterEl.dataset.mini = '1';
+      this.reset();
+    }
+    clear() {
+      this.field.querySelectorAll('.fw, .pop, .wreck').forEach((n) => n.remove());
+      this.field.classList.remove('destroyed', 'danger', 'quaking', 'frozen', 'slowed', 'doubled');
+      this.els.clear();
+      this.words = [];
+    }
+    reset() {
+      this.clear();
+      this.field.classList.add('remote');
+      Object.assign(this, { score: 0, bar: 0, combo: 0, maxCombo: 0, dead: false });
+      this.apply({});
+    }
+    mult() {
+      return 1 + Math.min(this.combo, 40) * 0.05;
+    }
+    apply(s) {
+      const W = this.field.clientWidth, H = this.field.clientHeight;
+      const scored = (s.sc || 0) > this.score, bump = (s.c || 0) > this.combo;
+      Object.assign(this, { score: s.sc || 0, combo: s.c || 0, maxCombo: s.mc || 0, bar: s.bar || 0 });
+      const ws = s.w || [], buf = s.buf || '';
+      let g = '';
+      for (let n = buf.length; n > 0 && !g; n--) if (ws.some((w) => w[0].startsWith(buf.slice(0, n)))) g = buf.slice(0, n);
+      const live = new Set();
+      ws.forEach(([text, x, y, power]) => {
+        live.add(text);
+        let e = this.els.get(text);
+        if (!e) {
+          const el = document.createElement('div');
+          el.className = 'fw' + (power ? ' pw pw-' + power : '');
+          el.innerHTML = (power && POWERS[power] ? `<span class="pl">${POWERS[power].label}</span>` : '') + '<span class="t"></span><span class="r"></span>';
+          this.field.appendChild(el);
+          e = { el, text, t: el.querySelector('.t'), r: el.querySelector('.r') };
+          this.els.set(text, e);
+        }
+        e.el.style.transform = `translate(${(x * W).toFixed(1)}px, ${(y * H).toFixed(1)}px)`;
+        e.el.classList.toggle('low', y > 0.72);
+        const hit = g && text.startsWith(g);
+        e.el.classList.toggle('hit', !!hit);
+        e.t.textContent = hit ? g : '';
+        e.r.textContent = hit ? text.slice(g.length) : text;
+      });
+      this.els.forEach((e, text) => {
+        if (live.has(text)) return;
+        this.els.delete(text);
+        e.el.style.setProperty('--tr', e.el.style.transform);
+        e.el.classList.add(scored ? 'done' : 'dead');
+        setTimeout(() => e.el.remove(), 400);
+      });
+      this.words = [...this.els.values()];
+      this.typedEl.innerHTML = '';
+      this.typedEl.appendChild(document.createTextNode(g));
+      if (buf.length > g.length) {
+        const w = document.createElement('span');
+        w.className = 'wrong';
+        w.textContent = buf.slice(g.length);
+        this.typedEl.appendChild(w);
+      }
+      const fx = s.fx || {};
+      ['freeze', 'slow', 'double'].forEach((k) => this.field.classList.toggle({ freeze: 'frozen', slow: 'slowed', double: 'doubled' }[k], fx[k] > 0));
+      this.powersEl.innerHTML = Object.keys(POWERS).filter((k) => fx[k] > 0).map((k) => `<span class="pchip pw-${k}">${POWERS[k].label} <b>${(+fx[k]).toFixed(1)}s</b></span>`).join('');
+      renderMeter(this.meterEl, this, bump && this.combo % 5 === 0);
+      renderOverflow(this.overflowEl, this.bar);
+      const d = U.clamp(this.bar, 0, 1);
+      this.field.style.setProperty('--danger', d.toFixed(3));
+      this.field.style.setProperty('--shake', U.clamp((d - 0.75) / 0.25, 0, 1).toFixed(3));
+      this.field.classList.toggle('danger', d > 0 && !this.dead);
+      this.field.classList.toggle('quaking', d >= 0.75 && !this.dead);
+    }
+  }
+
+  // the first value at path that passes test → cb, once
+  function waitFor(path, test, cb) {
+    let done = false;
+    const off = KK.net.ref(path).on((v) => {
+      if (done || !test(v)) return;
+      done = true;
+      setTimeout(() => off && off(), 0);
+      cb(v);
+    });
+    return () => {
+      done = true;
+      off();
+    };
+  }
+
+  // m: { id, me, opp, oppName, oppWord, seed, level, lang }
+  G.startPvp = function (m) {
+    stopRun();
+    const p = G.params(m.level);
+    const laneL = $('#laneL'), laneR = $('#laneR');
+    const base = 'matches/' + m.id;
+    const you = new Board({
+      field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
+      meter: laneL.querySelector('.cmeter'), overflow: laneL.querySelector('.meter-row'), miniMeter: true,
+      word: KK.keysound.comboKey(KK.app.build), p,
+      hooks: { combo: (b, t) => { announce(b, t); sendHit(t); }, change: () => vsHud(), dead: () => roundEnd() },
+    });
+    const opp = new RemoteView(laneR, $('#vsFieldR'), $('#vsTypedR'), m.oppWord || 'creamy');
+    const r = (run = {
+      kind: 'pvp', m, base, lang: m.lang, level: m.level, p, you, opp, boards: [you], round: 0, wins: [0, 0], history: [],
+      running: false, paused: false, over: false, hud: {}, offs: [], liveT: 0, oppAt: 0, rnd: Math.random,
+      tick(dt) {
+        spawnTick(dt);
+        you.step(dt);
+        if (!run.running) return;
+        vsHud();
+        if ((run.liveT -= dt * 1000) <= 0) {
+          publish();
+          run.liveT = LIVE_MS;
+        }
+        if (KK.net.now() - run.oppAt > STALE_MS) return oppGone(false);
+        if (run.time <= 0) roundEnd();
+      },
+    });
+    r.offs.push(KK.net.ref(`${base}/live/${m.opp}`).on((s) => r === run && s && onOppLive(s)));
+    r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
+      KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
+      if (r !== run || !h || h.r !== run.round || !run.running || run.you.dead) return;
+      flyAttack('to-l', h.n, h.dmg);
+      takeHit(h.dmg, h.label);
+    }));
+    r.offs.push(KK.net.ref(`${base}/left/${m.opp}`).on((v) => r === run && v && oppGone(true)));
+    KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
+    $('#vsNameL').textContent = KK.app.userName();
+    $('#vsNameR').textContent = m.oppName;
+    startRoundPvp();
+  };
+
+  function publish() {
+    const b = run.you;
+    KK.net.ref(`${run.base}/live/${run.m.me}`).set({
+      r: run.round, sc: b.score, bar: +b.bar.toFixed(3), c: b.combo, mc: b.maxCombo, buf: b.buffer, dead: b.dead ? 1 : 0,
+      w: b.words.map((w) => [w.text, +(w.x / (b.W || 1)).toFixed(3), +(w.y / (b.H || 1)).toFixed(3), w.power || 0]),
+      fx: { freeze: +b.fx.freeze.toFixed(1), slow: +b.fx.slow.toFixed(1), double: +b.fx.double.toFixed(1) },
+      at: KK.net.now(),
+    });
+  }
+
+  function onOppLive(s) {
+    if (s.r !== run.round) return;
+    run.oppAt = KK.net.now();
+    if (run.opp.dead) return;
+    run.opp.apply(s);
+    if (s.dead) {
+      run.opp.dead = true;
+      if (run.running) roundEnd();
+    }
+    vsHud();
+  }
+
+  function sendHit(tier) {
+    if (!run.running || run.opp.dead) return;
+    const a = attackOf(run.you, tier);
+    flyAttack('to-r', a.n, a.dmg);
+    KK.sfx.attack();
+    KK.net.ref(`${run.base}/hits/${run.m.opp}`).push({ r: run.round, n: a.n, dmg: +a.dmg.toFixed(4), label: a.label });
+  }
+
+  function startRoundPvp() {
+    const r = run, round = ++run.round;
+    run.you.reset();
+    run.opp.reset();
+    Object.assign(run, {
+      time: ROUND_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], sincePower: 0, lastSec: ROUND_SECONDS,
+      running: false, paused: false, hud: {}, liveT: 0, rnd: U.rng(U.hash(run.m.seed + ':' + round)),
+    });
+    vsHud(true);
+    KK.music.duck(true);
+    KK.net.ref(`${run.base}/ready/${round}/${run.m.me}`).set(true);
+    KK.ui.open(
+      `<div class="ov-h">round ${round}</div><div class="ov-sub">waiting for <b>${esc(run.m.oppName)}</b> to be ready…</div>
+       <div class="ov-btns"><button class="btn ghost" data-ov="leave">leave match</button></div>`,
+      { leave: leaveMatch, esc: leaveMatch }
+    );
+    let giveUp = null;
+    const stop = waitFor(`${run.base}/ready/${round}`, (v) => v && v[r.m.me] && v[r.m.opp], () => {
+      clearTimeout(giveUp);
+      if (r !== run) return;
+      run.oppAt = KK.net.now() + 4000; // the countdown
+      KK.music.duck(false);
+      KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos attack their overflow bar`);
+    });
+    giveUp = setTimeout(() => r === run && !run.running && (stop(), oppGone(false)), 30000);
+    run.offs.push(stop, () => clearTimeout(giveUp));
+  }
+
+  function roundEndPvp() {
+    if (!run.running) return;
+    run.running = false;
+    publish();
+    const r = run, round = run.round, me = run.you, opp = run.opp;
+    const mine = { sc: me.score, bar: +me.bar.toFixed(3), dead: me.dead ? 1 : 0, mc: me.maxCombo, acc: me.acc() };
+    KK.net.ref(`${run.base}/res/${round}/${run.m.me}`).set(mine);
+    const dead = [me, opp].filter((b) => b.dead);
+    dead.forEach(wreck);
+    if (dead.length) KK.voice.overflow();
+    const t0 = Date.now(), delay = dead.length ? 2600 : 0;
+    let theirs = null, timer = null, shown = false;
+    const show = () => {
+      if (shown || r !== run || run.over) return;
+      shown = true;
+      clearTimeout(timer);
+      // no result from them: judge from the last thing we saw
+      pvpRoundResult(mine, theirs || { sc: opp.score, bar: opp.bar, dead: opp.dead ? 1 : 0, mc: opp.maxCombo, acc: null });
+    };
+    const stop = waitFor(`${run.base}/res/${round}/${run.m.opp}`, (v) => !!v, (v) => {
+      theirs = v;
+      setTimeout(show, Math.max(0, delay - (Date.now() - t0)));
+    });
+    timer = setTimeout(() => {
+      stop();
+      show();
+    }, Math.max(delay, 10000));
+    run.offs.push(stop, () => clearTimeout(timer));
+  }
+
+  function pvpRoundResult(mine, theirs) {
+    let w;
+    if (mine.dead && !theirs.dead) w = 'opp';
+    else if (theirs.dead && !mine.dead) w = 'you';
+    else if (mine.sc !== theirs.sc) w = mine.sc > theirs.sc ? 'you' : 'opp';
+    else if (mine.bar !== theirs.bar) w = mine.bar < theirs.bar ? 'you' : 'opp';
+    else w = 'draw';
+    if (w === 'you') run.wins[0]++;
+    if (w === 'opp') run.wins[1]++;
+    run.history.push({ w, you: mine.sc, opp: theirs.sc });
+    run.you.words.slice().forEach((x) => run.you.removeWord(x, 'done'));
+    vsHud(true);
+    const name = esc(run.m.oppName);
+    const over = run.wins[0] >= 2 || run.wins[1] >= 2;
+    KK.music.duck(true);
+    if (w === 'you') KK.sfx.clear();
+    else if (w === 'opp') KK.sfx.fail();
+    const why = mine.dead || theirs.dead ? 'overflow' : 'time · higher score';
+    const head = over
+      ? run.wins[0] > run.wins[1] ? `you beat ${name} ${run.wins[0]}–${run.wins[1]}` : `${name} wins the match ${run.wins[1]}–${run.wins[0]}`
+      : w === 'draw' ? `round ${run.round}: draw` : `round ${run.round}: ${w === 'you' ? 'you win' : name + ' wins'}`;
+    let sub = `decided by ${why}`;
+    if (over) {
+      run.over = true;
+      sub = KK.online.record(run.wins[0] > run.wins[1]);
+    }
+    const stat = (s) => `<div><span class="hud-lbl">score</span><b>${(s.sc || 0).toLocaleString()}</b><span class="hud-lbl">max combo ${s.mc || 0}x${s.acc != null ? ` · acc ${s.acc}%` : ''} · overflow ${Math.round((s.bar || 0) * 100)}%</span></div>`;
+    KK.ui.open(
+      `<div class="ov-h">${head}</div>
+       <div class="ov-sub">${sub}</div>
+       <div class="res-vs"><div><span class="hud-lbl">you</span>${stat(mine)}</div><div><span class="hud-lbl">${name}</span>${stat(theirs)}</div></div>
+       <div class="ov-btns">
+         ${over ? '<button class="btn primary" data-ov="lobby" data-primary>back to players</button>' : `<button class="btn primary" data-ov="nextRound" data-primary>round ${run.round + 1} →</button>`}
+         <button class="btn ghost" data-ov="menu">${over ? 'menu' : 'leave match'}</button>
+       </div>
+       <p class="hint" style="margin-top:16px"><span class="kbd">enter</span> ${over ? 'back to players' : 'next round'}</p>`,
+      {
+        nextRound: () => { KK.ui.close(); startRoundPvp(); },
+        lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
+        menu: leaveMatch,
+        esc: over ? () => { KK.ui.close(); G.quit(); KK.online.openLobby(); } : () => {},
+      }
+    );
+  }
+
+  // they quit, closed the page or stopped answering: the match is ours
+  function oppGone(quit) {
+    if (!run || run.kind !== 'pvp' || run.over) return;
+    run.over = true;
+    run.running = false;
+    run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
+    KK.music.duck(true);
+    KK.sfx.clear();
+    const sub = KK.online.record(true);
+    KK.ui.open(
+      `<div class="ov-h">${esc(run.m.oppName)} ${quit ? 'left the match' : 'lost connection'}</div>
+       <div class="ov-sub">you win by forfeit · ${sub}</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to players</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
+      {
+        lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
+        menu: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
+        esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
+      }
+    );
+  }
+
+  function leaveMatch() {
+    KK.ui.close();
+    G.quit();
+    KK.app.show('title');
+  }
+
+  // esc against a person: the match keeps running behind this
+  function pvpMenu() {
+    KK.ui.open(
+      `<div class="ov-h">leave the match?</div><div class="ov-sub">the round keeps going while this is open · leaving counts as a loss</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="back" data-primary>keep playing</button><button class="btn ghost" data-ov="leave">forfeit &amp; leave</button></div>`,
+      { back: () => KK.ui.close(), esc: () => KK.ui.close(), leave: leaveMatch }
+    );
+  }
+
+  function endPvp() {
+    if (!run.over) {
+      run.over = true;
+      KK.net.ref(`${run.base}/left/${run.m.me}`).set(true);
+      KK.online.record(false);
+    }
+    run.offs.forEach((f) => f());
+    run.offs = [];
+    run.opp.clear();
+    run.opp.field.classList.remove('remote');
+    KK.online.matchEnded();
+  }
+
   /* ------------------------------ pause / quit ------------------------------ */
-  G.pause = function () {
-    if (!run || !run.running || run.paused) return;
+  // fromKey: esc was pressed (a window blur only pauses solo and vs AI)
+  G.pause = function (fromKey) {
+    if (!run || !run.running) return;
+    if (run.kind === 'pvp') return fromKey && pvpMenu();
     run.paused = true;
     KK.music.duck(true);
     const b = G.human();
@@ -909,6 +1259,7 @@
   };
 
   G.quit = function () {
+    if (run && run.kind === 'pvp') endPvp();
     stopRun();
     run = null;
     KK.builder.level = 1;
@@ -922,7 +1273,7 @@
     const b = G.human();
     if (e.code === 'Escape') {
       if (run.paused) G.resume();
-      else if (run.running) G.pause();
+      else if (run.running) G.pause(true);
       return true;
     }
     if (!run.running || run.paused) return e.key === ' ' || e.key === 'Backspace';

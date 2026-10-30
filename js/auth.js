@@ -7,7 +7,9 @@
    * Local accounts: everything lives in this browser's localStorage. Passwords are
    * salted and run through PBKDF2-SHA256 (Web Crypto) so they aren't stored as plain
    * text, but this is not real security — anyone with access to the browser profile
-   * can read or wipe the data. Swap this module for a server API when publishing.
+   * can read or wipe the data. When Firebase is configured (js/net-config.js), real
+   * accounts live online instead and this module only serves as the offline stand-in
+   * and to move an old local account online on its first log in (js/net.js).
    */
   const A = (KK.auth = {});
   const ITER = 120000;
@@ -40,12 +42,28 @@
 
   A.validate = function (name, password) {
     const n = A.normalize(name);
+    const min = KK.net && KK.net.online() ? 6 : 4; // online accounts need 6
     if (!/^[a-z0-9_.-]{3,20}$/.test(n)) return 'username: 3–20 letters, numbers, . _ or -';
-    if (String(password || '').length < 4) return 'password: at least 4 characters';
+    if (String(password || '').length < min) return `password: at least ${min} characters`;
     return null;
   };
 
-  A.current = () => S.get('session', null);
+  // each tab keeps its own session (so two tabs can be two players); a new tab
+  // starts as whoever logged in last
+  const TAB = 'kkph.tabSession';
+  A.current = () => {
+    try {
+      const s = sessionStorage.getItem(TAB);
+      if (s) return JSON.parse(s);
+    } catch (e) { /* no sessionStorage */ }
+    return S.get('session', null);
+  };
+  const setSession = (n) => {
+    S.set('session', n);
+    try {
+      sessionStorage.setItem(TAB, JSON.stringify(n));
+    } catch (e) { /* no sessionStorage */ }
+  };
   A.displayName = (n) => (users()[n] && users()[n].display) || n;
 
   A.signup = async function (name, password) {
@@ -57,7 +75,7 @@
     const salt = newSalt();
     all[n] = { display: String(name).trim(), salt, hash: await hashPassword(password, salt), created: Date.now() };
     saveUsers(all);
-    S.set('session', n);
+    setSession(n);
     return n;
   };
 
@@ -65,9 +83,14 @@
     const n = A.normalize(name);
     const u = users()[n];
     if (!u || (await hashPassword(String(password || ''), u.salt)) !== u.hash) throw new Error('wrong username or password');
-    S.set('session', n);
+    setSession(n);
     return n;
   };
 
-  A.logout = () => S.remove('session');
+  A.logout = () => {
+    S.remove('session');
+    try {
+      sessionStorage.removeItem(TAB);
+    } catch (e) { /* no sessionStorage */ }
+  };
 })();

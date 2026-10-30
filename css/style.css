@@ -554,6 +554,46 @@ body.no-game-kb .game-kb { display: none; }
 .res-small { color: var(--sub); font-size: 13px; }
 .res-small b { color: var(--text); font-weight: 400; }
 
+/* ------------------------------- vs players ------------------------------- */
+.home-count { color: var(--sub); font-size: 12px; margin: -26px 0 30px; min-height: 16px; }
+.prec { color: var(--main); font-weight: 400; }
+.lobby { max-width: 860px; margin: 0 auto; }
+.lobby-me { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; background: var(--bg2); border-radius: var(--r); padding: 12px 14px; margin-bottom: 26px; }
+.lobby-me .select { min-width: 260px; }
+.lobby-desc, .ch-build { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--sub); line-height: 1.5; text-align: left; }
+.lobby-desc b, .ch-build b { color: var(--text); font-weight: 400; }
+.lobby-desc { flex-basis: 100%; }
+.lobby-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.pl-card { background: var(--bg2); border-radius: var(--r); padding: 12px 14px; }
+.pl-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pl-head b { font-weight: 400; font-size: 16px; }
+.pl-head .sub { color: var(--sub); font-size: 12px; flex: 1; }
+.pl-dot { width: 8px; height: 8px; border-radius: 50%; background: #5fd38a; box-shadow: 0 0 8px rgba(95, 211, 138, .7); }
+.pl-dot.busy { background: var(--main); box-shadow: 0 0 8px rgba(226, 183, 20, .6); }
+.pl-builds { display: flex; flex-direction: column; gap: 6px; }
+.pb { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent; }
+.pb.sel { border-color: color-mix(in srgb, var(--main) 45%, transparent); }
+.pb-text { flex: 1; min-width: 0; }
+.pb-name { font-size: 13px; }
+.pb-name em { font-style: normal; color: var(--main); font-size: 11px; margin-left: 6px; }
+.pb-head { font-size: 12px; color: var(--main); opacity: .85; }
+.pb-meta { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb-rec { font-size: 12px; color: var(--sub); white-space: nowrap; }
+.vs-sub { font-size: 11px; color: var(--sub); opacity: .8; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.field.remote .fw { transition: transform .16s linear; }
+.ch-overlay { z-index: 70; background: rgba(15, 26, 46, .92); }
+.ch-card { max-width: 560px; background: var(--bg2); border-radius: 12px; padding: 26px 28px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--main) 55%, transparent), 0 20px 60px rgba(0, 0, 0, .5); }
+.ch-tag { color: var(--main); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; animation: ch-pulse 1s ease-in-out infinite; }
+.ch-card .ov-h b { color: var(--main); font-weight: 400; }
+.ch-build { justify-content: center; margin: 14px 0; }
+.ch-pick { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 16px; }
+.ch-time { height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin: 10px 0 12px; }
+.ch-time i { display: block; height: 100%; width: 100%; background: var(--main); transition: width .1s linear; }
+.ch-card .ov-sub { margin-bottom: 0; }
+.ch-card .ov-btns { margin-top: 18px; }
+.ch-card .hint { margin: 12px 0 0; }
+@keyframes ch-pulse { 50% { opacity: .45; } }
+
 /* --------------------------------- footer --------------------------------- */
 .bottom { position: relative; z-index: 60; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0 26px; color: var(--sub); font-size: 12px; flex-wrap: wrap; }
 .vol { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }

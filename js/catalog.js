@@ -740,6 +740,14 @@
     };
   };
 
+  // vs players with no saved build: the same creamy recipe as a TKL in a white case
+  // with black-on-white keycaps
+  C.PVP_DEFAULT_NAME = 'creamy white tkl (default)';
+  C.pvpDefaultBuild = function () {
+    const kc = C.keycapById['vmk-black-on-white-171-key-cherry-profile-double-shot-pbt'] || C.keycapById[C.defaultBuild().keycap];
+    return Object.assign(C.defaultBuild(), { layout: 'tkl', caseColor: '#ebeae4', keycap: kc.id });
+  };
+
   C.sanitizeBuild = function (b) {
     const d = C.defaultBuild();
     if (!b || typeof b !== 'object') return d;

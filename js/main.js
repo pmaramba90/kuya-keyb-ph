@@ -20,7 +20,7 @@
   };
   app.saveSettings = () => KK.store.set('settings', app.settings);
   app.saveProgress = () => KK.store.uset('progress', app.progress);
-  app.userName = () => (app.user ? KK.auth.displayName(app.user) : 'you');
+  app.userName = () => (app.user ? (KK.net.me && KK.net.me.display) || KK.auth.displayName(app.user) : 'you');
 
   A.musicVol = app.settings.music;
   A.sfxVol = app.settings.sfx;
@@ -72,9 +72,14 @@
 
   /* --------------------------------- profiles --------------------------------- */
   // named, saved keyboard builds that survive a refresh (per user)
-  const persistProfiles = () => {
+  // saved builds are also copied online so other players can see them (js/online.js)
+  app.storeProfiles = () => {
     KK.store.uset('profiles', app.profiles);
-    KK.store.uset('profileId', app.profileId);
+    KK.online.pushBuilds();
+  };
+  const persistProfiles = () => {
+    app.storeProfiles();
+    if (!app.pvpPrev) KK.store.uset('profileId', app.profileId);
   };
   const clone = (o) => JSON.parse(JSON.stringify(o));
 
@@ -146,7 +151,7 @@
         return `<div class="pcard${p.id === app.profileId ? ' cur' : ''}" data-id="${p.id}">
           <button class="pmain" data-pact="load" title="load this build">
             <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
-            <span class="ptext"><span class="pname">${esc(p.name)}</span><span class="pmeta">${esc(sw.name)} · ${C.CASES[b.case].name} · ${C.LAYOUTS[b.layout].name}${p.best ? ' · best ' + p.best.toLocaleString() : ''}</span></span>
+            <span class="ptext"><span class="pname">${esc(p.name)}</span><span class="pmeta">${esc(sw.name)} · ${C.CASES[b.case].name} · ${C.LAYOUTS[b.layout].name}${p.best ? ' · best ' + p.best.toLocaleString() : ''}${p.w || p.l ? ` · <b class="prec">wins: ${p.w || 0} · losses: ${p.l || 0}</b>` : ''}</span></span>
           </button>
           <button class="picon" data-pact="rename" title="rename">✎</button>
           <button class="picon" data-pact="delete" title="delete">✕</button>
@@ -265,7 +270,9 @@
 
   app.show = function (name) {
     if (!app.user) name = 'title'; // everything past the home page needs an account
-    if (PLAY_SCREENS[app.screen] && name !== app.screen && KK.game.isRunning()) KK.game.quit();
+    // leaving a match against a person between rounds still ends it
+    if (PLAY_SCREENS[app.screen] && name !== app.screen && (KK.game.isRunning() || KK.game.mode() === 'pvp')) KK.game.quit();
+    if (app.screen === 'lobby' && name !== 'lobby') KK.online.leftLobby();
     // the keyboards screen previews other boards' sound; leaving it restores yours
     if (app.screen === 'kbs' && name !== 'kbs') KK.keysound.setBuild(app.build);
     app.screen = name;
@@ -280,6 +287,7 @@
     if (name === 'vs') {
       app.vsKb.update(app.build);
       renderGameBuild($('#vsBuild'));
+      $('#vsSubL').textContent = $('#vsSubR').textContent = '';
     }
     requestAnimationFrame(() => views.concat(KK.builder.kb || []).forEach((v) => v.fit()));
   };
@@ -347,20 +355,46 @@
     KK.game.startVs(diff, app.settings.lang);
   };
 
+  // vs players: you play the build you picked for the match; your usual board comes
+  // back when it ends (KK.online → app.pvpDone)
+  app.startPvp = function (m, mine, opp) {
+    gesture();
+    ui.close();
+    if (!app.pvpPrev) app.pvpPrev = { build: app.build, profileId: app.profileId };
+    app.build = mine.build;
+    app.profileId = app.profiles.some((p) => p.id === mine.pid) ? mine.pid : null;
+    KK.keysound.setBuild(app.build);
+    app.show('vs');
+    $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
+    $('#vsSubR').textContent = `${opp.name} · ${opp.d.head}`;
+    $('#vsSubR').title = `${opp.d.board} · ${opp.d.sw} · ${opp.d.caps}`;
+    KK.music.setMode('game', m.level);
+    KK.music.duck(false);
+    KK.game.startPvp(m);
+  };
+  app.pvpDone = function () {
+    if (!app.pvpPrev) return;
+    app.build = app.pvpPrev.build;
+    app.profileId = app.pvpPrev.profileId;
+    app.pvpPrev = null;
+    KK.keysound.setBuild(app.build);
+  };
+
   app.flashKey = (code, cls) => (app.screen === 'vs' ? app.vsKb : app.gameKb).flash(code, cls);
 
   /* ----------------------------------- home ----------------------------------- */
   let authMode = 'login';
   function renderHome() {
     const inn = !!app.user;
-    $('#authForm').hidden = inn;
+    $('#authForm').hidden = inn || !app.netReady; // not before we know if you're signed in
     $('#homeIn').hidden = !inn;
     document.body.classList.toggle('signed-out', !inn);
     $('#navUser').innerHTML = inn ? `<span>@${esc(app.userName())}</span><button class="foot-btn" id="logoutBtn">log out</button>` : '';
     if (inn) {
       const vs = app.progress.vs || {};
       const rec = ['easy', 'medium', 'hard'].filter((d) => vs[d]).map((d) => `${d} ${vs[d].w}–${vs[d].l}`).join(' · ');
-      $('#homeHi').innerHTML = `welcome, <b>${esc(app.userName())}</b>${app.progress.bestTotal ? ` · best total ${app.progress.bestTotal.toLocaleString()}` : ''}${rec ? ` · vs ai ${rec}` : ''}`;
+      const dflt = app.progress.pvpDefault;
+      $('#homeHi').innerHTML = `welcome, <b>${esc(app.userName())}</b>${app.progress.bestTotal ? ` · best total ${app.progress.bestTotal.toLocaleString()}` : ''}${rec ? ` · vs ai ${rec}` : ''}${dflt && !app.profiles.length ? ` · ${esc(C.PVP_DEFAULT_NAME)} <b>wins: ${dflt.w} · losses: ${dflt.l}</b>` : ''}`;
       $('#btnQuick').hidden = !app.hasSaved;
       renderProfiles();
     } else {
@@ -386,9 +420,10 @@
     err.textContent = '';
     try {
       if (authMode === 'signup' && pass !== $('#authPass2').value) throw new Error("passwords don't match");
-      const user = authMode === 'signup' ? await KK.auth.signup(name, pass) : await KK.auth.login(name, pass);
+      const user = (authMode === 'signup' ? await KK.net.signup(name, pass) : await KK.net.login(name, pass)).name;
       const imported = authMode === 'signup' && claimLegacyData(user);
       setUser(user);
+      KK.online.start();
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
       app.show('title');
@@ -401,8 +436,9 @@
 
   $('#navUser').addEventListener('click', (e) => {
     if (e.target.id !== 'logoutBtn') return;
-    if (KK.game.isRunning()) KK.game.quit();
-    KK.auth.logout();
+    if (KK.game.isRunning() || KK.game.mode() === 'pvp') KK.game.quit();
+    KK.online.stop();
+    KK.net.logout();
     clearUser();
     setAuthMode('login');
     app.show('title');
@@ -467,6 +503,7 @@
       KK.keysound.down(e.code);
       pressAll(e.code);
     }
+    if (KK.online.key(e)) return e.preventDefault(); // a challenge on screen comes first
     if (ui.isOpen()) {
       if (ui.key(e)) e.preventDefault();
       return;
@@ -522,12 +559,22 @@
     KK.builder.mode = 'vs';
     KK.builder.open(4);
   });
+  $('#btnPvp').addEventListener('click', () => KK.online.openLobby());
 
   /* ----------------------------------- boot ----------------------------------- */
-  const session = KK.auth.current();
-  if (session && (KK.store.get('users', {}) || {})[session]) setUser(session);
-  else clearUser();
+  clearUser();
   KK.builder.init();
   KK.kbs.init();
   app.show('title');
+  KK.online.watchCount((n) => ($('#homeCount').textContent = `${n.toLocaleString()} ${n === 1 ? 'player has' : 'players have'} signed up`));
+  // the session comes back from the online layer (Firebase or this browser)
+  KK.net.ready.then((who) => {
+    app.netReady = true;
+    $('#authHint').textContent = KK.net.online() ? 'one account works on every device' : 'accounts are saved only in this browser for now';
+    if (who && !app.user) {
+      setUser(who.name);
+      KK.online.start();
+    }
+    if (app.screen === 'title') app.show('title');
+  });
 })();

@@ -11,15 +11,16 @@ No build step and no install. Either:
 
 Click or press any key once the page opens. Browsers block audio until you interact with the page.
 
-## Accounts (local for now)
+## Accounts
 
-The home page is just the logo, the wordmark, and **log in / sign up** (username and password).
+The home page is the logo, the wordmark, a count of players who have signed up, and **log in / sign up** (username and password).
 
-- Accounts live only in this browser's localStorage.
-- Passwords are salted and hashed with PBKDF2-SHA256 via Web Crypto, so they're never stored as plain text.
-- This is not real security: anyone with access to the browser profile can read or wipe the data. Replace `js/auth.js` with a server API before publishing.
+- **Online (Firebase configured, see "Going online"):** accounts are Firebase Auth accounts, so one account works on every device. Passwords need 6+ characters. Saved builds are copied online, so they follow you to other devices and other players can see them.
+- **Offline (no config):** accounts live only in this browser's localStorage. Passwords are salted and hashed with PBKDF2-SHA256 via Web Crypto. This is not real security: anyone with access to the browser profile can read or wipe the data.
+- An account made in the browser before going online moves online the first time you log in with it, as long as its password has 6+ characters.
 - Each account has its own current build, saved builds, level progress and vs-AI record. Saving a build only saves it to the signed-in account.
 - Builds made before accounts existed are given to the first account created on that browser.
+- Each browser tab keeps its own sign-in, so two tabs can be two players.
 
 ## Full keyboards
 
@@ -69,6 +70,28 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 - A match is **best of 3**, with 3-minute rounds. A round ends when someone's overflow bar fills. If both survive the 3 minutes, the higher score wins.
 - **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 60% of a missed word's damage, rising with each tier to 100% at WOW. The AI's combos hit you the same way.
 - Your win/loss record per difficulty is saved to your account.
+
+## vs players
+
+**vs players** on the home page lists everyone online, with each player's saved builds: name, how it sounds, board, switch and keycaps, and its win–loss record. The build each player picked is marked "playing with".
+
+- Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
+- **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
+- Same rules as vs AI at medium speed (level 4): best of 3, 3-minute rounds, combos attack the other player's overflow bar.
+- Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
+- Esc doesn't pause against a person. It asks whether to forfeit. Leaving, closing the page, or going quiet for 12 seconds mid-round counts as a loss.
+- Each win or loss is added to the build you played: **wins: 1 · losses: 0** shows on that saved build on the home page. Matches against the AI don't count.
+
+## Going online
+
+Without setup, vs players works between tabs of one browser, which is handy for testing. To let everyone play each other, connect a free Firebase project (Spark plan, no card needed):
+
+1. At https://console.firebase.google.com create a project. Then **Build → Authentication → Get started → Email/Password → Enable**.
+2. **Build → Realtime Database → Create database**: pick the Singapore (`asia-southeast1`) location and start in **locked mode**. Under **Rules**, paste `database.rules.json` and publish.
+3. **Authentication → Settings → Authorized domains**: add `pmaramba90.github.io` (and later `kuyakeybph.com`).
+4. **Project settings → Your apps → Web (</>)**: register an app and copy its `firebaseConfig`. Paste it into `js/net-config.js` as `window.KK_FIREBASE = { ... }`. It must include `databaseURL`.
+
+The config values are public by design. The database rules are what keep each player's data their own. Usernames become sign-in emails on `players.kuyakeybph.com`; nothing is ever sent to them.
 
 ## How it plays
 
@@ -165,6 +188,9 @@ index.html
 css/style.css
 js/util.js            helpers + localStorage (global and per-user keys)
 js/auth.js            local sign up / log in (PBKDF2-hashed passwords)
+js/net-config.js      Firebase web config (null = everything stays in this browser)
+js/net.js             online layer: Firebase Auth + Realtime Database, or a localStorage stand-in
+js/online.js          vs players: presence, lobby, challenges, build sync, records, user count
 js/data-*.js          switches, keycap sets, word lists (english + tagalog)
 js/catalog.js         parts, sound multipliers, switch/keycap inference
 js/audio-core.js      audio context, buses, DSP primitives
@@ -174,10 +200,11 @@ js/sfx.js             game sound effects
 js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
-js/game.js            game engine: Board (one field), solo mode, vs AI mode, AI typist
+js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
+database.rules.json   Firebase Realtime Database security rules
 js/main.js            screens, overlay, input, settings
 ```
 
-## Publishing later
+## Publishing
 
-It's a fully static site, so any static host works: GitHub Pages, Netlify, Cloudflare Pages or Vercel. Upload the folder as-is. The UI font (JetBrains Mono) and the keycap legend fonts load from Google Fonts. Without a connection the UI falls back to the system monospace font (Cascadia Mono or Consolas on Windows).
+It's live at https://pmaramba90.github.io/kuya-keyb-ph/ (GitHub Pages, deployed from `main`). It's a fully static site, so any static host works. Online play needs the Firebase setup above. The UI font (JetBrains Mono) and the keycap legend fonts load from Google Fonts. Without a connection the UI falls back to the system monospace font (Cascadia Mono or Consolas on Windows).

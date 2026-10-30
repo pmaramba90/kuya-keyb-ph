@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "meta": {
+      ".read": true,
+      "userCount": {
+        ".write": "auth != null && newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
+      }
+    },
+    "users": {
+      ".read": "auth != null",
+      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+    },
+    "builds": {
+      ".read": "auth != null",
+      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+    },
+    "presence": {
+      ".read": "auth != null",
+      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+    },
+    "challenges": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".read": "auth != null && auth.uid === $from",
+          ".write": "auth != null && (auth.uid === $to || auth.uid === $from)"
+        }
+      }
+    },
+    "matches": {
+      "$mid": {
+        ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",
+        ".write": "auth != null && (data.exists() ? (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid) : (newData.child('a').val() === auth.uid || newData.child('b').val() === auth.uid))"
+      }
+    }
+  }
+}
