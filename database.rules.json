@@ -105,6 +105,7 @@
           ".write": "auth != null && (auth.uid === $uid || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' && !newData.exists()))",
           ".validate": "newData.hasChildren(['type', 'at']) && (newData.child('type').val() === 'post' || newData.hasChildren(['kind', 'item', 'rating']))",
           "link": { ".validate": "newData.isString() && newData.val().length <= 500 && newData.val().beginsWith('https://')" },
+          "gif": { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9]{4,64}$/)" },
           "type": { ".validate": "newData.val() === 'post' || newData.val() === 'review'" },
           "text": { ".validate": "newData.isString() && newData.val().length <= 1000" },
           "at": { ".validate": "newData.isNumber()" },

@@ -376,13 +376,13 @@
     $('#reqTabs').innerHTML = tab('in', 'requests received', nIn) + tab('out', 'requests sent', nOut);
     $('#friendReqs').innerHTML = reqTab === 'in'
       ? Object.entries(reqs)
-          .map(([uid, r]) => `<div class="fr-card req">${S.avatarImg(uid, 'sm')}
+          .map(([uid, r]) => `<div class="fr-card req link" data-user="${esc(uid)}" title="view profile">${S.avatarImg(uid, 'sm')}
             <div class="fr-text"><b>${esc(r.display || r.name)}</b><span>wants to be friends</span></div>
             <button class="btn primary sm" data-fr="accept" data-uid="${esc(uid)}">accept</button>
             <button class="btn ghost sm" data-fr="decline" data-uid="${esc(uid)}">decline</button></div>`)
           .join('') || '<p class="hint">no requests waiting for you.</p>'
       : Object.entries(sent)
-          .map(([uid, r]) => `<div class="fr-card sent">${S.avatarImg(uid, 'sm')}
+          .map(([uid, r]) => `<div class="fr-card sent link" data-user="${esc(uid)}" title="view profile">${S.avatarImg(uid, 'sm')}
             <div class="fr-text"><b>${esc((info[uid] || {}).display || (r && r.name) || '…')}</b><span>request sent · waiting for them</span></div>
             <button class="btn ghost sm" data-fr="cancel" data-uid="${esc(uid)}">cancel</button></div>`)
           .join('') || "<p class=\"hint\">no pending requests — the ones you send show here until they're answered.</p>";

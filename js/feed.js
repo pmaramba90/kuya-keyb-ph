@@ -234,6 +234,29 @@
   }
   F.shopOf = shopOf;
 
+  /* ----------------------------------- GIFs ----------------------------------- */
+  // a post's GIF is stored as its GIPHY id and always shown from GIPHY's own servers
+  const GIF_ID = /^[A-Za-z0-9]{4,64}$/;
+  const gifSrc = (id, size) => `https://media.giphy.com/media/${id}/${size || 'giphy'}.webp`;
+  // a pasted GIPHY link → the GIF's id: giphy.com/gifs/<words>-<id>, giphy.com/embed/<id>,
+  // media*.giphy.com/media/[v1.…/]<id>/…, i.giphy.com/<id>.gif
+  function giphyId(link) {
+    let u;
+    try {
+      u = new URL(String(link).trim());
+    } catch (e) {
+      return null;
+    }
+    if (!/(^|\.)giphy\.com$/.test(u.hostname)) return null;
+    const parts = u.pathname.split('/').filter(Boolean);
+    let id = null;
+    if (['gifs', 'stickers', 'embed'].includes(parts[0])) id = (parts[1] || '').split('-').pop();
+    else if (parts[0] === 'media') id = parts[(parts[1] || '').startsWith('v1.') ? 2 : 1];
+    else if (u.hostname === 'i.giphy.com' && parts.length === 1) id = parts[0].replace(/\.(gif|webp|mp4)$/, '');
+    return id && GIF_ID.test(id) ? id : null;
+  }
+  F.giphyId = giphyId;
+
   /* ---------------------------------- posts ---------------------------------- */
   function renderPosts() {
     const all = [];
@@ -260,6 +283,7 @@
         <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span></div></div>
         ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>` : ''}
       ${p.text ? `<p class="post-text">${esc(String(p.text).slice(0, 1000))}</p>` : ''}
+      ${!review && GIF_ID.test(p.gif) ? `<div class="post-gif"><img src="${gifSrc(p.gif)}" alt="GIF" loading="lazy" onerror="this.parentNode.remove()"><span>via GIPHY</span></div>` : ''}
     </article>`;
   }
 
@@ -329,11 +353,55 @@
         <input class="search rev-link" id="revLink" type="text" inputmode="url" autocomplete="off" maxlength="500" spellcheck="false" placeholder="https://www.lazada.com.ph/products/…">
         <div class="grp-h">your review</div>` : ''}
       <textarea class="search comp-text" id="compText" maxlength="1000" rows="${mode === 'review' ? 4 : 3}" placeholder="${mode === 'review' ? 'how does it sound, feel, look? worth the price?' : "what's on your mind? a build, a switch, a match…"}"></textarea>
-      <div class="comp-foot"><span class="hint" id="compMsg"></span><button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
+      ${mode === 'post' ? `
+        <div class="gif-chosen" id="gifChosen" hidden></div>
+        <div class="gif-pick" id="gifPick" hidden>
+          ${GIPHY_KEY ? '<input class="search" id="gifQ" spellcheck="false" autocomplete="off" placeholder="search GIPHY"><div class="gif-grid" id="gifGrid"></div>' : ''}
+          <input class="search" id="gifLink" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="${GIPHY_KEY ? 'or paste' : 'paste'} a GIPHY link (giphy.com → a GIF → copy link)">
+          <div class="gif-attr">powered by <b>GIPHY</b></div>
+        </div>` : ''}
+      <div class="comp-foot">${mode === 'post' ? '<button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button>' : ''}<span class="hint" id="compMsg"></span><button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
     (mode === 'review' ? form.querySelector('.rev-kinds .chip') : $('#compText')).focus();
   }
 
   const compMsg = (t) => ($('#compMsg').textContent = t);
+
+  // GIF picker: GIPHY search (with an API key in js/giphy-config.js) or a pasted link
+  const GIPHY_KEY = String(window.KK_GIPHY_KEY || '').trim();
+  let gifTimer = null, gifToken = 0;
+  function toggleGifs() {
+    const pick = $('#gifPick');
+    pick.hidden = !pick.hidden;
+    if (pick.hidden) return;
+    if (GIPHY_KEY) {
+      if (!$('#gifGrid').children.length) searchGifs('');
+      $('#gifQ').focus();
+    } else $('#gifLink').focus();
+  }
+  async function searchGifs(q) {
+    const token = ++gifToken, grid = $('#gifGrid');
+    const api = `https://api.giphy.com/v1/gifs/${q ? 'search' : 'trending'}?api_key=${encodeURIComponent(GIPHY_KEY)}&limit=24&rating=pg-13${q ? '&q=' + encodeURIComponent(q) : ''}`;
+    try {
+      const res = await fetch(api);
+      if (!res.ok) throw new Error('giphy ' + res.status);
+      const ids = ((await res.json()).data || []).map((g) => g && g.id).filter((id) => GIF_ID.test(id));
+      if (token !== gifToken || !grid.isConnected) return;
+      grid.innerHTML = ids.length
+        ? ids.map((id) => `<button type="button" class="gif-cell" data-gif="${id}"><img src="${gifSrc(id, '200w')}" alt="" loading="lazy"></button>`).join('')
+        : '<p class="hint">no GIFs found</p>';
+    } catch (err) {
+      console.warn('kkph giphy', err);
+      if (token === gifToken && grid.isConnected) grid.innerHTML = "<p class=\"hint\">GIPHY search isn't working right now. Paste a GIPHY link below instead.</p>";
+    }
+  }
+  function pickGif(id) {
+    comp.gif = id;
+    $('#gifPick').hidden = true;
+    const el = $('#gifChosen');
+    el.hidden = false;
+    el.innerHTML = `<img src="${gifSrc(id, '200w')}" alt="GIF"><button type="button" class="picon" data-comp="nogif" title="remove the GIF">✕</button>`;
+    compMsg('');
+  }
 
   function pickKind(kind) {
     comp.kind = kind;
@@ -394,6 +462,14 @@
     const t = e.target;
     const close = t.closest('[data-comp="close"]');
     if (close) return KK.sfx.ui(), closeComposer();
+    if (t.closest('[data-comp="gif"]')) return t.closest('button').blur(), KK.sfx.ui(), toggleGifs();
+    if (t.closest('[data-comp="nogif"]')) {
+      comp.gif = null;
+      $('#gifChosen').hidden = true;
+      return KK.sfx.ui();
+    }
+    const g = t.closest('[data-gif]');
+    if (g) return KK.sfx.select(), pickGif(g.dataset.gif);
     if (t.closest('[data-comp="change"]')) {
       $('#revChosen').hidden = true;
       $('#revPick').hidden = false;
@@ -406,7 +482,29 @@
     const st = t.closest('#revStars');
     if (st) return KK.sfx.ui(), setRating(starAt(st, e.clientX));
   });
-  form.addEventListener('input', (e) => e.target.id === 'revQ' && renderResults());
+  form.addEventListener('input', (e) => {
+    const id = e.target.id;
+    if (id === 'revQ') renderResults();
+    if (id === 'gifQ') {
+      clearTimeout(gifTimer);
+      gifTimer = setTimeout(() => searchGifs(e.target.value.trim()), 350);
+    }
+    if (id === 'gifLink') {
+      if (e.inputType === 'insertFromPaste') useGifLink(e.target); // a paste is the whole link
+      else compMsg('');
+    }
+  });
+  // a typed link is read once it's finished: Enter or leaving the box
+  form.addEventListener('change', (e) => e.target.id === 'gifLink' && useGifLink(e.target));
+  function useGifLink(input) {
+    const v = input.value.trim();
+    const gid = v && giphyId(/^https?:\/\//i.test(v) ? v : 'https://' + v);
+    if (gid) {
+      input.value = '';
+      KK.sfx.select();
+      pickGif(gid);
+    } else compMsg(v ? "that isn't a GIPHY GIF link" : '');
+  }
   form.addEventListener('pointermove', (e) => {
     const st = e.target.closest('#revStars');
     if (st) showStars(starAt(st, e.clientX));
@@ -416,6 +514,11 @@
     if (e.target.closest('#revStars') && !(to && to.closest && to.closest('#revStars'))) showStars(comp ? comp.rating : 0);
   });
   form.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.target.id === 'gifQ' || e.target.id === 'gifLink')) {
+      e.preventDefault(); // not "post"
+      if (e.target.id === 'gifLink') useGifLink(e.target);
+      return;
+    }
     if (e.target.id !== 'revStars') return;
     const d = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
     if (!d) return;
@@ -428,7 +531,10 @@
     if (!me || !comp) return;
     const text = $('#compText').value.trim().slice(0, 1000);
     const data = { type: comp.mode, text, at: N.now() };
-    if (comp.mode === 'post' && !text) return compMsg('write something first');
+    if (comp.mode === 'post') {
+      if (!text && !comp.gif) return compMsg('write something or add a GIF first');
+      if (comp.gif) data.gif = comp.gif;
+    }
     if (comp.mode === 'review') {
       if (!comp.item) return compMsg('pick what you are reviewing');
       if (!comp.rating) return compMsg('give it a rating');
