@@ -79,7 +79,10 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 - **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
 - Same rules as vs AI at medium speed (level 4): best of 3, 3-minute rounds, combos attack the other player's overflow bar.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
-- Esc doesn't pause against a person. It asks whether to forfeit. Leaving, closing the page, or going quiet for 12 seconds mid-round counts as a loss.
+- Esc doesn't pause against a person. It asks whether to forfeit.
+- The match keeps running when you alt-tab or minimize: a worker's timer steps the game when the browser stops sending animation frames, so your words keep falling and missing, and your opponent keeps seeing your field.
+- Between rounds, each player has **30 seconds** to start the next round once the other is waiting. If you don't, the waiting player wins the match, and your screen shows the loss when you come back.
+- Leaving, closing the page, or losing connection for 12 seconds mid-round also counts as a loss.
 - Each win or loss is added to the build you played: **wins: 1 · losses: 0** shows on that saved build on the home page. Matches against the AI don't count.
 
 ## Going online

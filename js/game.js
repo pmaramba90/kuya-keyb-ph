@@ -529,16 +529,44 @@
     run.running = true;
     run.last = performance.now();
     requestAnimationFrame(frame);
+    if (run.kind === 'pvp') keepTicking();
   }
 
-  function frame(ts) {
+  function frame() {
     if (!run || !run.running) return;
-    const dt = Math.min(0.05, (ts - run.last) / 1000);
-    run.last = ts;
-    if (!run.paused) {
-      run.time -= dt;
-      run.elapsed += dt;
-      run.tick(dt);
+    advance();
+    requestAnimationFrame(frame);
+  }
+
+  // A covered, minimized or alt-tabbed window gets no animation frames, but a match
+  // against a person must keep going: a worker's timer (not throttled like the page's)
+  // steps the game whenever frames stop arriving.
+  let ticker = null;
+  function keepTicking() {
+    if (ticker) return;
+    const onTick = () => run && run.running && run.kind === 'pvp' && performance.now() - run.last > 120 && advance();
+    try {
+      const src = 'setInterval(() => postMessage(0), 100);';
+      ticker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      ticker.onmessage = onTick;
+    } catch (e) {
+      ticker = setInterval(onTick, 100); // no workers: page timers (slowed to ~1/s when hidden)
+    }
+  }
+
+  // runs the clock up to now. Against a person a late step (after a stall) is caught
+  // up in small slices, so words keep falling, spawning and missing as usual; solo and
+  // vs AI just carry on (they pause when you leave the window).
+  function advance() {
+    const now = performance.now();
+    let dt = Math.min((now - run.last) / 1000, run.kind === 'pvp' ? 10 : 0.05);
+    run.last = now;
+    while (dt > 0.0005 && run && run.running && !run.paused) {
+      const s = Math.min(dt, 0.05);
+      dt -= s;
+      run.time -= s;
+      run.elapsed += s;
+      run.tick(s);
       if (!run || !run.running) return;
       const sec = Math.ceil(run.time);
       if (sec !== run.lastSec) {
@@ -546,7 +574,6 @@
         if (sec <= 10 && sec > 0) KK.sfx.tick();
       }
     }
-    requestAnimationFrame(frame);
   }
 
   function spawnTick(dt) {
@@ -900,6 +927,7 @@
   // so both screens always agree. There's no pausing against a person.
   const LIVE_MS = 140;
   const STALE_MS = 12000; // no snapshot for this long mid-round → they're gone
+  const READY_SECS = 30; // to start the next round before the waiting player wins
   const esc = U.esc;
 
   class RemoteView {
@@ -1011,17 +1039,17 @@
     const opp = new RemoteView(laneR, $('#vsFieldR'), $('#vsTypedR'), m.oppWord || 'creamy');
     const r = (run = {
       kind: 'pvp', m, base, lang: m.lang, level: m.level, p, you, opp, boards: [you], round: 0, wins: [0, 0], history: [],
-      running: false, paused: false, over: false, hud: {}, offs: [], liveT: 0, oppAt: 0, rnd: Math.random,
+      running: false, paused: false, over: false, hud: {}, offs: [], pubAt: 0, oppAt: 0, rnd: Math.random,
       tick(dt) {
         spawnTick(dt);
         you.step(dt);
         if (!run.running) return;
         vsHud();
-        if ((run.liveT -= dt * 1000) <= 0) {
+        if (performance.now() - run.pubAt >= LIVE_MS) {
           publish();
-          run.liveT = LIVE_MS;
+          run.pubAt = performance.now();
         }
-        if (KK.net.now() - run.oppAt > STALE_MS) return oppGone(false);
+        if (KK.net.now() - run.oppAt > STALE_MS) return oppGone('gone');
         if (run.time <= 0) roundEnd();
       },
     });
@@ -1032,7 +1060,9 @@
       flyAttack('to-l', h.n, h.dmg);
       takeHit(h.dmg, h.label);
     }));
-    r.offs.push(KK.net.ref(`${base}/left/${m.opp}`).on((v) => r === run && v && oppGone(true)));
+    r.offs.push(KK.net.ref(`${base}/left/${m.opp}`).on((v) => r === run && v && oppGone('quit')));
+    // they took the win because we were away (or our updates stopped reaching them)
+    r.offs.push(KK.net.ref(`${base}/claim/${m.opp}`).on((v) => r === run && v && claimedAgainst()));
     KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
     $('#vsNameL').textContent = KK.app.userName();
     $('#vsNameR').textContent = m.oppName;
@@ -1075,26 +1105,44 @@
     run.opp.reset();
     Object.assign(run, {
       time: ROUND_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], sincePower: 0, lastSec: ROUND_SECONDS,
-      running: false, paused: false, hud: {}, liveT: 0, rnd: U.rng(U.hash(run.m.seed + ':' + round)),
+      running: false, paused: false, hud: {}, pubAt: 0, rnd: U.rng(U.hash(run.m.seed + ':' + round)),
     });
     vsHud(true);
     KK.music.duck(true);
     KK.net.ref(`${run.base}/ready/${round}/${run.m.me}`).set(true);
+    // they have READY_SECS to start the round too, or the match is yours
+    const until = Date.now() + READY_SECS * 1000;
     KK.ui.open(
-      `<div class="ov-h">round ${round}</div><div class="ov-sub">waiting for <b>${esc(run.m.oppName)}</b> to be ready…</div>
+      `<div class="ov-h">round ${round}</div><div class="ov-sub">waiting for <b>${esc(run.m.oppName)}</b> to be ready…<br>
+       if they're not back in <b class="wait-secs">${READY_SECS}</b>s, you win the match</div>
+       <div class="ch-time"><i class="wait-bar"></i></div>
        <div class="ov-btns"><button class="btn ghost" data-ov="leave">leave match</button></div>`,
       { leave: leaveMatch, esc: leaveMatch }
     );
+    const show = () => {
+      const left = Math.max(0, until - Date.now());
+      const n = document.querySelector('#ovCard .wait-secs'), bar = document.querySelector('#ovCard .wait-bar');
+      if (n) n.textContent = Math.ceil(left / 1000);
+      if (bar) bar.style.width = (left / (READY_SECS * 10)) + '%';
+    };
+    const clock = setInterval(show, 250);
     let giveUp = null;
     const stop = waitFor(`${run.base}/ready/${round}`, (v) => v && v[r.m.me] && v[r.m.opp], () => {
       clearTimeout(giveUp);
-      if (r !== run) return;
+      clearInterval(clock);
+      if (r !== run || run.over) return;
       run.oppAt = KK.net.now() + 4000; // the countdown
       KK.music.duck(false);
       KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos attack their overflow bar`);
     });
-    giveUp = setTimeout(() => r === run && !run.running && (stop(), oppGone(false)), 30000);
-    run.offs.push(stop, () => clearTimeout(giveUp));
+    giveUp = setTimeout(() => {
+      clearInterval(clock);
+      if (r === run && !run.running) {
+        stop();
+        oppGone('away');
+      }
+    }, READY_SECS * 1000);
+    run.offs.push(stop, () => clearTimeout(giveUp), () => clearInterval(clock));
   }
 
   function roundEndPvp() {
@@ -1172,18 +1220,18 @@
     );
   }
 
-  // they quit, closed the page or stopped answering: the match is ours
-  function oppGone(quit) {
-    if (!run || run.kind !== 'pvp' || run.over) return;
+  // the match ends early: overlay with the way back to the players list
+  function endEarly(head, sub, won) {
     run.over = true;
     run.running = false;
     run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
     KK.music.duck(true);
-    KK.sfx.clear();
-    const sub = KK.online.record(true);
+    if (won) KK.sfx.clear();
+    else KK.sfx.fail();
+    const rec = KK.online.record(won);
     KK.ui.open(
-      `<div class="ov-h">${esc(run.m.oppName)} ${quit ? 'left the match' : 'lost connection'}</div>
-       <div class="ov-sub">you win by forfeit · ${sub}</div>
+      `<div class="ov-h">${head}</div>
+       <div class="ov-sub">${sub} · ${rec}</div>
        <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to players</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
       {
         lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
@@ -1191,6 +1239,22 @@
         esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
       }
     );
+  }
+
+  // why: 'quit' (they left), 'away' (didn't start the next round in time), 'gone' (their
+  // updates stopped mid-round). Unless they quit, the win is claimed in the match so
+  // their screen shows the loss when they come back.
+  function oppGone(why) {
+    if (!run || run.kind !== 'pvp' || run.over) return;
+    if (why !== 'quit') KK.net.ref(`${run.base}/claim/${run.m.me}`).set(true);
+    const name = esc(run.m.oppName);
+    const head = { quit: `${name} left the match`, away: `${name} didn't come back in time`, gone: `${name} lost connection` }[why];
+    endEarly(head, 'you win by forfeit', true);
+  }
+
+  function claimedAgainst() {
+    if (!run || run.kind !== 'pvp' || run.over) return;
+    endEarly(`${esc(run.m.oppName)} wins`, `you were away too long to start the round (${READY_SECS}s) or lost connection`, false);
   }
 
   function leaveMatch() {
