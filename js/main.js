@@ -16,7 +16,6 @@
   app.saveBuild = () => {
     KK.store.uset('build', app.build);
     app.hasSaved = true;
-    $('#btnQuick').hidden = false;
   };
   app.saveSettings = () => KK.store.set('settings', app.settings);
   app.saveProgress = () => KK.store.uset('progress', app.progress);
@@ -286,8 +285,8 @@
     });
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
-  // the nav tab each screen belongs to
-  const NAV_TAB = { title: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
+  // the nav tab each screen belongs to (a player's page: the tab you opened it from)
+  const NAV_TAB = { title: 'title', profile: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
   const HINT_SOLO = $('#keysHint').innerHTML;
   const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
@@ -301,10 +300,12 @@
     if ((app.screen === 'kbs' || app.screen === 'user') && name !== app.screen) KK.keysound.setBuild(app.build);
     app.screen = name;
     document.body.dataset.screen = name;
+    document.body.classList.toggle('signed-out', !app.user);
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
-    const tab = NAV_TAB[name] || name;
+    const tab = name === 'user' ? NAV_TAB[app.userFrom] || app.userFrom || 'friends' : NAV_TAB[name] || name;
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
-    $('#navUser').classList.toggle('on', name === 'profile');
+    $('#navUser').classList.toggle('on', tab === 'title');
+    if (name === 'home') KK.feed.render();
     if (name === 'title') renderHome();
     if (name === 'play') renderPlay();
     if (name === 'friends') KK.social.renderFriends();
@@ -445,7 +446,8 @@
       return;
     }
     const me = KK.net.me || {}, p = app.progress, cur = app.settings.currency || 'usd';
-    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div><div class="hint">welcome back</div></div>`;
+    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div><div class="hint">your profile</div></div>
+      <button class="btn ghost sm edit-profile" id="editProfile">edit profile</button>`;
     const add = (a, r) => ({ w: a.w + ((r && r.w) || 0), l: a.l + ((r && r.l) || 0) });
     const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
     const pvp = app.profiles.reduce(add, add({ w: 0, l: 0 }, p.pvpDefault));
@@ -456,10 +458,10 @@
     if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
     $('#homeQuick').hidden = !app.hasSaved;
     const main = kbs.find((k) => k.id && k.id === app.mainBuildId()) || kbs[0];
-    renderFeatured(FEAT_HOME, main);
+    renderFeatured(FEAT_HOME, main, me.uid);
     const rest = kbs.filter((k) => k !== main);
     $('#dashKbs').innerHTML = rest.length
-      ? rest.map((k) => kbCard(k, { open: true, canMain: true })).join('')
+      ? rest.map((k) => kbCard(k, { open: true, canMain: true, owner: me.uid })).join('')
       : `<p class="hint">${kbs.length ? 'build more keyboards from play — they show up here.' : 'no saved keyboards yet — build one from play.'}</p>`;
   }
   $('#dashKbs').addEventListener('click', (e) => {
@@ -471,6 +473,8 @@
     const c = e.target.closest('[data-id]');
     if (c) app.loadProfile(c.dataset.id);
   });
+  $('#dashHi').addEventListener('click', (e) => e.target.closest('#editProfile') && app.show('profile'));
+  $('#editBack').addEventListener('click', () => app.show('title'));
   // the featured keyboard opens its summary too
   $('#dashFeat').addEventListener('click', () => {
     const id = $('#dashFeat').dataset.id;
@@ -508,20 +512,22 @@
       <span class="kb-text"><b>${esc(k.name)}</b><span>${esc(KK.keysound.writeup(b).headline)}</span></span>
       <span class="kb-num"><b>${C.money(C.billOfMaterials(b).total, cur)}</b><span>est. price</span></span>
       <span class="kb-num"><b>${wr.pct}</b><span>${wr.rec}</span></span>
+      ${(k.id && KK.feed.heart(o.owner, k.id)) || '<span></span>'}
       ${o.canMain && k.id ? `<button class="btn sm ghost" data-main="${esc(k.id)}">make main</button>` : '<span></span>'}
     </div>`;
   }
 
   // the featured keyboard: the board drawn full size plus everything about it
-  const FEAT_HOME = { box: '#dashFeat', name: '#featName', tags: '#featTags', spec: '#featSpec', stats: '#featStats', view: () => app.featView };
-  const FEAT_USER = { box: '#userFeat', name: '#userFeatName', tags: '#userFeatTags', spec: '#userFeatSpec', stats: '#userFeatStats', sound: '#userFeatSound', view: () => app.userFeatView };
-  function renderFeatured(F, k) {
+  const FEAT_HOME = { box: '#dashFeat', name: '#featName', tags: '#featTags', heart: '#featHeart', spec: '#featSpec', stats: '#featStats', view: () => app.featView };
+  const FEAT_USER = { box: '#userFeat', name: '#userFeatName', tags: '#userFeatTags', heart: '#userFeatHeart', spec: '#userFeatSpec', stats: '#userFeatStats', sound: '#userFeatSound', view: () => app.userFeatView };
+  function renderFeatured(F, k, owner) {
     $(F.box).hidden = !k;
     if (!k) return;
     const b = C.sanitizeBuild(k.build), wr = winRate(k), cur = app.settings.currency || 'usd';
     const w = KK.keysound.writeup(b);
     $(F.box).dataset.id = k.id || '';
     $(F.box).classList.toggle('open', F === FEAT_HOME && !!k.id);
+    $(F.heart).innerHTML = k.id ? KK.feed.heart(owner, k.id) : '';
     $(F.name).textContent = k.name;
     $(F.tags).textContent = w.headline;
     if (F.sound) {
@@ -537,8 +543,11 @@
   }
 
   /* -------------------------------- a friend's page -------------------------------- */
-  app.showUser = async function (uid) {
+  // from: the screen it was opened from (the back link returns there)
+  app.showUser = async function (uid, from) {
     if (!uid) return;
+    if (KK.net.me && uid === KK.net.me.uid) return app.show('title'); // that's you
+    app.userFrom = from || (app.screen === 'user' ? app.userFrom : app.screen) || 'friends';
     app.viewUid = uid;
     app.show('user');
     $('#userHi').innerHTML = `${KK.social.avatarImg(uid, 'md')}<div><div class="dash-name">…</div></div>`;
@@ -557,15 +566,15 @@
     const all = bs || {};
     const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
     const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
-    renderFeatured(FEAT_USER, main);
+    renderFeatured(FEAT_USER, main, uid);
     if (main) KK.keysound.setBuild(C.sanitizeBuild(main.build)); // typing here plays their board
     const rest = kbs.filter((k) => k !== main);
     $('#userKbsH').hidden = !rest.length;
-    $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, {})).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
+    $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, { owner: uid })).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
     const ch = $('#userChallenge');
     if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
   };
-  $('#userBack').addEventListener('click', () => app.show('friends'));
+  $('#userBack').addEventListener('click', () => app.show(app.userFrom || 'friends'));
   $('#userFeatSound').addEventListener('click', (e) => {
     const b = e.target.closest('[data-act="demo"]');
     if (!b) return;
@@ -573,14 +582,32 @@
     KK.keysound.demo();
   });
 
-  // play: the modes, building, your saved builds
+  // play: the modes, your saved builds, your matches against players
   function renderPlay() {
     const vs = app.progress.vs || {};
     const rec = ['easy', 'medium', 'hard'].filter((d) => vs[d]).map((d) => `${d} ${vs[d].w}–${vs[d].l}`).join(' · ');
     $('#homeHi').innerHTML = rec ? `vs ai ${rec}` : '';
-    $('#btnQuick').hidden = !app.hasSaved;
     renderProfiles();
+    renderHistory();
   }
+
+  // newest first; vs players only (written by KK.online.record)
+  async function renderHistory() {
+    const me = KK.net.me;
+    if (!me) return;
+    const all = (await KK.net.ref('history/' + me.uid).once().catch(() => null)) || {};
+    if (app.screen !== 'play') return;
+    const list = Object.values(all).filter((h) => h && h.opp && h.at).sort((a, b) => b.at - a.at).slice(0, 30);
+    $('#histList').innerHTML = list.length
+      ? list.map((h) => `<div class="fr-card link" data-user="${esc(h.opp)}" title="open their profile">${KK.social.avatarImg(String(h.opp), 'sm')}
+          <div class="fr-text"><b>vs ${esc(h.oppName || 'player')}</b><span>${esc(h.build || '')} · ${KK.feed.ago(h.at)}</span></div>
+          <span class="hist-res ${h.won ? 'w' : 'l'}"><b>${h.won ? 'win' : 'loss'}</b><span>${esc(h.score || '')}${h.how ? ' · ' + esc(h.how) : ''}</span></span></div>`).join('')
+      : '<p class="hint">no matches against players yet. Challenge someone from vs players.</p>';
+  }
+  $('#histList').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-user]');
+    if (c) app.showUser(c.dataset.user, 'play');
+  });
 
   function setAuthMode(m) {
     authMode = m;
@@ -605,9 +632,10 @@
       setUser(user);
       KK.online.start();
       KK.social.start();
+      KK.feed.start();
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
-      app.show('title');
+      app.show(imported ? 'title' : 'home');
       if (imported) $('#dashHi').innerHTML += '<span class="hint"> · imported your existing builds</span>';
     } catch (ex) {
       err.textContent = ex.message;
@@ -619,6 +647,7 @@
     if (KK.game.isRunning() || KK.game.mode() === 'pvp') KK.game.quit();
     KK.online.stop();
     KK.social.stop();
+    KK.feed.stop();
     KK.net.logout();
     clearUser();
     setAuthMode('login');
@@ -713,9 +742,7 @@
     }
     const inField = e.target.matches && e.target.matches('input, select, textarea');
     if (inField) return;
-    if (e.code === 'Space' || e.code === 'Backspace' || e.key === "'" || e.key === '/') e.preventDefault();
-    if (app.screen === 'play' && e.key === 'Enter') KK.builder.open(0);
-  });
+    if (e.code === 'Space' || e.code === 'Backspace' || e.key === "'" || e.key === '/') e.preventDefault();  });
 
   document.addEventListener('keyup', (e) => {
     KK.anticheat.up(e);
@@ -739,22 +766,23 @@
   $('#logo').addEventListener('click', (e) => {
     e.preventDefault();
     if (KK.game.isRunning()) return KK.game.pause();
-    app.show('title');
+    app.show('home');
   });
-  $('#btnBuild').addEventListener('click', () => {
-    app.profileId = null; // a fresh build isn't tied to a saved profile until saved
-    persistProfiles();
-    KK.builder.open(0);
-  });
-  $('#btnQuick').addEventListener('click', () => KK.builder.open(4));
-  $('#btnKbs').addEventListener('click', () => KK.kbs.open());
-  // the same three on the home page: they just press play's buttons
-  const HOME_BTN = { build: '#btnBuild', kbs: '#btnKbs', quick: '#btnQuick' };
+  // your profile: build a new keyboard, full keyboards, continue last build
+  const HOME_BTN = {
+    build: () => {
+      app.profileId = null; // a fresh build isn't tied to a saved profile until saved
+      persistProfiles();
+      KK.builder.open(0);
+    },
+    kbs: () => KK.kbs.open(),
+    quick: () => KK.builder.open(4),
+  };
   $('#dashActions').addEventListener('click', (e) => {
     const b = e.target.closest('[data-home]');
     if (!b) return;
     b.blur();
-    $(HOME_BTN[b.dataset.home]).click();
+    HOME_BTN[b.dataset.home]();
   });
   $('#btnSolo').addEventListener('click', () => {
     KK.builder.mode = 'solo';
@@ -771,9 +799,10 @@
   KK.builder.init();
   KK.kbs.init();
   app.show('title');
-  KK.online.watchCount((n) => ($('#homeCount').textContent = `${n.toLocaleString()} ${n === 1 ? 'player has' : 'players have'} signed up`));
+  // shown on the sign-in page and on home
+  KK.online.watchCount((n) => ($('#homeCount').textContent = $('#feedCount').textContent = `${n.toLocaleString()} ${n === 1 ? 'player has' : 'players have'} signed up`));
   // who's online can only be read signed in (database rules), so it shows after log in
-  KK.online.watchOnline((n) => ($('#homeOnline').innerHTML = n == null ? '' : `<i class="pl-dot"></i>${n.toLocaleString()} online now`));
+  KK.online.watchOnline((n) => ($('#homeOnline').innerHTML = $('#feedOnline').innerHTML = n == null ? '' : `<i class="pl-dot"></i>${n.toLocaleString()} online now`));
   // the session comes back from the online layer (Firebase or this browser)
   KK.net.ready.then((who) => {
     app.netReady = true;
@@ -782,7 +811,8 @@
       setUser(who.name);
       KK.online.start();
       KK.social.start();
+      KK.feed.start();
     }
-    if (app.screen === 'title') app.show('title');
+    if (app.screen === 'title') app.show(app.user ? 'home' : 'title');
   });
 })();

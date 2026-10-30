@@ -87,6 +87,50 @@
         }
       }
     },
+    "hearts": {
+      ".read": "auth != null",
+      "$owner": {
+        "$pid": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && $uid !== $owner",
+            ".validate": "newData.val() === true"
+          }
+        }
+      }
+    },
+    "posts": {
+      ".read": "auth != null",
+      "$uid": {
+        "$id": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['type', 'at']) && (newData.child('type').val() === 'post' || newData.hasChildren(['kind', 'item', 'rating']))",
+          "type": { ".validate": "newData.val() === 'post' || newData.val() === 'review'" },
+          "text": { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "at": { ".validate": "newData.isNumber()" },
+          "kind": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "item": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "rating": { ".validate": "newData.isNumber() && newData.val() >= 0.5 && newData.val() <= 5 && (newData.val() * 2) % 1 === 0" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "history": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$id": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['opp', 'won', 'at'])",
+          "opp": { ".validate": "newData.isString() && newData.val().length <= 128" },
+          "oppName": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "won": { ".validate": "newData.isBoolean()" },
+          "score": { ".validate": "newData.isString() && newData.val().length <= 12" },
+          "how": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "build": { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
     "presence": {
       ".read": "auth != null",
       "$uid": {

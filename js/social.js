@@ -76,6 +76,7 @@
       friends = v || {};
       Object.keys(friends).forEach(loadInfo);
       renderFriends();
+      KK.feed.sync(); // the feed follows your friends' posts
     }));
     offs.push(N.ref('friendReqs/' + me.uid).on((v) => {
       reqs = v || {};
@@ -113,8 +114,15 @@
   }
   $('#navUser').addEventListener('click', () => {
     $('#navUser').blur();
-    if (me) KK.app.show('profile');
+    if (me) KK.app.show('title'); // your profile page
   });
+
+  S.friendIds = () => Object.keys(friends);
+  // a name we already know: a friend, someone you've sent a request to, or anyone online
+  S.nameOf = (uid) => {
+    const f = info[uid], p = KK.online.players()[uid];
+    return (f && (f.display || f.name)) || (p && p.display) || '';
+  };
 
   // a friend's name and optional profile, kept up to date
   function loadInfo(uid) {

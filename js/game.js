@@ -1331,7 +1331,7 @@
     let sub = `decided by ${why}`;
     if (over) {
       run.over = true;
-      sub = KK.online.record(run.wins[0] > run.wins[1]);
+      sub = KK.online.record(run.wins[0] > run.wins[1], matchInfo(''));
     }
     const stat = (s) => `<div><span class="hud-lbl">score</span><b>${(s.sc || 0).toLocaleString()}</b><span class="hud-lbl">max combo ${s.mc || 0}x${s.acc != null ? ` · acc ${s.acc}%` : ''} · overflow ${Math.round((s.bar || 0) * 100)}%</span></div>`;
     KK.ui.open(
@@ -1352,8 +1352,12 @@
     );
   }
 
+  // for the match history: who, the round score, and how it ended if not by rounds
+  const matchInfo = (how) => ({ opp: run.m.opp, oppName: run.m.oppName, wins: run.wins.slice(), how });
+
   // the match ends early: overlay with the way back to the players list
-  function endEarly(head, sub, won) {
+  // how: a few words for the match history ("they left")
+  function endEarly(head, sub, won, how) {
     run.over = true;
     run.running = false;
     run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
@@ -1362,7 +1366,7 @@
       KK.sfx.clear();
       KK.voice.call('victor', 0.35);
     } else KK.sfx.fail();
-    const rec = KK.online.record(won);
+    const rec = KK.online.record(won, matchInfo(how));
     KK.ui.open(
       `<div class="ov-h">${head}</div>
        <div class="ov-sub">${sub} · ${rec}</div>
@@ -1383,17 +1387,18 @@
     if (why !== 'quit') KK.net.ref(`${run.base}/claim/${run.m.me}`).set(true);
     const name = esc(run.m.oppName);
     const head = { quit: `${name} left the match`, away: `${name} didn't come back in time`, gone: `${name} lost connection` }[why];
-    endEarly(head, 'you win by forfeit', true);
+    const how = { quit: 'they left', away: "they didn't come back", gone: 'they lost connection' }[why];
+    endEarly(head, 'you win by forfeit', true, how);
   }
 
   function oppCheated(why) {
     if (!run || run.kind !== 'pvp' || run.over) return;
-    endEarly(`${esc(run.m.oppName)} was caught cheating`, `${esc(String(why).slice(0, 80))} · you win by forfeit`, true);
+    endEarly(`${esc(run.m.oppName)} was caught cheating`, `${esc(String(why).slice(0, 80))} · you win by forfeit`, true, 'they cheated');
   }
 
   function claimedAgainst() {
     if (!run || run.kind !== 'pvp' || run.over) return;
-    endEarly(`${esc(run.m.oppName)} wins`, `you were away too long to start the round (${READY_SECS}s) or lost connection`, false);
+    endEarly(`${esc(run.m.oppName)} wins`, `you were away too long to start the round (${READY_SECS}s) or lost connection`, false, 'you were away');
   }
 
   function leaveMatch() {
@@ -1415,7 +1420,7 @@
     if (!run.over) {
       run.over = true;
       KK.net.ref(`${run.base}/left/${run.m.me}`).set(true);
-      KK.online.record(false);
+      KK.online.record(false, matchInfo('you left'));
     }
     run.offs.forEach((f) => f());
     run.offs = [];
@@ -1431,7 +1436,7 @@
     if (!run || !run.running) return;
     if (run.kind === 'pvp') {
       KK.net.ref(`${run.base}/cheat/${run.m.me}`).set(reason);
-      return endEarly('cheating detected', `${esc(reason)} · you forfeit the match`, false);
+      return endEarly('cheating detected', `${esc(reason)} · you forfeit the match`, false, 'cheating detected');
     }
     run.running = false;
     run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));

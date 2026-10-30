@@ -13,17 +13,24 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 ## Sections
 
-The top bar has **home · play · friends · marketplace**, plus your picture and name (your profile).
+The top bar has **home · profile · play · friends · marketplace**, plus your picture and name (which also opens your profile). Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
-- **home**: signed out, the logo with sign in / sign up. Signed in, a dashboard:
+- **home**: a feed, like X or Facebook.
+  - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
+  - **+** opens **new review** or **new post**.
+    - A post is just text.
+    - A review: pick what you're reviewing (full keyboard, base (case), plate, switches, keycaps, lube or mods), search the catalog and pick the item, rate it out of 5 stars, then write the review. Clicking the left half of a star gives half a star; the arrow keys also move the rating in half stars. Keyboard reviews show the product photo.
+  - **Popular keyboards** on the side: the five keyboards on the site with the most hearts, from anyone, not just friends. Click one to open its owner's page. The sign-up and online counts are here too.
+- **profile**: your dashboard.
   - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record
-  - **build a new keyboard · full keyboards · continue last build** (the same buttons as on play)
+  - **edit profile**, plus **build a new keyboard · full keyboards · continue last build**
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
-- **play**: the game modes (single player, vs AI, vs players), build a new keyboard, full keyboards, continue last build, and your saved builds (load, rename, delete).
+  - **Hearts**: every keyboard on a player's page has a ♥ with its count. Click it to heart someone else's keyboard, and click again to take the heart back. On your own keyboards you just see the count, since you can't heart your own.
+- **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. **requests received / requests sent** switch between the requests waiting for you and the ones you've sent that haven't been answered yet (cancel takes one back). The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
 - **marketplace**: coming soon.
-- **profile** (click your name): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
+- **edit profile** (on your profile): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 
 **Profile pictures** work like Facebook's: pick a photo, then drag to position it in the circle and zoom with the slider (or the mouse wheel). It's cropped in the browser to a 192 px square JPEG (a few KB) and saved in the database, because file storage would need Firebase's paid plan. Without a picture you get the keyboard logo. Pictures show in the nav, on home, on friends, in the vs players list, on challenges, on the VS card and beside both names at the top of the match.
 
@@ -252,6 +259,7 @@ js/sfx.js             game sound effects
 js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
+js/feed.js            home feed: posts and reviews (+), hearts, popular keyboards
 js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inhuman-speed keys
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules

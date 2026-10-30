@@ -22,9 +22,13 @@
         <span class="logo-text"><span class="logo-top">build · type · thock</span><span class="logo-main">kuya keyb <b>ph</b></span></span>
       </a>
       <nav class="nav">
-        <button class="nav-btn" data-go="title" title="home">
+        <button class="nav-btn" data-go="home" title="home">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
           <span>home</span>
+        </button>
+        <button class="nav-btn" data-go="title" title="your profile">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 20.5c.8-4 4-6.2 8-6.2s7.2 2.2 8 6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>profile</span>
         </button>
         <button class="nav-btn" data-go="play" title="play">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>
@@ -43,7 +47,33 @@
     </header>
 
     <main>
-      <!-- home: signed out — logo, wordmark, sign in / sign up; signed in — your dashboard -->
+      <!-- home: the feed — your posts and your friends', beside the most-hearted keyboards -->
+      <section class="screen" id="scr-home">
+        <div class="feed">
+          <div class="feed-main">
+            <div class="feed-top">
+              <div class="grp-h">home</div>
+              <div class="feed-add">
+                <button class="fab" id="feedAdd" title="new review or post" aria-label="new review or post">+</button>
+                <div class="add-menu" id="addMenu" hidden>
+                  <button data-new="review"><span>★</span>new review</button>
+                  <button data-new="post"><span>✎</span>new post</button>
+                </div>
+              </div>
+            </div>
+            <form class="composer" id="composer" autocomplete="off" hidden></form>
+            <div class="feed-posts" id="feedPosts"></div>
+          </div>
+          <aside class="feed-side">
+            <p class="feed-count" id="feedCount"></p>
+            <p class="feed-count" id="feedOnline"></p>
+            <div class="grp-h">popular keyboards <span class="sub">most hearts</span></div>
+            <div class="pop-list" id="feedPopular"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- signed out: logo, wordmark, sign in / sign up; signed in: your profile -->
       <section class="screen active" id="scr-title">
         <div class="home">
           <div class="home-hero">
@@ -76,7 +106,7 @@
               <button class="btn primary" data-home="quick" id="homeQuick" hidden>continue last build</button>
             </div>
             <div class="feat" id="dashFeat" hidden>
-              <div class="feat-head"><span class="grp-h">featured keyboard</span><b class="feat-name" id="featName"></b><span class="feat-tags" id="featTags"></span><span class="feat-open">open summary →</span></div>
+              <div class="feat-head"><span class="grp-h">featured keyboard</span><b class="feat-name" id="featName"></b><span class="feat-tags" id="featTags"></span><span class="feat-heart" id="featHeart"></span><span class="feat-open">open summary →</span></div>
               <div class="feat-kb" id="featKb"></div>
               <div class="feat-body"><div class="feat-spec" id="featSpec"></div><div class="feat-stats" id="featStats"></div></div>
             </div>
@@ -95,14 +125,13 @@
             <button class="btn primary" id="btnVs">vs AI</button>
             <button class="btn primary" id="btnPvp">vs players</button>
           </div>
-          <div class="title-actions">
-            <button class="btn" id="btnBuild">build a new keyboard</button>
-            <button class="btn" id="btnKbs">full keyboards</button>
-            <button class="btn" id="btnQuick" hidden>continue last build</button>
-          </div>
           <div class="saved" id="savedWrap" hidden>
             <div class="grp-h">your saved builds</div>
             <div class="saved-list" id="savedList"></div>
+          </div>
+          <div class="saved hist">
+            <div class="grp-h">match history <span class="sub">vs players</span></div>
+            <div class="hist-list" id="histList"></div>
           </div>
         </div>
       </section>
@@ -125,10 +154,10 @@
       <!-- a friend's page: their picture, details and keyboards, laid out like your home -->
       <section class="screen" id="scr-user">
         <div class="dash user-page">
-          <button class="link-btn back-link" id="userBack">← friends</button>
+          <button class="link-btn back-link" id="userBack">← back</button>
           <div class="dash-hi" id="userHi"></div>
           <div class="feat" id="userFeat" hidden>
-            <div class="feat-head"><span class="grp-h">featured keyboard</span><b class="feat-name" id="userFeatName"></b><span class="feat-tags" id="userFeatTags"></span></div>
+            <div class="feat-head"><span class="grp-h">featured keyboard</span><b class="feat-name" id="userFeatName"></b><span class="feat-tags" id="userFeatTags"></span><span class="feat-heart" id="userFeatHeart"></span></div>
             <div class="feat-kb" id="userFeatKb"></div>
             <div class="feat-sound" id="userFeatSound"></div>
             <div class="feat-body"><div class="feat-spec" id="userFeatSpec"></div><div class="feat-stats" id="userFeatStats"></div></div>
@@ -146,6 +175,7 @@
       <!-- your profile -->
       <section class="screen" id="scr-profile">
         <div class="narrow profile">
+          <button class="link-btn back-link" id="editBack">← your profile</button>
           <button class="av-edit" id="avEdit" title="change profile picture"><img class="av xl" id="profileAv" alt=""><span>change photo</span></button>
           <input type="file" id="avFile" accept="image/*" hidden>
           <button class="link-btn" id="avRemove" hidden>remove photo</button>
@@ -360,6 +390,7 @@
   <script src="js/game.js"></script>
   <script src="js/online.js"></script>
   <script src="js/social.js"></script>
+  <script src="js/feed.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -100,8 +100,9 @@
     if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
   }
 
-  // after a match against a person: +1 win or loss on the build you played
-  O.record = function (won) {
+  // after a match against a person: +1 win or loss on the build you played, and a line
+  // in your match history. m: { opp, oppName, wins: [yours, theirs], how }
+  O.record = function (won, m) {
     const app = KK.app, pick = O.matchPick;
     if (!pick) return '';
     let rec;
@@ -112,6 +113,14 @@
     app.saveProgress();
     app.storeProfiles();
     O.matchPick = null;
+    if (me && m) {
+      const id = N.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      N.ref(`history/${me.uid}/${id}`).set({
+        opp: String(m.opp), oppName: String(m.oppName || 'player').slice(0, 40), won: !!won,
+        score: `${count(m.wins[0])}–${count(m.wins[1])}`, how: String(m.how || '').slice(0, 40),
+        build: String(pick.name).slice(0, 60), at: N.now(),
+      }).catch((err) => console.warn('kkph history', err));
+    }
     return `${esc(pick.name)} is now ${recText(rec)} vs players`;
   };
 
