@@ -19,7 +19,7 @@
       <div class="grp"><div class="grp-h">difficulty</div><div class="chips">${Object.keys(VS_INFO).map((k) => `<button class="chip${d === k ? ' on' : ''}" data-act="diff" data-v="${k}">${k}</button>`).join('')}</div>
         <p class="hint" style="margin-top:8px">ai ${VS_INFO[d].ai} · word speed: level ${VS_INFO[d].speed}${rec ? ` · your record ${rec.w}–${rec.l}` : ''}</p></div>
       <button class="btn primary big" data-act="start">start vs AI · ${d} →</button>
-      <p class="hint" style="margin-top:12px">best of 3 · 3-minute rounds · every 5x combo attacks the AI's overflow bar (bigger combos hit harder)</p>`;
+      <p class="hint" style="margin-top:12px">best of 3 · 1:30 rounds · every 5x combo attacks the AI's overflow bar (bigger combos hit harder)</p>`;
   }
 
   const startLabel = () => (B.mode === 'vs' ? `start vs AI · ${KK.app.settings.vsDiff || 'medium'} →` : `start level ${B.level} →`);
@@ -305,7 +305,7 @@
             ${B.mode === 'vs' ? vsBlock(app, prog) : `
             <div class="grp"><div class="grp-h">level</div><div class="chips">${levels.join('')}</div></div>
             <button class="btn primary big" data-act="start">start level ${B.level} →</button>
-            <p class="hint" style="margin-top:12px">survive 2 minutes · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>`}
+            <p class="hint" style="margin-top:12px">survive 1 minute · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>`}
           </section>
         </div>
         <section class="sum-parts">

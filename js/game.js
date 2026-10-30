@@ -6,7 +6,7 @@
 
   /*
    * Two modes share one engine:
-   *   solo — survive 2 minutes per level; misses fill the overflow bar.
+   *   solo — survive 1 minute per level; misses fill the overflow bar.
    *   vs AI — you (left) against an AI typist (right), best of 3 three-minute rounds.
    *           Both fields get the same word stream; combo milestones attack the
    *           opponent's overflow bar (harder at higher tiers).
@@ -14,8 +14,8 @@
    * A Board is one playing field (words, input, combo, overflow, power-ups).
    */
   const G = (KK.game = {});
-  const LEVEL_SECONDS = 120;
-  const ROUND_SECONDS = 180;
+  const LEVEL_SECONDS = 60;
+  const ROUND_SECONDS = 90;
   const VS_LEVEL = { easy: 3, medium: 4, hard: 5 };
   const AI_WORD = { easy: 'creamy', medium: 'thocky', hard: 'clicky' };
 
@@ -66,6 +66,14 @@
       missDamage: Math.min(0.08 + 0.008 * (L - 1), 0.14),
       heal: 0.012,
     };
+  };
+
+  // vs modes: a busier field — words come ~1.5x as often and more can be on screen
+  const vsParams = (L) => {
+    const p = G.params(L);
+    p.spawn *= 0.65;
+    p.maxOn += 8;
+    return p;
   };
 
   // one spawn event; in vs mode the same event is sent to both fields. Against another
@@ -662,7 +670,7 @@
     };
     $('#hudLevel').textContent = 'level ' + level;
     soloHud(true);
-    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 2:00 · smaller words score more");
+    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 1:00 · smaller words score more");
   };
 
   function soloHud(force) {
@@ -730,7 +738,7 @@
   G.startVs = function (diff, lang) {
     stopRun();
     const level = VS_LEVEL[diff];
-    const p = G.params(level);
+    const p = vsParams(level);
     const laneL = $('#laneL'), laneR = $('#laneR');
     const you = new Board({
       field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
@@ -770,14 +778,14 @@
     Object.assign(run, { time: ROUND_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: ROUND_SECONDS, running: false, paused: false, hud: {} });
     vsHud(true);
     KK.music.duck(false);
-    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 3:00 · your combos fill the AI's overflow, your misses lower it · smaller words score more`);
+    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 1:30 · your combos fill the AI's overflow, your misses lower it · smaller words score more`);
   }
 
   // combo milestone → the opponent's overflow bar rises: a bit less than a miss at
   // 5x, growing with the tier (60% of a miss … 100% at WOW)
   function attackOf(from, tier) {
     const n = tier === 'wow' ? 5 : tier;
-    return { n, dmg: run.p.missDamage * (0.5 + 0.1 * n), label: KK.voice.label(from.word, tier).replace(/!+$/, '') };
+    return { n, dmg: run.p.missDamage * (0.9 + 0.3 * n), label: KK.voice.label(from.word, tier).replace(/!+$/, '') };
   }
   function flyAttack(dir, n, dmg) {
     const fly = document.createElement('div');
@@ -1070,7 +1078,7 @@
   // m: { id, me, opp, oppName, oppWord, seed, level, lang }
   G.startPvp = function (m) {
     stopRun();
-    const p = G.params(m.level);
+    const p = vsParams(m.level);
     const laneL = $('#laneL'), laneR = $('#laneR');
     const base = 'matches/' + m.id;
     const you = new Board({
@@ -1186,7 +1194,7 @@
         if (r !== run || run.over) return;
         run.oppAt = KK.net.now() + 4000; // the countdown
         KK.music.duck(false);
-        KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos fill their overflow, your misses lower it · smaller words score more`, () => KK.voice.call('fight'));
+        KK.ui.countdown(begin, `round ${round} · best of 3 · 1:30 · vs ${run.m.oppName} · your combos fill their overflow, your misses lower it · smaller words score more`, () => KK.voice.call('fight'));
       };
       if (round === 1) vsIntro(go);
       else go();
@@ -1224,7 +1232,7 @@
          ${side('vsi-l', KK.app.userName(), KK.app.pvpName || 'your keyboard', mine)}
          <div class="vsi-vs"><span>VS</span><i class="vsi-ring"></i></div>
          ${side('vsi-r', m.oppName, m.oppBuildName || 'their keyboard', m.oppBuild)}
-         <div class="vsi-foot">best of 3 · 3:00 rounds · combos attack the other overflow bar</div>
+         <div class="vsi-foot">best of 3 · 1:30 rounds · combos attack the other overflow bar</div>
        </div>`,
       {}
     );

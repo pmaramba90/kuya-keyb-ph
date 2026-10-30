@@ -363,7 +363,7 @@
        <div class="ch-build">${swatch(d)}<span><b>${esc(ch.pname)}</b> · ${esc(d.head)}<br>${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</span></div>
        <label class="ch-pick"><span class="hud-lbl">play with</span><select class="select" id="chPick">${opts}</select></label>
        <div class="ch-time"><i></i></div>
-       <div class="ov-sub">best of 3 · 3:00 rounds · <span class="ch-secs">${CH_SECS}</span>s to answer</div>
+       <div class="ov-sub">best of 3 · 1:30 rounds · <span class="ch-secs">${CH_SECS}</span>s to answer</div>
        <div class="ov-btns"><button class="btn primary" data-ch-act="yes" data-ch-primary>accept</button><button class="btn ghost" data-ch-act="no">decline</button></div>
        <p class="hint"><span class="kbd">enter</span> accept · <span class="kbd">esc</span> decline</p>`,
       {

@@ -67,9 +67,10 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
   - the page quakes, and the field turns dark and glitchy
   - a huge diagonal **OVERFLOW** slams in; the explosion and breaking glass hit first, then the announcer shouts "OVERFLOOOW!" in the clear, through a clean vocal chain
   - the round result appears after the moment plays out (about 2.6 s)
-- A match is **best of 3**, with 3-minute rounds. A round ends when someone's overflow bar fills. If both survive the 3 minutes, the higher score wins.
+- A match is **best of 3**, with 1:30 rounds. A round ends when someone's overflow bar fills. If both survive the 90 seconds, the higher score wins.
+- The field is busier than single player at the same speed: words arrive about 1.5x as often, and up to 8 more can be on screen at once.
 - **Your overflow bar only fills from the other side's combos.** Missing a word doesn't fill your own bar in vs modes. Instead it lowers your **opponent's** bar by about 5% (half a miss's damage), so every miss helps the other side.
-- **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 60% of a missed word's damage, rising with each tier to 100% at WOW. The AI's combos hit you the same way.
+- **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 1.2× a missed word's damage (about 12% of the bar at medium speed), rising by 0.3× each tier to 2.4× at WOW (about 25%). The AI's combos hit you the same way.
 - Your win/loss record per difficulty is saved to your account.
 
 ## vs players
@@ -78,7 +79,7 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
 - **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
-- Same rules as vs AI at medium speed (level 4): best of 3, 3-minute rounds, combos attack the other player's overflow bar.
+- Same rules as vs AI at medium speed (level 4): best of 3, 1:30 rounds, combos attack the other player's overflow bar.
 - Before round 1 a **VS card** plays (about 4 seconds). Each player's selected keyboard is the main image: the store photo for a full keyboard, otherwise the build drawn large. Both sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!".
 - During the match both keyboards sit under the lanes, each with its owner's name and full setup. Your opponent's keys light up as they type.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
@@ -103,8 +104,8 @@ The config values are public by design. The database rules are what keep each pl
 
 1. **Build**: choose the base (layout, case material and color, plate, mount), the switches (586 from keybumps.com), the keycaps (727 sets from mechanicalkeyboards.com), and any mods and lube.
 2. **Summary**: a write-up of how the board sounds, an estimated price (USD by default, PHP or EUR optional), and shop links for every part. Name and save the build here. Saved builds appear on the home screen after a refresh, where you can load, rename or delete them.
-3. **Play (survival)**: each level lasts 2 minutes.
-   - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the 2 minutes to unlock the next level.
+3. **Play (survival)**: each level lasts 1 minute.
+   - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
