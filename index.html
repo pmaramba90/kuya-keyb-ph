@@ -46,11 +46,13 @@
           <button class="nav-user" id="navUser" title="your details · log out" aria-haspopup="true" aria-expanded="false"></button>
           <!-- your name's drop-down: quick profile details and log out -->
           <form class="user-menu" id="userMenu" autocomplete="off" hidden>
-            <label><span>nickname</span><input class="search" id="umNick" maxlength="30" placeholder="optional"></label>
-            <label><span>city</span><input class="search" id="umCity" maxlength="40" placeholder="optional"></label>
-            <label><span>country</span><input class="search" id="umCountry" maxlength="40" placeholder="optional"></label>
+            <div class="um-top"><button class="um-edit" type="button" id="umEdit">edit</button></div>
+            <div class="um-box">
+              <label><span>nickname</span><input class="search" id="umNick" maxlength="30" placeholder="optional"></label>
+              <label><span>city</span><input class="search" id="umCity" maxlength="40" placeholder="optional"></label>
+              <label><span>country</span><input class="search" id="umCountry" maxlength="40" placeholder="optional"></label>
+            </div>
             <div class="um-btns">
-              <button class="btn sm" type="button" id="umEdit">edit</button>
               <button class="btn primary sm" type="submit" id="umSave" hidden>save</button>
               <button class="btn ghost sm" type="button" id="umCancel" hidden>cancel</button>
               <span class="hint" id="umMsg"></span>

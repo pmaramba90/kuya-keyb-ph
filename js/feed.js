@@ -11,12 +11,16 @@
    *   hearts/{owner}/{pid}/{uid}  true — uid hearted owner's keyboard pid
    *   posts/{uid}/{id}            { type: 'post' | 'review', text, at } and, for a
    *                               review, { kind, item, rating } — rating 0.5–5 in halves
+   *   reacts/{uid}/{id}/{heart|laugh}/{who}  true — reactions on a post
+   *   replies/{uid}/{id}/{rid}    { uid, text, at } — replies under a post, oldest first
    *
    * The feed is your posts and your friends', newest first, beside the most-hearted
    * keyboards on the site.
    */
   const F = (KK.feed = {});
-  let me = null, offs = [], hearts = {}, posts = {}, subs = {};
+  let me = null, offs = [], hearts = {}, subs = {};
+  // what the feed follows, per post owner: their posts, the reactions and the replies
+  const T = { posts: {}, reacts: {}, replies: {} };
   const names = {}; // uid → display name, for players who aren't your friends
   let buildsCache = {}; // owner uid → promise of their builds (fresh each time home opens)
 
@@ -52,21 +56,28 @@
     offs = [];
     Object.values(subs).forEach((f) => f());
     subs = {};
-    posts = {};
+    Object.keys(T).forEach((t) => (T[t] = {}));
     hearts = {};
     me = null;
     closeComposer();
   };
+
+  // one owner's posts, reactions and replies, kept live; '*' = everyone's
+  function follow(uid) {
+    const stop = Object.keys(T).map((t) => N.ref(uid === '*' ? t : `${t}/${uid}`).on((v) => {
+      if (uid === '*') T[t] = v || {};
+      else T[t][uid] = v || {};
+      if (KK.app.screen === 'home') renderPosts();
+    }));
+    return () => stop.forEach((f) => f());
+  }
 
   // follow your posts and your friends' (called again whenever your friends change)
   F.sync = function () {
     if (!me) return;
     // the moderator sees every post on the site
     if (me.name === MOD) {
-      if (!subs['*']) subs['*'] = N.ref('posts').on((v) => {
-        posts = v || {};
-        if (KK.app.screen === 'home') renderPosts();
-      });
+      if (!subs['*']) subs['*'] = follow('*');
       return;
     }
     const want = new Set([me.uid, ...KK.social.friendIds()]);
@@ -74,14 +85,10 @@
       if (want.has(uid)) return;
       subs[uid]();
       delete subs[uid];
-      delete posts[uid];
+      Object.keys(T).forEach((t) => delete T[t][uid]);
     });
     want.forEach((uid) => {
-      if (subs[uid]) return;
-      subs[uid] = N.ref('posts/' + uid).on((v) => {
-        posts[uid] = v || {};
-        if (KK.app.screen === 'home') renderPosts();
-      });
+      if (!subs[uid]) subs[uid] = follow(uid);
     });
     if (KK.app.screen === 'home') renderPosts();
   };
@@ -260,19 +267,61 @@
   F.giphyId = giphyId;
 
   /* ---------------------------------- posts ---------------------------------- */
+  const openReplies = new Set(); // "owner/id" of posts with the reply box open
+  const drafts = {}; // "owner/id" → a reply being typed (kept across redraws)
+
   function renderPosts() {
+    const box = $('#feedPosts');
+    // a redraw mustn't lose the reply you're typing
+    const act = document.activeElement, typing = act && act.dataset && act.dataset.replyIn;
+    const caret = typing ? [act.selectionStart, act.selectionEnd] : null;
     const all = [];
-    Object.keys(posts).forEach((uid) => Object.entries(posts[uid] || {}).forEach(([id, p]) => p && typeof p === 'object' && all.push({ uid, id, p })));
+    Object.keys(T.posts).forEach((uid) => Object.entries(T.posts[uid] || {}).forEach(([id, p]) => p && typeof p === 'object' && all.push({ uid, id, p })));
     all.sort((a, b) => (+b.p.at || 0) - (+a.p.at || 0));
-    $('#feedPosts').innerHTML = all.length
+    box.innerHTML = all.length
       ? all.slice(0, 60).map(postHtml).join('')
       : '<p class="hint feed-empty">nothing here yet. Share a post or a review with +, and add friends to see theirs.</p>';
+    const back = typing && box.querySelector(`[data-reply-in="${CSS.escape(typing)}"]`);
+    if (back) {
+      back.focus();
+      back.setSelectionRange(caret[0], caret[1]);
+    }
+  }
+
+  const REPLY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9.5L5 19.5v-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  const REACTS = { heart: { icon: HEART, label: 'heart' }, laugh: { icon: '<span class="emo">😂</span>', label: 'haha' } };
+
+  // ♥ and 😂 (with who reacted on hover), then reply
+  function actsHtml(key, rx, nReplies) {
+    const react = (kind) => {
+      const who = Object.keys((rx && rx[kind]) || {}), on = !!(me && who.includes(me.uid));
+      const tip = who.length ? who.map(nameOf).join(', ') : REACTS[kind].label;
+      return `<button class="react r-${kind}${on ? ' on' : ''}" data-react="${kind}" data-key="${esc(key)}" title="${esc(tip)}">${REACTS[kind].icon}<b>${who.length || ''}</b></button>`;
+    };
+    return `<div class="post-acts">${react('heart')}${react('laugh')}
+      <button class="react r-reply${openReplies.has(key) ? ' on' : ''}" data-reply="${esc(key)}">${REPLY_ICON}<b>${nReplies || ''}</b><span>${nReplies > 1 ? 'replies' : 'reply'}</span></button></div>`;
+  }
+
+  function repliesHtml(key, owner, list) {
+    const open = openReplies.has(key);
+    if (!list.length && !open) return '';
+    const mod = me && me.name === MOD;
+    return `<div class="replies">${list.map(([rid, r]) => `<div class="reply">
+        <span class="post-av" data-user="${esc(r.uid)}">${KK.social.avatarImg(r.uid, 'xs')}</span>
+        <div class="reply-body"><b data-user="${esc(r.uid)}">${esc(nameOf(r.uid))}</b><span class="reply-text">${esc(String(r.text || '').slice(0, 500))}</span><span class="reply-at">${F.ago(r.at)}</span></div>
+        ${r.uid === ME() || owner === ME() || mod ? `<button class="picon" data-rdel="${esc(rid)}" data-key="${esc(key)}" title="delete reply">✕</button>` : ''}</div>`).join('')}
+      ${open ? `<form class="reply-form" data-reply-form="${esc(key)}" autocomplete="off"><input class="search" data-reply-in="${esc(key)}" maxlength="500" placeholder="write a reply…" value="${esc(drafts[key] || '')}"><button class="btn primary sm" type="submit">reply</button></form>` : ''}</div>`;
   }
 
   function postHtml({ uid, id, p }) {
     const review = p.type === 'review';
     const it = review && itemById(p.kind, p.item);
     const r = rating(p.rating), shop = review && shopOf(p.link);
+    const key = uid + '/' + id;
+    const rx = (T.reacts[uid] || {})[id];
+    const reps = Object.entries((T.replies[uid] || {})[id] || {})
+      .filter(([, x]) => x && typeof x === 'object' && typeof x.uid === 'string')
+      .sort((a, b) => (+a[1].at || 0) - (+b[1].at || 0));
     return `<article class="post">
       <div class="post-head">
         <span class="post-av" data-user="${esc(uid)}">${KK.social.avatarImg(uid, 'sm')}</span>
@@ -286,29 +335,100 @@
         ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>` : ''}
       ${p.text ? `<p class="post-text">${esc(String(p.text).slice(0, 1000))}</p>` : ''}
       ${!review && isGif(p.gif) ? `<div class="post-gif"><img src="${gifSrc(p.gif)}" alt="GIF" loading="lazy" onerror="this.parentNode.remove()"><span>via GIPHY</span></div>` : ''}
+      ${actsHtml(key, rx, reps.length)}
+      ${repliesHtml(key, uid, reps)}
     </article>`;
   }
+
+  // ✕ asks "delete?" first; true once it's been clicked twice
+  function armed(b) {
+    if (b.dataset.armed) return true;
+    b.dataset.armed = '1';
+    b.textContent = 'delete?';
+    b.classList.add('armed');
+    setTimeout(() => b.isConnected && (delete b.dataset.armed, (b.textContent = '✕'), b.classList.remove('armed')), 2500);
+    return false;
+  }
+  const warn = (err) => console.warn('kkph posts', err);
 
   $('#scr-home').addEventListener('click', (e) => {
     const del = e.target.closest('[data-del]');
     if (del && me) {
       del.blur();
-      if (!del.dataset.armed) {
-        del.dataset.armed = '1';
-        del.textContent = 'delete?';
-        del.classList.add('armed');
-        setTimeout(() => del.isConnected && (delete del.dataset.armed, (del.textContent = '✕'), del.classList.remove('armed')), 2500);
-        return;
-      }
+      if (!armed(del)) return;
       KK.sfx.ui();
-      if (!canDelete(del.dataset.uid)) return;
-      return N.ref(`posts/${del.dataset.uid}/${del.dataset.del}`).remove().catch((err) => console.warn('kkph posts', err));
+      const owner = del.dataset.uid, id = del.dataset.del;
+      if (!canDelete(owner)) return;
+      // the post, then its reactions and replies
+      return N.ref(`posts/${owner}/${id}`).remove().then(() => {
+        N.ref(`reacts/${owner}/${id}`).remove().catch(warn);
+        N.ref(`replies/${owner}/${id}`).remove().catch(warn);
+      }).catch(warn);
+    }
+    const rx = e.target.closest('[data-react]');
+    if (rx && me) {
+      rx.blur();
+      const [owner, id] = rx.dataset.key.split('/'), kind = rx.dataset.react;
+      const ref = N.ref(`reacts/${owner}/${id}/${kind}/${me.uid}`);
+      const on = rx.classList.contains('on');
+      if (on) KK.sfx.ui();
+      else KK.sfx.select();
+      return (on ? ref.remove() : ref.set(true)).catch(warn);
+    }
+    const rb = e.target.closest('[data-reply]');
+    if (rb) {
+      rb.blur();
+      KK.sfx.ui();
+      const key = rb.dataset.reply;
+      if (openReplies.has(key)) openReplies.delete(key);
+      else openReplies.add(key);
+      renderPosts();
+      const input = $('#feedPosts').querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
+      if (input) input.focus();
+      return;
+    }
+    const rd = e.target.closest('[data-rdel]');
+    if (rd && me) {
+      rd.blur();
+      if (!armed(rd)) return;
+      KK.sfx.ui();
+      const [owner, id] = rd.dataset.key.split('/');
+      return N.ref(`replies/${owner}/${id}/${rd.dataset.rdel}`).remove().catch(warn);
     }
     const u = e.target.closest('[data-user]');
     if (u) {
       KK.sfx.ui();
       if (u.dataset.user === ME()) KK.app.show('title');
       else KK.app.showUser(u.dataset.user, 'home');
+    }
+  });
+
+  $('#feedPosts').addEventListener('input', (e) => {
+    const k = e.target.dataset.replyIn;
+    if (k) drafts[k] = e.target.value;
+  });
+  $('#feedPosts').addEventListener('submit', async (e) => {
+    const f = e.target.closest('[data-reply-form]');
+    if (!f || !me) return;
+    e.preventDefault();
+    const key = f.dataset.replyForm, input = f.querySelector('input'), text = input.value.trim().slice(0, 500);
+    if (!text) return input.focus();
+    const [owner, id] = key.split('/');
+    const btn = f.querySelector('button');
+    btn.disabled = true;
+    try {
+      await N.ref(`replies/${owner}/${id}/${newId()}`).set({ uid: me.uid, text, at: N.now() });
+      delete drafts[key];
+      KK.sfx.select();
+      const again = $('#feedPosts').querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
+      if (again) {
+        again.value = '';
+        again.focus();
+      }
+    } catch (err) {
+      warn(err);
+      btn.disabled = false;
+      btn.textContent = 'try again';
     }
   });
 

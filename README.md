@@ -13,10 +13,11 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 ## Sections
 
-The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down where you can change your nickname, city and country (save), or log out. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
+The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
 - **home**: a feed, like X or Facebook.
   - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
+  - **Reactions and replies**: under every post, **♥** and **😂** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
   - **Moderator**: **akosipolnew1** sees every post on the site, not just friends', and can delete any of them. The database rules allow that one account and no other.
   - **+** opens **new review** or **new post**.
     - A post is text, a GIF, or both. **GIF** opens a GIPHY picker.

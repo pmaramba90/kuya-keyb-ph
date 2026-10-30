@@ -116,6 +116,36 @@
         }
       }
     },
+    "reacts": {
+      ".read": "auth != null",
+      "$owner": {
+        "$pid": {
+          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com')",
+          "$kind": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && ($kind === 'heart' || $kind === 'laugh') && (!newData.exists() || root.child('posts').child($owner).child($pid).exists())",
+              ".validate": "newData.val() === true"
+            }
+          }
+        }
+      }
+    },
+    "replies": {
+      ".read": "auth != null",
+      "$owner": {
+        "$pid": {
+          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com')",
+          "$rid": {
+            ".write": "auth != null && (newData.exists() ? !data.exists() && newData.child('uid').val() === auth.uid && root.child('posts').child($owner).child($pid).exists() : (data.child('uid').val() === auth.uid || auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com'))",
+            ".validate": "newData.hasChildren(['uid', 'text', 'at'])",
+            "uid": { ".validate": "newData.isString()" },
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
+            "at": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
     "history": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

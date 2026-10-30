@@ -129,7 +129,7 @@
       el.tabIndex = on ? 0 : -1;
       el.placeholder = on ? 'optional' : '—';
     });
-    $('#umEdit').hidden = on;
+    $('#umEdit').style.visibility = on ? 'hidden' : ''; // keeps its space, so the box doesn't jump
     $('#umSave').hidden = $('#umCancel').hidden = !on;
     if (on) {
       $('#umMsg').textContent = '';
