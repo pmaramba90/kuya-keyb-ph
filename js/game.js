@@ -573,6 +573,7 @@
   function begin() {
     run.running = true;
     run.last = performance.now();
+    KK.anticheat.reset(caught);
     requestAnimationFrame(frame);
     if (run.kind === 'pvp') keepTicking();
   }
@@ -612,6 +613,8 @@
       run.time -= s;
       run.elapsed += s;
       run.tick(s);
+      if (!run || !run.running) return;
+      KK.anticheat.watch(G.human().keys);
       if (!run || !run.running) return;
       const sec = Math.ceil(run.time);
       if (sec !== run.lastSec) {
@@ -1134,6 +1137,7 @@
     r.offs.push(KK.net.ref(`${base}/left/${m.opp}`).on((v) => r === run && v && oppGone('quit')));
     // they took the win because we were away (or our updates stopped reaching them)
     r.offs.push(KK.net.ref(`${base}/claim/${m.opp}`).on((v) => r === run && v && claimedAgainst()));
+    r.offs.push(KK.net.ref(`${base}/cheat/${m.opp}`).on((v) => r === run && v && oppCheated(v)));
     KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
     $('#vsNameL').textContent = KK.app.userName();
     $('#vsNameR').textContent = m.oppName;
@@ -1382,6 +1386,11 @@
     endEarly(head, 'you win by forfeit', true);
   }
 
+  function oppCheated(why) {
+    if (!run || run.kind !== 'pvp' || run.over) return;
+    endEarly(`${esc(run.m.oppName)} was caught cheating`, `${esc(String(why).slice(0, 80))} · you win by forfeit`, true);
+  }
+
   function claimedAgainst() {
     if (!run || run.kind !== 'pvp' || run.over) return;
     endEarly(`${esc(run.m.oppName)} wins`, `you were away too long to start the round (${READY_SECS}s) or lost connection`, false);
@@ -1413,6 +1422,28 @@
     run.opp.clear();
     run.opp.field.classList.remove('remote');
     KK.online.matchEnded();
+  }
+
+  /* ------------------------------ cheat detection ------------------------------ */
+  // KK.anticheat caught typing no person did: the run stops and doesn't count (no
+  // scores, records or unlocks). Against a person it's a forfeit, and they're told why.
+  function caught(reason) {
+    if (!run || !run.running) return;
+    if (run.kind === 'pvp') {
+      KK.net.ref(`${run.base}/cheat/${run.m.me}`).set(reason);
+      return endEarly('cheating detected', `${esc(reason)} · you forfeit the match`, false);
+    }
+    run.running = false;
+    run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
+    KK.music.duck(true);
+    KK.sfx.fail();
+    const out = () => { KK.ui.close(); G.quit(); KK.app.show('play'); };
+    KK.ui.open(
+      `<div class="ov-h">cheating detected</div>
+       <div class="ov-sub">${esc(reason)}<br>this ${run.kind === 'solo' ? 'run' : 'match'} doesn't count · type it yourself on your keyboard</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="menu" data-primary>back to play</button></div>`,
+      { menu: out, esc: out }
+    );
   }
 
   /* ------------------------------ pause / quit ------------------------------ */
@@ -1471,6 +1502,8 @@
       return true;
     }
     if (!run.running || run.paused) return e.key === ' ' || e.key === 'Backspace';
+    if (!e.repeat) KK.anticheat.down(e);
+    if (!run || !run.running) return true; // that key got them caught
     if (e.ctrlKey || e.metaKey || e.altKey) {
       if (e.key === 'Backspace' && e.ctrlKey) {
         b.clearInput();

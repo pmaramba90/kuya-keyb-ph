@@ -152,6 +152,22 @@ The config values are public by design. The database rules are what keep each pl
 
 Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer).
 
+## Cheat detection
+
+While a round runs, `js/anticheat.js` watches the keys that reach the game and catches typing no person did:
+
+- **scripted keys**: key events made by code (a console script, an extension), not a keyboard
+- **no keyboard**: letters reaching the game that no key press sent
+- **instant keys**: pressed and released within 12 ms on most of the last 30 keys. Macro tools and auto-typers do that; a finger holds a key 50–150 ms.
+- **machine rhythm**: the gaps between the last 30 keys vary by under 8% (a person's vary by 40–70%)
+- **inhuman speed**: 60 keys averaging under 35 ms apart (about 340 wpm, sustained)
+
+What happens when it's caught:
+- **Single player and vs AI**: the run stops and doesn't count, so no scores, records or unlocks.
+- **vs players**: the cheater forfeits. It counts as a loss for them, and the other player is told why and gets the win.
+
+The limits are generous so a fast typist never trips them. It runs in the player's browser, so it stops bots, macros and auto-typers. Someone who edits the game's code in their own browser could still get round it; making that impossible would need scores checked on a server.
+
 ## How the keycaps are drawn
 
 Legends follow each maker's style as seen in the mechanicalkeyboards.com product photos. The styles are `LEGEND_STYLES` in `js/catalog.js`:
@@ -236,6 +252,7 @@ js/sfx.js             game sound effects
 js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
+js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inhuman-speed keys
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules
 js/main.js            screens, overlay, input, settings

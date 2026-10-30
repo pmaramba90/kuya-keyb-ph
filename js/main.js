@@ -718,6 +718,7 @@
   });
 
   document.addEventListener('keyup', (e) => {
+    KK.anticheat.up(e);
     KK.keysound.up(e.code);
     releaseAll(e.code);
   });
