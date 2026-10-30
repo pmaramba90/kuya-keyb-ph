@@ -49,7 +49,12 @@
             <label><span>nickname</span><input class="search" id="umNick" maxlength="30" placeholder="optional"></label>
             <label><span>city</span><input class="search" id="umCity" maxlength="40" placeholder="optional"></label>
             <label><span>country</span><input class="search" id="umCountry" maxlength="40" placeholder="optional"></label>
-            <div class="um-btns"><button class="btn primary sm" type="submit">save</button><span class="hint" id="umMsg"></span></div>
+            <div class="um-btns">
+              <button class="btn sm" type="button" id="umEdit">edit</button>
+              <button class="btn primary sm" type="submit" id="umSave" hidden>save</button>
+              <button class="btn ghost sm" type="button" id="umCancel" hidden>cancel</button>
+              <span class="hint" id="umMsg"></span>
+            </div>
             <button class="um-logout" type="button" id="umLogout">log out</button>
           </form>
         </div>

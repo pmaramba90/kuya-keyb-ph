@@ -237,6 +237,8 @@
   /* ----------------------------------- GIFs ----------------------------------- */
   // a post's GIF is stored as its GIPHY id and always shown from GIPHY's own servers
   const GIF_ID = /^[A-Za-z0-9]{4,64}$/;
+  // only a real string: regex.test(undefined) tests the word "undefined", which would pass
+  const isGif = (v) => typeof v === 'string' && GIF_ID.test(v);
   const gifSrc = (id, size) => `https://media.giphy.com/media/${id}/${size || 'giphy'}.webp`;
   // a pasted GIPHY link → the GIF's id: giphy.com/gifs/<words>-<id>, giphy.com/embed/<id>,
   // media*.giphy.com/media/[v1.…/]<id>/…, i.giphy.com/<id>.gif
@@ -253,7 +255,7 @@
     if (['gifs', 'stickers', 'embed'].includes(parts[0])) id = (parts[1] || '').split('-').pop();
     else if (parts[0] === 'media') id = parts[(parts[1] || '').startsWith('v1.') ? 2 : 1];
     else if (u.hostname === 'i.giphy.com' && parts.length === 1) id = parts[0].replace(/\.(gif|webp|mp4)$/, '');
-    return id && GIF_ID.test(id) ? id : null;
+    return isGif(id) ? id : null;
   }
   F.giphyId = giphyId;
 
@@ -283,7 +285,7 @@
         <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span></div></div>
         ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>` : ''}
       ${p.text ? `<p class="post-text">${esc(String(p.text).slice(0, 1000))}</p>` : ''}
-      ${!review && GIF_ID.test(p.gif) ? `<div class="post-gif"><img src="${gifSrc(p.gif)}" alt="GIF" loading="lazy" onerror="this.parentNode.remove()"><span>via GIPHY</span></div>` : ''}
+      ${!review && isGif(p.gif) ? `<div class="post-gif"><img src="${gifSrc(p.gif)}" alt="GIF" loading="lazy" onerror="this.parentNode.remove()"><span>via GIPHY</span></div>` : ''}
     </article>`;
   }
 
@@ -384,7 +386,7 @@
     try {
       const res = await fetch(api);
       if (!res.ok) throw new Error('giphy ' + res.status);
-      const ids = ((await res.json()).data || []).map((g) => g && g.id).filter((id) => GIF_ID.test(id));
+      const ids = ((await res.json()).data || []).map((g) => g && g.id).filter(isGif);
       if (token !== gifToken || !grid.isConnected) return;
       grid.innerHTML = ids.length
         ? ids.map((id) => `<button type="button" class="gif-cell" data-gif="${id}"><img src="${gifSrc(id, '200w')}" alt="" loading="lazy"></button>`).join('')

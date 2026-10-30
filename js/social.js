@@ -116,8 +116,36 @@
     el.innerHTML = me ? `${S.avatarImg(me.uid, 'xs')}<span>${esc(me.display)}</span>` : '';
     el.hidden = !me;
   }
-  // your name (top right) opens a drop-down: nickname, city, country, log out
+  // your name (top right) opens a drop-down: nickname, city, country (shown; edit to
+  // change them) and log out
   const umenu = $('#userMenu');
+  const UM_FIELDS = [['#umNick', 'nickname'], ['#umCity', 'city'], ['#umCountry', 'country']];
+  let umSaved = {};
+  function umEditing(on) {
+    umenu.classList.toggle('editing', on);
+    UM_FIELDS.forEach(([id]) => {
+      const el = $(id);
+      el.readOnly = !on;
+      el.tabIndex = on ? 0 : -1;
+      el.placeholder = on ? 'optional' : '—';
+    });
+    $('#umEdit').hidden = on;
+    $('#umSave').hidden = $('#umCancel').hidden = !on;
+    if (on) {
+      $('#umMsg').textContent = '';
+      $('#umNick').focus();
+    }
+  }
+  const umFill = (p) => UM_FIELDS.forEach(([id, k]) => ($(id).value = p[k] || ''));
+  $('#umEdit').addEventListener('click', () => {
+    KK.sfx.ui();
+    umEditing(true);
+  });
+  $('#umCancel').addEventListener('click', () => {
+    KK.sfx.ui();
+    umFill(umSaved);
+    umEditing(false);
+  });
   S.closeMenu = () => {
     umenu.hidden = true;
     $('#navUser').classList.remove('on');
@@ -130,24 +158,27 @@
     if (!umenu.hidden) return S.closeMenu();
     KK.sfx.ui();
     $('#umMsg').textContent = '';
+    umFill({});
+    umEditing(false);
     umenu.hidden = false;
     $('#navUser').classList.add('on');
     $('#navUser').setAttribute('aria-expanded', 'true');
-    const p = (await N.ref('profiles/' + me.uid).once().catch(() => null)) || {};
-    $('#umNick').value = p.nickname || '';
-    $('#umCity').value = p.city || '';
-    $('#umCountry').value = p.country || '';
-    $('#umNick').focus();
+    umSaved = (await N.ref('profiles/' + me.uid).once().catch(() => null)) || {};
+    if (!umenu.classList.contains('editing')) umFill(umSaved);
   });
   document.addEventListener('click', (e) => !umenu.hidden && !e.target.closest('.nav-user-wrap') && S.closeMenu());
-  umenu.addEventListener('keydown', (e) => e.key === 'Escape' && S.closeMenu());
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && !umenu.hidden && S.closeMenu());
   umenu.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!me) return;
+    if (!me || !umenu.classList.contains('editing')) return;
     const v = (id, n) => $(id).value.trim().slice(0, n);
+    const p = { nickname: v('#umNick', 30), city: v('#umCity', 40), country: v('#umCountry', 40) };
     try {
-      await N.ref('profiles/' + me.uid).set({ nickname: v('#umNick', 30), city: v('#umCity', 40), country: v('#umCountry', 40) });
+      await N.ref('profiles/' + me.uid).set(p);
       KK.sfx.select();
+      umSaved = p;
+      umFill(p);
+      umEditing(false);
       $('#umMsg').textContent = 'saved ✓';
     } catch (err) {
       console.warn('kkph profile', err);

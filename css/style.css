@@ -88,7 +88,10 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .user-menu[hidden] { display: none; }
 .user-menu label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--sub); }
 .user-menu .search { width: 100%; min-width: 0; background: var(--bg); font-size: 13px; padding: 7px 10px; }
-.um-btns { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.user-menu .search[readonly] { background: transparent; padding-left: 0; padding-right: 0; border-color: transparent; box-shadow: none; outline: none; cursor: default; color: var(--text); }
+.user-menu .search[readonly]::placeholder { color: var(--sub); }
+.um-btns { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.um-btns [hidden] { display: none; }
 .um-btns .hint { margin: 0; }
 .um-logout { margin-top: 4px; padding: 9px 0 0; border: 0; border-top: 1px solid var(--bg3); background: none; color: var(--sub); font-size: 12px; text-align: left; cursor: pointer; }
 .um-logout:hover { color: var(--err); }
