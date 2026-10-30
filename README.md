@@ -15,6 +15,8 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
+On a phone the tabs move to a bar along the bottom (icons with small names), your name shrinks to just your picture at the top right, and every page fits the screen's width. The bar hides while you're playing. On a tablet the tabs show as icons only.
+
 - **home**: a feed, like X or Facebook.
   - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
   - **Reactions and replies**: under every post, **♥** and **😂** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
@@ -227,6 +229,8 @@ Hollowness isn't a note of its own: the first 12 ms of each strike drive the cas
 Clicks are mixed outside the keycap low-pass, so they cut through: MX-style click jackets give a thin tick near 8–10 kHz, Kailh click bars a louder, fuller snap near 3–4 kHz. Each key size (alpha, wide, spacebar) renders 6 variants. Each key also gets its own slight pitch offset and a stereo position. Switch housing material, stem type and factory lube are inferred from each switch's name and brand.
 
 ## Music
+
+The music plays only while you're playing (single player, vs AI and vs players), starting on that level's track, and stops when you leave the game. The rest of the site is quiet; key sounds still play everywhere.
 
 A procedural **lo-fi chill radio** with six tracks:
 

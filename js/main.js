@@ -301,6 +301,7 @@
     app.screen = name;
     document.body.dataset.screen = name;
     document.body.classList.toggle('signed-out', !app.user);
+    syncMusic();
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
     const tab = name === 'user' ? NAV_TAB[app.userFrom] || app.userFrom || 'friends' : NAV_TAB[name] || name;
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
@@ -685,7 +686,13 @@
   /* ---------------------------------- audio ---------------------------------- */
   function gesture() {
     A.init();
-    if (A.ready && !KK.music.playing && app.settings.music > 0) KK.music.start();
+    syncMusic();
+  }
+  // music plays only while you're playing (single player, vs AI, vs players)
+  function syncMusic() {
+    const want = !!PLAY_SCREENS[app.screen] && app.settings.music > 0;
+    if (want && A.ready && !KK.music.playing) KK.music.start();
+    if (!want && KK.music.playing) KK.music.stop();
   }
   document.addEventListener('pointerdown', gesture);
 

@@ -453,7 +453,9 @@
     if (!A.ready || M.playing) return;
     setupBus();
     M.playing = true;
-    if (!tr) setTrack(Math.floor(Math.random() * TRACKS.length));
+    // starting with a game: that level's track (it only plays while you play)
+    if (M.mode === 'game' && M.level) setTrack((M.level - 1) % TRACKS.length);
+    else if (!tr) setTrack(Math.floor(Math.random() * TRACKS.length));
     nextTime = A.ctx.currentTime + 0.15;
     timer = setInterval(tick, 25);
     const now = A.ctx.currentTime;
