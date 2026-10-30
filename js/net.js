@@ -223,7 +223,11 @@
     const create = async (name, pass) => {
       const cred = await auth.createUserWithEmailAndPassword(emailOf(name), pass);
       await N.ref('users/' + cred.user.uid).set({ name, display: String(name).trim(), created: N.now() });
-      await N.ref('meta/userCount').transaction((c) => (c || 0) + 1);
+      try {
+        await N.ref('meta/userCount').transaction((c) => (c || 0) + 1);
+      } catch (e) {
+        console.warn('kkph: user counter not updated', e); // the account itself is fine
+      }
       return cred.user;
     };
     return {

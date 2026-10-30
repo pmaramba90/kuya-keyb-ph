@@ -297,7 +297,7 @@
     const b = app.build;
     const sw = C.switchById[b.switch], kc = C.keycapById[b.keycap], cs = C.CASES[b.case];
     const prof = app.currentProfile();
-    const name = prof && !app.isDirty() ? prof.name : 'current build';
+    const name = app.pvpPrev ? app.pvpName : prof && !app.isDirty() ? prof.name : 'current build';
     const tags = KK.keysound.writeup(b).headline.split(' · ');
     const color = (cs.colors.find((c) => c[1].toLowerCase() === b.caseColor.toLowerCase()) || ['custom'])[0];
     const lube = b.lube !== 'stock' ? C.lubeById[b.lube].name : sw.factoryLube ? 'factory lubed' : 'stock (dry)';
@@ -362,6 +362,7 @@
     ui.close();
     if (!app.pvpPrev) app.pvpPrev = { build: app.build, profileId: app.profileId };
     app.build = mine.build;
+    app.pvpName = mine.name;
     app.profileId = app.profiles.some((p) => p.id === mine.pid) ? mine.pid : null;
     KK.keysound.setBuild(app.build);
     app.show('vs');
