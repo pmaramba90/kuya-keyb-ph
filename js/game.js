@@ -1119,9 +1119,12 @@
     r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
       KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
       if (r !== run || !h || h.r !== run.round || !run.running || run.you.dead) return;
-      if (h.relief) return run.you.relieve(h.relief); // they missed a word
-      flyAttack('to-l', h.n, h.dmg);
-      takeHit(h.dmg, h.label);
+      // never trust the numbers: cap them at what a real miss / WOW combo can do
+      const md = run.p.missDamage;
+      if (h.relief) return run.you.relieve(U.clamp(+h.relief || 0, 0, md * MISS_RELIEF)); // they missed a word
+      const n = U.clamp(Math.round(+h.n) || 1, 1, 5), dmg = U.clamp(+h.dmg || 0, 0, md * (0.9 + 0.3 * 5));
+      flyAttack('to-l', n, dmg);
+      takeHit(dmg, String(h.label || 'combo').slice(0, 24));
     }));
     r.offs.push(KK.net.ref(`${base}/left/${m.opp}`).on((v) => r === run && v && oppGone('quit')));
     // they took the win because we were away (or our updates stopped reaching them)

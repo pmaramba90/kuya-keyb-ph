@@ -8,32 +8,51 @@
     },
     "users": {
       ".read": "auth != null",
-      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "name": { ".validate": "auth.token.email === newData.val() + '@players.kuyakeybph.com'" },
+        "display": { ".validate": "newData.isString() && newData.val().toLowerCase() === newData.parent().child('name').val()" },
+        "created": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
     },
     "names": {
       ".read": "auth != null",
-      "$name": { ".write": "auth != null && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)" }
+      "$name": { ".write": "auth != null && newData.val() === auth.uid && auth.token.email === $name + '@players.kuyakeybph.com'" }
     },
     "avatars": {
       ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 300000"
+        ".validate": "newData.isString() && newData.val().length < 300000 && newData.val().matches(/^data:image\\/(jpeg|png|webp);base64,[A-Za-z0-9+\\/=]+$/)"
       }
     },
     "profiles": {
       ".read": "auth != null",
-      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "nickname": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "city": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "country": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "$other": { ".validate": false }
+      }
     },
     "private": {
-      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "email": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "$other": { ".validate": false }
+      }
     },
     "friendReqs": {
       "$to": {
         ".read": "auth != null && auth.uid === $to",
         "$from": {
           ".read": "auth != null && auth.uid === $from",
-          ".write": "auth != null && (auth.uid === $to || auth.uid === $from)"
+          ".write": "auth != null && (auth.uid === $from || (auth.uid === $to && !newData.exists()))",
+          "name": { ".validate": "auth.token.email === newData.val() + '@players.kuyakeybph.com'" },
+          "display": { ".validate": "newData.isString() && newData.val().toLowerCase() === newData.parent().child('name').val()" }
         }
       }
     },
@@ -41,24 +60,36 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "$other": {
-          ".write": "auth != null && (auth.uid === $uid || (auth.uid === $other && (!newData.exists() || root.child('friendReqs').child($other).child($uid).exists())))"
+          ".write": "auth != null && (auth.uid === $uid || (auth.uid === $other && (!newData.exists() || root.child('friendReqs').child($other).child($uid).exists())))",
+          ".validate": "newData.isNumber()"
         }
       }
     },
     "builds": {
       ".read": "auth != null",
-      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "$pid": {
+          "w": { ".validate": "newData.isNumber()" },
+          "l": { ".validate": "newData.isNumber()" }
+        }
+      }
     },
     "presence": {
       ".read": "auth != null",
-      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "name": { ".validate": "auth.token.email === newData.val() + '@players.kuyakeybph.com'" },
+        "display": { ".validate": "newData.isString() && newData.val().toLowerCase() === newData.parent().child('name').val()" }
+      }
     },
     "challenges": {
       "$to": {
         ".read": "auth != null && auth.uid === $to",
         "$from": {
           ".read": "auth != null && auth.uid === $from",
-          ".write": "auth != null && (auth.uid === $to || auth.uid === $from)"
+          ".write": "auth != null && (auth.uid === $from || (auth.uid === $to && data.exists()))",
+          "fromName": { ".validate": "newData.val() === data.val() || auth.token.email === newData.val().toLowerCase() + '@players.kuyakeybph.com'" }
         }
       }
     },

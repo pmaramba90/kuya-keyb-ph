@@ -39,7 +39,9 @@
     };
   };
   const swatch = (d) => `<span class="pswatch" style="background:${d.b.caseColor}"><i style="background:${d.kc.colors.a}"></i><i style="background:${d.kc.colors.m}"></i><i style="background:${d.kc.colors.x}"></i></span>`;
-  const recText = (r) => `${(r && r.w) || 0}W–${(r && r.l) || 0}L`;
+  // records can come from other players' data: only ever print them as whole numbers
+  const count = (n) => Math.max(0, Math.floor(Number(n) || 0));
+  const recText = (r) => `${count(r && r.w)}W–${count(r && r.l)}L`;
   O.recText = recText;
 
   // the builds you can play with: your saved ones, or the default if there are none

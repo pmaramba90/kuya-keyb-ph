@@ -36,8 +36,11 @@
     loading[uid] = true;
     N.ready.then(() => N.ref('avatars/' + uid).on((v) => setAvatar(uid, v)));
   }
+  // only a real base64 photo is shown — anything else (it's other players' data) falls
+  // back to the logo, so a crafted value can't break out of the <img>
+  const PHOTO = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
   function setAvatar(uid, url) {
-    avs[uid] = typeof url === 'string' && url.startsWith('data:image/') ? url : S.DEFAULT_AV;
+    avs[uid] = typeof url === 'string' && url.length < 300000 && PHOTO.test(url) ? url : S.DEFAULT_AV;
     document.querySelectorAll(`img[data-av="${CSS.escape(uid)}"]`).forEach((im) => (im.src = avs[uid]));
   }
   S.avatarSrc = (uid) => {
@@ -45,7 +48,7 @@
     return avs[uid] || S.DEFAULT_AV;
   };
   // <img> that fills in when the picture arrives
-  S.avatarImg = (uid, cls) => `<img class="av ${cls || ''}" data-av="${esc(uid || '')}" src="${S.avatarSrc(uid)}" alt="">`;
+  S.avatarImg = (uid, cls) => `<img class="av ${cls || ''}" data-av="${esc(uid || '')}" src="${esc(S.avatarSrc(uid))}" alt="">`;
   // point an existing <img> at someone's picture
   S.setImg = (el, uid) => {
     if (!el) return;

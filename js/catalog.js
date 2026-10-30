@@ -752,15 +752,24 @@
     const d = C.defaultBuild();
     if (!b || typeof b !== 'object') return d;
     const out = Object.assign({}, d, b);
-    if (!C.LAYOUTS[out.layout]) out.layout = d.layout;
-    if (!C.CASES[out.case]) out.case = d.case;
-    if (!C.PLATES[out.plate]) out.plate = d.plate;
-    if (!C.MOUNTS[out.mount]) out.mount = d.mount;
-    if (!C.switchById[out.switch]) out.switch = d.switch;
-    if (!C.keycapById[out.keycap]) out.keycap = d.keycap;
-    if (!C.lubeById[out.lube]) out.lube = d.lube;
-    out.mods = Array.isArray(out.mods) ? out.mods.filter((m) => C.modById[m]) : [];
-    if (!/^#[0-9a-f]{6}$/i.test(out.caseColor)) out.caseColor = C.CASES[out.case].colors[0][1];
+    // builds also arrive from other players: only exact catalog keys pass (so names
+    // like "constructor" or "__proto__" can't slip through)
+    const has = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+    if (!has(C.LAYOUTS, out.layout)) out.layout = d.layout;
+    if (!has(C.CASES, out.case)) out.case = d.case;
+    if (!has(C.PLATES, out.plate)) out.plate = d.plate;
+    if (!has(C.MOUNTS, out.mount)) out.mount = d.mount;
+    if (!has(C.switchById, out.switch)) out.switch = d.switch;
+    if (!has(C.keycapById, out.keycap)) out.keycap = d.keycap;
+    if (!has(C.lubeById, out.lube)) out.lube = d.lube;
+    out.mods = Array.isArray(out.mods) ? out.mods.filter((m) => has(C.modById, m)) : [];
+    if (typeof out.caseColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(out.caseColor)) out.caseColor = C.CASES[out.case].colors[0][1];
+    const pre = has(C.keyboardById, out.prebuilt) && C.keyboardById[out.prebuilt];
+    if (!pre) ['prebuilt', 'look', 'swIdx'].forEach((k) => delete out[k]);
+    else {
+      out.look = U.clamp(Math.floor(+out.look) || 0, 0, pre.looks.length - 1);
+      out.swIdx = U.clamp(Math.floor(+out.swIdx) || 0, 0, pre.switches.length - 1);
+    }
     return out;
   };
 })();
