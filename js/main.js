@@ -241,7 +241,8 @@
       actions[b.dataset.ov]();
     }
   });
-  ui.countdown = function (cb, msg) {
+  // onGo: runs as "go" shows (vs players: the FIGHT! call)
+  ui.countdown = function (cb, msg, onGo) {
     ui.open('', {});
     let n = 3;
     const step = () => {
@@ -252,6 +253,7 @@
       } else {
         $('#ovCard').innerHTML = '<div class="count-big">go</div>';
         KK.sfx.count(0);
+        if (onGo) onGo();
         cdTimer = setTimeout(() => {
           ui.close();
           cb();
@@ -266,6 +268,18 @@
   app.gameKb = KK.kbview.create($('#gameKb'), { maxU: 26 });
   app.vsKb = KK.kbview.create($('#vsKb'), { maxU: 22 });
   views.push(app.gameKb, app.vsKb);
+  // your opponent's board (vs players): not in `views`, so your own key presses don't
+  // light it up — theirs do, from their live snapshots (app.oppPress)
+  app.oppKb = KK.kbview.create($('#vsOppKb'), { maxU: 22 });
+  const CODE_OF = (ch) => (/[a-z]/.test(ch) ? 'Key' + ch.toUpperCase() : null);
+  app.oppPress = function (typed) {
+    [...typed].slice(-8).forEach((ch, i) => {
+      const code = ch === '\b' ? 'Backspace' : CODE_OF(ch);
+      if (!code) return;
+      setTimeout(() => app.oppKb.press(code), i * 35);
+      setTimeout(() => app.oppKb.release(code), i * 35 + 90);
+    });
+  };
   const PLAY_SCREENS = { game: 1, vs: 1 };
 
   app.show = function (name) {
@@ -289,15 +303,16 @@
       renderGameBuild($('#vsBuild'));
       $('#vsSubL').textContent = $('#vsSubR').textContent = '';
     }
-    requestAnimationFrame(() => views.concat(KK.builder.kb || []).forEach((v) => v.fit()));
+    requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb).forEach((v) => v.fit()));
   };
 
-  // compact spec sheet shown beside the keyboard while playing
-  function renderGameBuild(target) {
-    const b = app.build;
+  // compact spec sheet shown beside the keyboard while playing (yours, or with b and
+  // title given, your opponent's)
+  function renderGameBuild(target, b, title) {
+    b = b || app.build;
     const sw = C.switchById[b.switch], kc = C.keycapById[b.keycap], cs = C.CASES[b.case];
     const prof = app.currentProfile();
-    const name = app.pvpPrev ? app.pvpName : prof && !app.isDirty() ? prof.name : 'current build';
+    const name = title || (app.pvpPrev ? app.pvpName : prof && !app.isDirty() ? prof.name : 'current build');
     const tags = KK.keysound.writeup(b).headline.split(' · ');
     const color = (cs.colors.find((c) => c[1].toLowerCase() === b.caseColor.toLowerCase()) || ['custom'])[0];
     const lube = b.lube !== 'stock' ? C.lubeById[b.lube].name : sw.factoryLube ? 'factory lubed' : 'stock (dry)';
@@ -369,11 +384,25 @@
     $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
     $('#vsSubR').textContent = `${opp.name} · ${opp.d.head}`;
     $('#vsSubR').title = `${opp.d.board} · ${opp.d.sw} · ${opp.d.caps}`;
+    // both keyboards side by side under the lanes
+    document.body.classList.add('pvp');
+    if (!app.keysHint) app.keysHint = $('#keysHint').innerHTML;
+    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; alt-tab keeps the match running';
+    $('#vsOpp').hidden = false;
+    $('#vsWhoL').textContent = app.userName();
+    $('#vsWhoR').textContent = m.oppName;
+    renderGameBuild($('#vsBuild'));
+    renderGameBuild($('#vsOppBuild'), m.oppBuild, m.oppBuildName);
+    app.oppKb.update(m.oppBuild);
+    requestAnimationFrame(() => [app.vsKb, app.oppKb].forEach((v) => v.fit()));
     KK.music.setMode('game', m.level);
     KK.music.duck(false);
     KK.game.startPvp(m);
   };
   app.pvpDone = function () {
+    document.body.classList.remove('pvp');
+    $('#vsOpp').hidden = true;
+    if (app.keysHint) $('#keysHint').innerHTML = app.keysHint;
     if (!app.pvpPrev) return;
     app.build = app.pvpPrev.build;
     app.profileId = app.pvpPrev.profileId;

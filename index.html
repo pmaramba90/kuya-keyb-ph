@@ -209,9 +209,16 @@
             <div class="typed ai" id="vsTypedR"><span class="caret"></span></div>
           </div>
         </div>
-        <div class="game-bottom">
-          <div class="game-kb" id="vsKb"></div>
-          <aside class="game-build" id="vsBuild"></aside>
+        <div class="game-bottom vs-bottom">
+          <div class="vs-half">
+            <div class="vs-who" id="vsWhoL"></div>
+            <div class="vs-kbrow"><div class="game-kb" id="vsKb"></div><aside class="game-build" id="vsBuild"></aside></div>
+          </div>
+          <!-- vs players: your opponent's board and setup -->
+          <div class="vs-half opp" id="vsOpp" hidden>
+            <div class="vs-who" id="vsWhoR"></div>
+            <div class="vs-kbrow"><div class="game-kb" id="vsOppKb"></div><aside class="game-build" id="vsOppBuild"></aside></div>
+          </div>
         </div>
       </section>
     </main>

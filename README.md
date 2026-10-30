@@ -78,6 +78,8 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
 - **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
 - Same rules as vs AI at medium speed (level 4): best of 3, 3-minute rounds, combos attack the other player's overflow bar.
+- Before round 1 a **VS card** plays (about 4 seconds). Both names and keyboards sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!".
+- During the match both keyboards sit under the lanes, each with its owner's name and full setup. Your opponent's keys light up as they type.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
 - Esc doesn't pause against a person. It asks whether to forfeit.
 - The match keeps running when you alt-tab or minimize: a worker's timer steps the game when the browser stops sending animation frames, so your words keep falling and missing, and your opponent keeps seeing your field.

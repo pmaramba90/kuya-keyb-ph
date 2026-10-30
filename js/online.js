@@ -387,7 +387,7 @@
     beatNow();
     const ob = C.sanitizeBuild(opp.build);
     KK.app.startPvp(
-      { id, me: me.uid, opp: oppUid, oppName: opp.display, oppWord: KK.keysound.comboKey(ob), seed: m.seed, level: m.level || 4, lang: m.lang || 'en' },
+      { id, me: me.uid, opp: oppUid, oppName: opp.display, oppWord: KK.keysound.comboKey(ob), oppBuild: ob, oppBuildName: opp.pname, seed: m.seed, level: m.level || 4, lang: m.lang || 'en' },
       { build: C.sanitizeBuild(mine.build), pid: mine.pid, name: mine.pname },
       { name: opp.pname, d: describe(ob) }
     );

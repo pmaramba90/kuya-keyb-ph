@@ -358,4 +358,40 @@
       window.speechSynthesis.speak(u);
     }
   };
+
+  /* --------------------------- vs players: match intro --------------------------- */
+  // a name card sweeping in from the side
+  X.whoosh = (at) => {
+    noise(at || 0, 0.32, 0.07, 600, 7000);
+    tone(180, at || 0, 0.3, { type: 'sawtooth', to: 900, vol: 0.02, lp: 2500 });
+  };
+  // the VS slamming down: sub boom, crack, a ringing metal hit and a low chip fanfare
+  X.slam = function (at) {
+    const t = at || 0;
+    tone(110, t, 1.1, { type: 'sine', to: 28, vol: 0.18, attack: 0.002, hold: 0.05, lp: 260 });
+    tone(55, t + 0.01, 0.6, { type: 'square', to: 30, vol: 0.05, lp: 200 });
+    noise(t, 0.5, 0.18, 7000, 500);
+    [523, 784, 1046, 1568].forEach((f, k) => tone(f * 1.003, t + 0.005 * k, 1.2, { type: 'triangle', vol: 0.016, lp: 9000, hold: 0.05 }));
+    [48, 55, 60].forEach((m, k) => note(m, t + 0.35 + k * 0.12, 0.5, { vol: 0.04 }));
+  };
+
+  // "VERSUS!" / "FIGHT!" — the combo calls' arcade chain
+  V.call = function (key, at) {
+    if (!A.ready || A.sfxVol <= 0) return;
+    const buf = V.bufs[key];
+    if (KK.music.dip) KK.music.dip(key === 'versus' ? 3.2 : 1.6);
+    if (buf) {
+      const src = A.ctx.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = 0.94;
+      src.connect(voiceChain());
+      src.start(A.ctx.currentTime + (at || 0));
+    } else if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(key + '!');
+      if (fallbackVoice) u.voice = fallbackVoice;
+      u.pitch = 0.8;
+      u.volume = Math.min(1, A.sfxVol * 1.15);
+      setTimeout(() => window.speechSynthesis.speak(u), (at || 0) * 1000);
+    }
+  };
 })();

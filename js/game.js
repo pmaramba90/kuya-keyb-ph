@@ -948,7 +948,7 @@
     reset() {
       this.clear();
       this.field.classList.add('remote');
-      Object.assign(this, { score: 0, bar: 0, combo: 0, maxCombo: 0, dead: false });
+      Object.assign(this, { score: 0, bar: 0, combo: 0, maxCombo: 0, dead: false, buf: '' });
       this.apply({});
     }
     mult() {
@@ -959,6 +959,11 @@
       const scored = (s.sc || 0) > this.score, bump = (s.c || 0) > this.combo;
       Object.assign(this, { score: s.sc || 0, combo: s.c || 0, maxCombo: s.mc || 0, bar: s.bar || 0 });
       const ws = s.w || [], buf = s.buf || '';
+      // light up the keys they typed since the last snapshot on their keyboard below
+      const prev = this.buf || '';
+      if (buf.length > prev.length && buf.startsWith(prev)) KK.app.oppPress(buf.slice(prev.length));
+      else if (buf && buf.length < prev.length && prev.startsWith(buf)) KK.app.oppPress('\b');
+      this.buf = buf;
       let g = '';
       for (let n = buf.length; n > 0 && !g; n--) if (ws.some((w) => w[0].startsWith(buf.slice(0, n)))) g = buf.slice(0, n);
       const live = new Set();
@@ -1131,9 +1136,14 @@
       clearTimeout(giveUp);
       clearInterval(clock);
       if (r !== run || run.over) return;
-      run.oppAt = KK.net.now() + 4000; // the countdown
-      KK.music.duck(false);
-      KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos attack their overflow bar`);
+      const go = () => {
+        if (r !== run || run.over) return;
+        run.oppAt = KK.net.now() + 4000; // the countdown
+        KK.music.duck(false);
+        KK.ui.countdown(begin, `round ${round} · best of 3 · 3:00 · vs ${run.m.oppName} · your combos attack their overflow bar`, () => KK.voice.call('fight'));
+      };
+      if (round === 1) vsIntro(go);
+      else go();
     });
     giveUp = setTimeout(() => {
       clearInterval(clock);
@@ -1143,6 +1153,38 @@
       }
     }, READY_SECS * 1000);
     run.offs.push(stop, () => clearTimeout(giveUp), () => clearInterval(clock));
+  }
+
+  // before round 1: the two fighters' cards sweep in, VS slams down (≈3.8 s)
+  function vsIntro(done) {
+    const m = run.m, mine = KK.app.build;
+    const side = (cls, name, title, b) => `<div class="vsi-side ${cls}">
+        <div class="vsi-name">${esc(name)}</div>
+        <div class="vsi-build">${esc(title)}</div>
+        <div class="vsi-tags">${esc(KK.keysound.writeup(b).headline)}</div>
+        <div class="vsi-kb"></div></div>`;
+    KK.ui.open(
+      `<div class="vsi">
+         <div class="vsi-bg"><i class="l"></i><i class="r"></i><b></b><b></b><b></b></div>
+         ${side('vsi-l', KK.app.userName(), KK.app.pvpName || 'your keyboard', mine)}
+         <div class="vsi-vs"><span>VS</span><i class="vsi-ring"></i></div>
+         ${side('vsi-r', m.oppName, m.oppBuildName || 'their keyboard', m.oppBuild)}
+         <div class="vsi-foot">best of 3 · 3:00 rounds · combos attack the other overflow bar</div>
+       </div>`,
+      {}
+    );
+    const kbs = document.querySelectorAll('#ovCard .vsi-kb');
+    [mine, m.oppBuild].forEach((b, i) => KK.kbview.create(kbs[i], { maxU: 20 }).update(b));
+    KK.sfx.whoosh(0);
+    KK.sfx.whoosh(0.25);
+    KK.sfx.slam(0.75);
+    KK.voice.call('versus', 0.85);
+    const r = run;
+    setTimeout(() => {
+      const el = document.querySelector('#ovCard .vsi');
+      if (el) el.classList.add('out');
+    }, 3400);
+    setTimeout(() => r === run && done(), 3800);
   }
 
   function roundEndPvp() {
