@@ -184,7 +184,9 @@
     $('#lobbyCount').textContent = list.length ? `${list.length} online` : '';
     $('#lobbyList').innerHTML = list.length
       ? list.map(([uid, p]) => playerCard(uid, p)).join('')
-      : '<p class="hint">nobody else is online right now — send your brother the link and keep this page open.</p>';
+      : N.online()
+        ? '<p class="hint">nobody else is online right now — send your brother the link and keep this page open.</p>'
+        : '<p class="lobby-off">online play isn’t switched on yet, so only other tabs of this same browser window show up here — not other devices, other browsers or incognito windows. It turns on once the site is connected to Firebase (README → “Going online”).</p>';
   }
 
   function playerCard(uid, p) {
