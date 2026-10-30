@@ -137,12 +137,14 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 /* the featured (main) keyboard: drawn full size with everything about it */
 .feat { background: var(--bg2); border-radius: 12px; padding: 18px 20px 20px; margin-bottom: 30px; }
 .feat[hidden] { display: none; }
-.feat-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 14px; }
+/* three lines: "featured keyboard", its name, its sound; heart (and open) on the right */
+.feat-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.feat-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; margin-right: auto; }
 .feat-head .grp-h { margin: 0; color: var(--main); }
 .feat-name { font-weight: 400; font-size: 20px; color: var(--text); }
 .feat-tags { font-size: 12px; color: var(--sub); }
 .feat-kb { margin: 4px 0 18px; display: flex; justify-content: center; }
-.feat-open { display: none; margin-left: auto; font-size: 12px; color: var(--sub); }
+.feat-open { display: none; font-size: 12px; color: var(--sub); padding-top: 5px; }
 .feat.open { cursor: pointer; border: 2px solid transparent; transition: border-color .15s; }
 .feat.open:hover { border-color: color-mix(in srgb, var(--main) 45%, transparent); }
 .feat.open .feat-open { display: inline; }
@@ -234,8 +236,7 @@ button.heart:active svg { transform: scale(1.3); }
 @keyframes beat { 50% { transform: scale(1.3); } }
 .heart.mine { cursor: default; }
 .heart-slot { display: inline-flex; justify-self: end; }
-.feat-heart { margin-left: auto; align-self: center; }
-.feat.open .feat-heart + .feat-open { margin-left: 4px; }
+.feat-heart { flex: none; }
 .kb-card { grid-template-columns: auto 1fr 90px 90px 56px 104px; }
 
 /* home: the feed */
@@ -299,6 +300,10 @@ button.heart:active svg { transform: scale(1.3); }
 .feed-count:empty { display: none; }
 .feed-count .pl-dot { display: inline-block; }
 .feed-side .grp-h { margin-top: 18px; }
+.pop-h { margin: 18px 0 10px; font-size: 14px; font-weight: 700; color: var(--text); }
+/* usernames on home are yellow: posts, replies, popular keyboards */
+.post-who b, .reply-body b, .kb-text .pop-by { color: var(--main); }
+.post-who b:hover, .reply-body b:hover { color: var(--text); }
 .pop-list { display: flex; flex-direction: column; gap: 8px; }
 .pop-list { gap: 10px; }
 .pop-card { background: var(--bg2); border: 2px solid transparent; border-radius: 10px; padding: 10px 12px 12px; cursor: pointer; transition: border-color .15s; }
