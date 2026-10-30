@@ -116,9 +116,47 @@
     el.innerHTML = me ? `${S.avatarImg(me.uid, 'xs')}<span>${esc(me.display)}</span>` : '';
     el.hidden = !me;
   }
-  $('#navUser').addEventListener('click', () => {
+  // your name (top right) opens a drop-down: nickname, city, country, log out
+  const umenu = $('#userMenu');
+  S.closeMenu = () => {
+    umenu.hidden = true;
+    $('#navUser').classList.remove('on');
+    $('#navUser').setAttribute('aria-expanded', 'false');
+  };
+  $('#navUser').addEventListener('click', async (e) => {
+    e.stopPropagation();
     $('#navUser').blur();
-    if (me) KK.app.show('title'); // your profile page
+    if (!me) return;
+    if (!umenu.hidden) return S.closeMenu();
+    KK.sfx.ui();
+    $('#umMsg').textContent = '';
+    umenu.hidden = false;
+    $('#navUser').classList.add('on');
+    $('#navUser').setAttribute('aria-expanded', 'true');
+    const p = (await N.ref('profiles/' + me.uid).once().catch(() => null)) || {};
+    $('#umNick').value = p.nickname || '';
+    $('#umCity').value = p.city || '';
+    $('#umCountry').value = p.country || '';
+    $('#umNick').focus();
+  });
+  document.addEventListener('click', (e) => !umenu.hidden && !e.target.closest('.nav-user-wrap') && S.closeMenu());
+  umenu.addEventListener('keydown', (e) => e.key === 'Escape' && S.closeMenu());
+  umenu.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!me) return;
+    const v = (id, n) => $(id).value.trim().slice(0, n);
+    try {
+      await N.ref('profiles/' + me.uid).set({ nickname: v('#umNick', 30), city: v('#umCity', 40), country: v('#umCountry', 40) });
+      KK.sfx.select();
+      $('#umMsg').textContent = 'saved ✓';
+    } catch (err) {
+      console.warn('kkph profile', err);
+      $('#umMsg').textContent = "couldn't save · try again";
+    }
+  });
+  $('#umLogout').addEventListener('click', () => {
+    S.closeMenu();
+    $('#logoutBtn').click();
   });
 
   S.friendIds = () => Object.keys(friends);

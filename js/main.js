@@ -304,7 +304,7 @@
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
     const tab = name === 'user' ? NAV_TAB[app.userFrom] || app.userFrom || 'friends' : NAV_TAB[name] || name;
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
-    $('#navUser').classList.toggle('on', tab === 'title');
+    KK.social.closeMenu();
     if (name === 'home') KK.feed.render();
     if (name === 'title') renderHome();
     if (name === 'play') renderPlay();
@@ -446,7 +446,7 @@
       return;
     }
     const me = KK.net.me || {}, p = app.progress, cur = app.settings.currency || 'usd';
-    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div><div class="hint">your profile</div></div>
+    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div></div>
       <button class="btn ghost sm edit-profile" id="editProfile">edit profile</button>`;
     const add = (a, r) => ({ w: a.w + ((r && r.w) || 0), l: a.l + ((r && r.l) || 0) });
     const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });

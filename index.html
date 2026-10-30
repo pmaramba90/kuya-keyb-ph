@@ -42,7 +42,17 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.3 3 2.7 3S9.3 11 9.3 9c0 2 1.3 3 2.7 3s2.7-1 2.7-3c0 2 1.3 3 2.6 3S20 11 20 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
           <span>marketplace</span>
         </button>
-        <button class="nav-user" id="navUser" title="your profile"></button>
+        <div class="nav-user-wrap">
+          <button class="nav-user" id="navUser" title="your details · log out" aria-haspopup="true" aria-expanded="false"></button>
+          <!-- your name's drop-down: quick profile details and log out -->
+          <form class="user-menu" id="userMenu" autocomplete="off" hidden>
+            <label><span>nickname</span><input class="search" id="umNick" maxlength="30" placeholder="optional"></label>
+            <label><span>city</span><input class="search" id="umCity" maxlength="40" placeholder="optional"></label>
+            <label><span>country</span><input class="search" id="umCountry" maxlength="40" placeholder="optional"></label>
+            <div class="um-btns"><button class="btn primary sm" type="submit">save</button><span class="hint" id="umMsg"></span></div>
+            <button class="um-logout" type="button" id="umLogout">log out</button>
+          </form>
+        </div>
       </nav>
     </header>
 
@@ -52,7 +62,6 @@
         <div class="feed">
           <div class="feed-main">
             <div class="feed-top">
-              <div class="grp-h">home</div>
               <div class="feed-add">
                 <button class="fab" id="feedAdd" title="new review or post" aria-label="new review or post">+</button>
                 <div class="add-menu" id="addMenu" hidden>

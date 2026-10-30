@@ -13,7 +13,7 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 ## Sections
 
-The top bar has **home · profile · play · friends · marketplace**, plus your picture and name (which also opens your profile). Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
+The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down where you can change your nickname, city and country (save), or log out. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
 - **home**: a feed, like X or Facebook.
   - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
