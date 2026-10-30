@@ -235,20 +235,40 @@
     const name = N.normalize($('#addFriendName').value);
     if (!name) return;
     if (name === me.name) return msg("that's you");
-    const uid = await N.ref('names/' + name).once();
-    if (!uid) return msg(`no player called “${name}”`);
-    if (friends[uid]) return msg(`${name} is already your friend`);
-    $('#addFriendName').value = '';
-    if (reqs[uid]) return S.accept(uid); // they asked you first
-    await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
-    KK.sfx.select();
-    msg(`friend request sent to ${name}`);
+    msg('looking…');
+    try {
+      const uid = await findUid(name);
+      if (!uid) return msg(`no player called “${name}”`);
+      if (friends[uid]) return msg(`${name} is already your friend`);
+      $('#addFriendName').value = '';
+      if (reqs[uid]) return S.accept(uid); // they asked you first
+      await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
+      KK.sfx.select();
+      msg(`friend request sent to ${name}`);
+    } catch (err) {
+      console.warn('kkph friends', err);
+      msg("couldn't send the request — the server refused it. Try again in a minute.");
+    }
   });
 
+  // username → uid: the names index, or (for players who haven't logged in since it
+  // existed) a look through the user list
+  async function findUid(name) {
+    const uid = await N.ref('names/' + name).once().catch(() => null);
+    if (uid) return uid;
+    const all = (await N.ref('users').once()) || {};
+    return Object.keys(all).find((k) => all[k] && N.normalize(all[k].name) === name) || null;
+  }
+
   S.accept = async function (uid) {
-    await N.ref('').update({ [`friends/${me.uid}/${uid}`]: N.now(), [`friends/${uid}/${me.uid}`]: N.now(), [`friendReqs/${me.uid}/${uid}`]: null });
-    KK.sfx.select();
-    msg('');
+    try {
+      await N.ref('').update({ [`friends/${me.uid}/${uid}`]: N.now(), [`friends/${uid}/${me.uid}`]: N.now(), [`friendReqs/${me.uid}/${uid}`]: null });
+      KK.sfx.select();
+      msg('');
+    } catch (err) {
+      console.warn('kkph friends', err);
+      msg("couldn't accept — the server refused it. Try again in a minute.");
+    }
   };
   S.decline = (uid) => N.ref(`friendReqs/${me.uid}/${uid}`).remove();
   S.unfriend = (uid) => N.ref('').update({ [`friends/${me.uid}/${uid}`]: null, [`friends/${uid}/${me.uid}`]: null });
