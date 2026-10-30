@@ -14,10 +14,13 @@
    *   profiles/{uid}           { nickname, city, country } — optional, seen by players
    *   private/{uid}            { email } — optional, only you can read it
    *   friendReqs/{to}/{from}   { name, display, at } — a pending friend request
+   *   sentReqs/{from}/{to}     { name, at } — your copy of the requests you've sent, so
+   *                            you can see them; dropped once theirs is answered
    *   friends/{uid}/{other}    since — both sides are written when a request is accepted
    */
   const S = (KK.social = {});
-  let me = null, offs = [], friends = {}, reqs = {};
+  let me = null, offs = [], friends = {}, reqs = {}, sent = {}, reqTab = 'in';
+  const sentWatch = {}; // uid → stop watching whether that request is still pending
   const info = {}; // uid → { name, display, nickname, city, country }
 
   /* ------------------------------ profile pictures ------------------------------ */
@@ -82,6 +85,11 @@
       $('#friendsBadge').hidden = !n;
       $('#friendsBadge').textContent = n || '';
     }));
+    offs.push(N.ref('sentReqs/' + me.uid).on((v) => {
+      sent = v || {};
+      watchSent();
+      renderFriends();
+    }));
     KK.online.onPresence(renderFriends);
     renderNav();
   };
@@ -89,6 +97,8 @@
   S.stop = function () {
     offs.forEach((f) => f());
     offs = [];
+    sent = {};
+    watchSent();
     me = null;
     friends = {};
     reqs = {};
@@ -243,10 +253,13 @@
       const uid = await findUid(name);
       if (!uid) return msg(`no player called “${name}”`);
       if (friends[uid]) return msg(`${name} is already your friend`);
+      if (sent[uid]) return msg(`you've already sent ${name} a request`);
       $('#addFriendName').value = '';
       if (reqs[uid]) return S.accept(uid); // they asked you first
       await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
+      N.ref(`sentReqs/${me.uid}/${uid}`).set({ name, at: N.now() }).catch((err) => console.warn('kkph friends', err));
       KK.sfx.select();
+      reqTab = 'out';
       msg(`friend request sent to ${name}`);
     } catch (err) {
       console.warn('kkph friends', err);
@@ -274,6 +287,26 @@
     }
   };
   S.decline = (uid) => N.ref(`friendReqs/${me.uid}/${uid}`).remove();
+  S.cancel = (uid) => N.ref('').update({ [`friendReqs/${uid}/${me.uid}`]: null, [`sentReqs/${me.uid}/${uid}`]: null });
+
+  // a sent request stays listed while it's pending: once they accept or decline (their
+  // copy is gone), drop yours
+  function watchSent() {
+    Object.keys(sentWatch).forEach((uid) => {
+      if (sent[uid] && me) return;
+      sentWatch[uid]();
+      delete sentWatch[uid];
+    });
+    if (!me) return;
+    const mine = me.uid;
+    Object.keys(sent).forEach((uid) => {
+      if (sentWatch[uid]) return;
+      loadInfo(uid);
+      sentWatch[uid] = N.ref(`friendReqs/${uid}/${mine}`).on((v) => {
+        if (v == null && me && me.uid === mine) N.ref(`sentReqs/${mine}/${uid}`).remove().catch(() => {});
+      });
+    });
+  }
   S.unfriend = (uid) => N.ref('').update({ [`friends/${me.uid}/${uid}`]: null, [`friends/${uid}/${me.uid}`]: null });
 
   // online / in a match / offline, from the presence list
@@ -287,12 +320,22 @@
     const ids = Object.keys(friends);
     const online = ids.filter((id) => stateOf(id) !== 'offline');
     $('#friendsCount').textContent = ids.length ? `${ids.length} · ${online.length} online` : '';
-    $('#friendReqs').innerHTML = Object.entries(reqs)
-      .map(([uid, r]) => `<div class="fr-card req">${S.avatarImg(uid, 'sm')}
-        <div class="fr-text"><b>${esc(r.display || r.name)}</b><span>wants to be friends</span></div>
-        <button class="btn primary sm" data-fr="accept" data-uid="${esc(uid)}">accept</button>
-        <button class="btn ghost sm" data-fr="decline" data-uid="${esc(uid)}">decline</button></div>`)
-      .join('');
+    // requests: received (to answer) and sent (still waiting on them)
+    const nIn = Object.keys(reqs).length, nOut = Object.keys(sent).length;
+    const tab = (t, label, n) => `<button class="chip${reqTab === t ? ' on' : ''}" data-rt="${t}">${label}${n ? `<b>${n}</b>` : ''}</button>`;
+    $('#reqTabs').innerHTML = tab('in', 'requests received', nIn) + tab('out', 'requests sent', nOut);
+    $('#friendReqs').innerHTML = reqTab === 'in'
+      ? Object.entries(reqs)
+          .map(([uid, r]) => `<div class="fr-card req">${S.avatarImg(uid, 'sm')}
+            <div class="fr-text"><b>${esc(r.display || r.name)}</b><span>wants to be friends</span></div>
+            <button class="btn primary sm" data-fr="accept" data-uid="${esc(uid)}">accept</button>
+            <button class="btn ghost sm" data-fr="decline" data-uid="${esc(uid)}">decline</button></div>`)
+          .join('') || '<p class="hint">no requests waiting for you.</p>'
+      : Object.entries(sent)
+          .map(([uid, r]) => `<div class="fr-card sent">${S.avatarImg(uid, 'sm')}
+            <div class="fr-text"><b>${esc((info[uid] || {}).display || (r && r.name) || '…')}</b><span>request sent · waiting for them</span></div>
+            <button class="btn ghost sm" data-fr="cancel" data-uid="${esc(uid)}">cancel</button></div>`)
+          .join('') || "<p class=\"hint\">no pending requests — the ones you send show here until they're answered.</p>";
     // online first, then by name
     ids.sort((a, b) => (stateOf(a) === 'offline') - (stateOf(b) === 'offline') || String((info[a] || {}).display).localeCompare((info[b] || {}).display));
     $('#friendList').innerHTML = ids.length
@@ -312,6 +355,13 @@
   S.renderFriends = renderFriends;
 
   document.querySelector('#scr-friends').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-rt]');
+    if (t) {
+      t.blur();
+      KK.sfx.ui();
+      reqTab = t.dataset.rt;
+      return renderFriends();
+    }
     const b = e.target.closest('[data-fr]');
     const card = e.target.closest('[data-user]');
     if (!b && card) return KK.app.showUser(card.dataset.user); // their page
@@ -321,6 +371,7 @@
     const uid = b.dataset.uid, act = b.dataset.fr;
     if (act === 'accept') S.accept(uid);
     else if (act === 'decline') S.decline(uid);
+    else if (act === 'cancel') S.cancel(uid).catch((err) => console.warn('kkph friends', err));
     else if (act === 'challenge') KK.online.challenge(uid, (info[uid] || {}).display || 'friend');
     else if (act === 'remove') {
       if (!b.dataset.armed) {

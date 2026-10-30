@@ -268,10 +268,11 @@
   app.gameKb = KK.kbview.create($('#gameKb'), { maxU: 26 });
   app.vsKb = KK.kbview.create($('#vsKb'), { maxU: 22 });
   views.push(app.gameKb, app.vsKb);
-  // featured keyboards: yours on home (lights up as you type) and a friend's on their page
+  // featured keyboards: yours on home and a friend's on their page — both light up as
+  // you type (on a friend's page you hear their board, too)
   app.featView = KK.kbview.create($('#featKb'), { maxU: 46 });
   app.userFeatView = KK.kbview.create($('#userFeatKb'), { maxU: 46 });
-  views.push(app.featView);
+  views.push(app.featView, app.userFeatView);
   // your opponent's board (vs players): not in `views`, so your own key presses don't
   // light it up — theirs do, from their live snapshots (app.oppPress)
   app.oppKb = KK.kbview.create($('#vsOppKb'), { maxU: 22 });
@@ -295,8 +296,9 @@
     // leaving a match against a person between rounds still ends it
     if (PLAY_SCREENS[app.screen] && name !== app.screen && (KK.game.isRunning() || KK.game.mode() === 'pvp')) KK.game.quit();
     if (app.screen === 'lobby' && name !== 'lobby') KK.online.leftLobby();
-    // the keyboards screen previews other boards' sound; leaving it restores yours
-    if (app.screen === 'kbs' && name !== 'kbs') KK.keysound.setBuild(app.build);
+    // the keyboards screen and a friend's page preview other boards' sound; leaving
+    // them restores yours
+    if ((app.screen === 'kbs' || app.screen === 'user') && name !== app.screen) KK.keysound.setBuild(app.build);
     app.screen = name;
     document.body.dataset.screen = name;
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
@@ -320,7 +322,7 @@
       renderGameBuild($('#vsBuild'));
       $('#vsSubL').textContent = $('#vsSubR').textContent = '';
     }
-    requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb, app.userFeatView).forEach((v) => v.fit()));
+    requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb).forEach((v) => v.fit()));
   };
 
   // compact spec sheet shown beside the keyboard while playing (yours, or with b and
@@ -469,6 +471,11 @@
     const c = e.target.closest('[data-id]');
     if (c) app.loadProfile(c.dataset.id);
   });
+  // the featured keyboard opens its summary too
+  $('#dashFeat').addEventListener('click', () => {
+    const id = $('#dashFeat').dataset.id;
+    if (id) app.loadProfile(id);
+  });
 
   /* ------------------------- featured / main keyboard ------------------------- */
   // your main keyboard: the one shown big on your home page and to friends. With
@@ -507,13 +514,21 @@
 
   // the featured keyboard: the board drawn full size plus everything about it
   const FEAT_HOME = { box: '#dashFeat', name: '#featName', tags: '#featTags', spec: '#featSpec', stats: '#featStats', view: () => app.featView };
-  const FEAT_USER = { box: '#userFeat', name: '#userFeatName', tags: '#userFeatTags', spec: '#userFeatSpec', stats: '#userFeatStats', view: () => app.userFeatView };
+  const FEAT_USER = { box: '#userFeat', name: '#userFeatName', tags: '#userFeatTags', spec: '#userFeatSpec', stats: '#userFeatStats', sound: '#userFeatSound', view: () => app.userFeatView };
   function renderFeatured(F, k) {
     $(F.box).hidden = !k;
     if (!k) return;
     const b = C.sanitizeBuild(k.build), wr = winRate(k), cur = app.settings.currency || 'usd';
+    const w = KK.keysound.writeup(b);
+    $(F.box).dataset.id = k.id || '';
+    $(F.box).classList.toggle('open', F === FEAT_HOME && !!k.id);
     $(F.name).textContent = k.name;
-    $(F.tags).textContent = KK.keysound.writeup(b).headline;
+    $(F.tags).textContent = w.headline;
+    if (F.sound) {
+      const meter = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar" style="--v:${Math.round(v * 100)}%"><i></i></div><span>${r}</span></div>`;
+      $(F.sound).innerHTML = `<div class="feat-meters">${meter('deep', 'high', w.meters.pitch)}${meter('quiet', 'loud', w.meters.volume)}${meter('thock', 'clack', w.meters.clack)}</div>
+        <div class="feat-hear"><button class="btn primary sm" data-act="demo">▶ hear it</button><span class="hint">or just type — you're on their board</span></div>`;
+    }
     renderGameBuild($(F.spec), b, k.name);
     const stat = (v, l) => `<div class="tile"><b>${v}</b><span class="hint">${l}</span></div>`;
     $(F.stats).innerHTML = stat(C.money(C.billOfMaterials(b).total, cur), 'estimated price') + stat(wr.pct, 'win rate vs players') + stat(wr.rec, 'record');
@@ -543,6 +558,7 @@
     const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
     const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
     renderFeatured(FEAT_USER, main);
+    if (main) KK.keysound.setBuild(C.sanitizeBuild(main.build)); // typing here plays their board
     const rest = kbs.filter((k) => k !== main);
     $('#userKbsH').hidden = !rest.length;
     $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, {})).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
@@ -550,6 +566,12 @@
     if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
   };
   $('#userBack').addEventListener('click', () => app.show('friends'));
+  $('#userFeatSound').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act="demo"]');
+    if (!b) return;
+    b.blur();
+    KK.keysound.demo();
+  });
 
   // play: the modes, building, your saved builds
   function renderPlay() {

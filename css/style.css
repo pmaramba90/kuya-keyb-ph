@@ -124,6 +124,15 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .feat-name { font-weight: 400; font-size: 20px; color: var(--text); }
 .feat-tags { font-size: 12px; color: var(--sub); }
 .feat-kb { margin: 4px 0 18px; display: flex; justify-content: center; }
+.feat-open { display: none; margin-left: auto; font-size: 12px; color: var(--sub); }
+.feat.open { cursor: pointer; border: 2px solid transparent; transition: border-color .15s; }
+.feat.open:hover { border-color: color-mix(in srgb, var(--main) 45%, transparent); }
+.feat.open .feat-open { display: inline; }
+.feat.open:hover .feat-open { color: var(--main); }
+.feat-sound { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 28px; margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--bg3); }
+.feat-meters { flex: 1 1 260px; max-width: 380px; }
+.feat-meters .meter:last-child { margin-bottom: 0; }
+.feat-hear { display: flex; align-items: center; gap: 12px; }
 .feat-body { display: grid; grid-template-columns: 1fr 220px; gap: 22px; align-items: start; }
 .feat-spec { font-size: 12px; color: var(--sub); line-height: 1.7; }
 .feat-spec .gb-name, .feat-spec .gb-tags { display: none; }
@@ -151,6 +160,9 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .add-friend .search { flex: 1; min-width: 0; }
 .add-msg { min-height: 18px; margin: 8px 0 14px; }
 #friendReqs:not(:empty) { margin-bottom: 18px; }
+.req-tabs { display: flex; gap: 6px; margin: 4px 0 10px; }
+.req-tabs .chip b { margin-left: 4px; color: var(--main); }
+.fr-card.sent { border: 1px dashed var(--bg3); }
 .friend-list, #friendReqs { display: flex; flex-direction: column; gap: 8px; }
 .fr-card { display: flex; align-items: center; gap: 12px; background: var(--bg2); border-radius: var(--r); padding: 10px 12px; }
 .fr-card.req { border: 1px solid color-mix(in srgb, var(--main) 45%, transparent); }
