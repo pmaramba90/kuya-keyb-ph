@@ -176,7 +176,7 @@
     db.ref('.info/serverTimeOffset').on('value', (s) => (N.offset = s.val() || 0));
     const warn = (path) => (e) => console.warn('kkph db', path, e && e.message);
     return function ref(path) {
-      const r = db.ref(path);
+      const r = path ? db.ref(path) : db.ref(); // '' = the root (Firebase rejects an empty path)
       return {
         set: (v) => r.set(v === undefined ? null : v),
         update: (o) => r.update(o),

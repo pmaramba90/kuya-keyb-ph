@@ -250,7 +250,7 @@
       msg(`friend request sent to ${name}`);
     } catch (err) {
       console.warn('kkph friends', err);
-      msg("couldn't send the request — the server refused it. Try again in a minute.");
+      msg("couldn't send the request — try again in a minute.");
     }
   });
 
@@ -270,7 +270,7 @@
       msg('');
     } catch (err) {
       console.warn('kkph friends', err);
-      msg("couldn't accept — the server refused it. Try again in a minute.");
+      msg("couldn't accept the request — try again in a minute.");
     }
   };
   S.decline = (uid) => N.ref(`friendReqs/${me.uid}/${uid}`).remove();

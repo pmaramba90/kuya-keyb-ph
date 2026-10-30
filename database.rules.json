@@ -18,7 +18,7 @@
     },
     "names": {
       ".read": "auth != null",
-      "$name": { ".write": "auth != null && newData.val() === auth.uid && auth.token.email === $name + '@players.kuyakeybph.com'" }
+      "$name": { ".write": "auth != null && auth.token.email === $name + '@players.kuyakeybph.com' && (newData.val() === auth.uid || !newData.exists())" }
     },
     "avatars": {
       ".read": "auth != null",
