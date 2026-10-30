@@ -73,12 +73,12 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 
 ## vs players
 
-**vs players** on the home page lists everyone online, with each player's saved builds: name, how it sounds, board, switch and keycaps, and its win–loss record. The build each player picked is marked "playing with".
+**vs players** on the home page lists everyone online: each player's username and the keyboard they've picked to play with (name, how it sounds, board, switch, keycaps, and its win–loss record). Once you're signed in, the home page also shows how many players are online now, under the sign-up count.
 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
 - **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
 - Same rules as vs AI at medium speed (level 4): best of 3, 3-minute rounds, combos attack the other player's overflow bar.
-- Before round 1 a **VS card** plays (about 4 seconds). Both names and keyboards sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!".
+- Before round 1 a **VS card** plays (about 4 seconds). Each player's selected keyboard is the main image: the store photo for a full keyboard, otherwise the build drawn large. Both sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!".
 - During the match both keyboards sit under the lanes, each with its owner's name and full setup. Your opponent's keys light up as they type.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
 - Esc doesn't pause against a person. It asks whether to forfeit.

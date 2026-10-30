@@ -556,6 +556,10 @@ body.no-game-kb .game-kb { display: none; }
 
 /* ------------------------------- vs players ------------------------------- */
 .home-count { color: var(--sub); font-size: 12px; margin: -26px 0 30px; min-height: 16px; }
+.home-count:has(+ .home-online:not(:empty)) { margin-bottom: 4px; }
+.home-online { margin-top: 0; display: flex; align-items: center; gap: 7px; }
+.home-online:empty { display: none; }
+.home-online .pl-dot { display: inline-block; }
 .prec { color: var(--main); font-weight: 400; }
 .lobby { max-width: 860px; margin: 0 auto; }
 .lobby-me { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; background: var(--bg2); border-radius: var(--r); padding: 12px 14px; margin-bottom: 26px; }
@@ -626,9 +630,16 @@ body.pvp #scr-vs .vs-half.opp .gb-name { color: #7fd1ff; }
 .vsi-name { font-size: clamp(26px, 4.2vw, 60px); font-weight: 700; line-height: 1.05; letter-spacing: -.02em; text-transform: uppercase; max-width: 100%; overflow-wrap: anywhere; }
 .vsi-l .vsi-name { color: var(--main); text-shadow: 0 0 24px rgba(226, 183, 20, .55), 4px 4px 0 rgba(0, 0, 0, .4); }
 .vsi-r .vsi-name { color: #7fd1ff; text-shadow: 0 0 24px rgba(127, 209, 255, .55), 4px 4px 0 rgba(0, 0, 0, .4); }
-.vsi-build { font-size: 15px; color: var(--text); margin-top: 10px; }
-.vsi-tags { font-size: 12px; color: var(--sub); margin: 2px 0 14px; }
-.vsi-kb { width: min(100%, 420px); }
+.vsi-build { font-size: 16px; color: var(--text); margin-top: 16px; }
+.vsi-tags { font-size: 12px; color: var(--sub); margin-top: 3px; }
+.vsi-hero { width: min(100%, 560px); margin-top: 18px; animation: vsi-hero 3.4s ease-out both; }
+.vsi-hero .vsi-kb { width: 100%; }
+.vsi-hero.photo img { display: block; width: 100%; height: min(42vh, 420px); object-fit: contain; background: #fff; border-radius: 14px; }
+.vsi-l .vsi-hero.photo img { box-shadow: 0 0 0 2px rgba(226, 183, 20, .6), 0 0 40px rgba(226, 183, 20, .35), 0 18px 40px rgba(0, 0, 0, .5); }
+.vsi-r .vsi-hero.photo img { box-shadow: 0 0 0 2px rgba(127, 209, 255, .6), 0 0 40px rgba(127, 209, 255, .35), 0 18px 40px rgba(0, 0, 0, .5); }
+.vsi-l .vsi-hero .kb { filter: drop-shadow(0 0 26px rgba(226, 183, 20, .35)); }
+.vsi-r .vsi-hero .kb { filter: drop-shadow(0 0 26px rgba(127, 209, 255, .35)); }
+@keyframes vsi-hero { from { transform: scale(.94); } to { transform: scale(1.03); } }
 .vsi-vs { position: relative; display: grid; place-items: center; width: clamp(110px, 14vw, 190px); }
 .vsi-vs span { position: relative; z-index: 1; font-size: clamp(64px, 10vw, 150px); font-weight: 800; font-style: italic; letter-spacing: -.06em; color: #fff3c4; background: linear-gradient(180deg, #fff6d0 10%, #ffb347 55%, #ff5a1f 90%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 18px rgba(255, 120, 30, .8)) drop-shadow(5px 6px 0 rgba(0, 0, 0, .55)); animation: vsi-slam .32s .75s cubic-bezier(.3, 1.6, .5, 1) both, vsi-throb 1.2s 1.2s ease-in-out infinite; }
 .vsi-ring { position: absolute; inset: 0; margin: auto; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #ffd27a; opacity: 0; animation: vsi-ring .7s .78s ease-out; }

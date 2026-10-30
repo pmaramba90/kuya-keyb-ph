@@ -597,6 +597,8 @@
   KK.kbs.init();
   app.show('title');
   KK.online.watchCount((n) => ($('#homeCount').textContent = `${n.toLocaleString()} ${n === 1 ? 'player has' : 'players have'} signed up`));
+  // who's online can only be read signed in (database rules), so it shows after log in
+  KK.online.watchOnline((n) => ($('#homeOnline').innerHTML = n == null ? '' : `<i class="pl-dot"></i>${n.toLocaleString()} online now`));
   // the session comes back from the online layer (Firebase or this browser)
   KK.net.ready.then((who) => {
     app.netReady = true;

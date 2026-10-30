@@ -1158,11 +1158,20 @@
   // before round 1: the two fighters' cards sweep in, VS slams down (≈3.8 s)
   function vsIntro(done) {
     const m = run.m, mine = KK.app.build;
+    // the selected keyboard is the main image: the store photo for a full keyboard,
+    // otherwise the build drawn big
+    const hero = (b) => {
+      const pre = b.prebuilt && KK.catalog.keyboardById[b.prebuilt];
+      const img = pre && (pre.looks[b.look || 0] || pre.looks[0]).img;
+      return img
+        ? `<div class="vsi-hero photo"><img alt="" src="${esc(img + (img.includes('?') ? '&' : '?') + 'width=900')}"></div>`
+        : '<div class="vsi-hero"><div class="vsi-kb"></div></div>';
+    };
     const side = (cls, name, title, b) => `<div class="vsi-side ${cls}">
         <div class="vsi-name">${esc(name)}</div>
+        ${hero(b)}
         <div class="vsi-build">${esc(title)}</div>
-        <div class="vsi-tags">${esc(KK.keysound.writeup(b).headline)}</div>
-        <div class="vsi-kb"></div></div>`;
+        <div class="vsi-tags">${esc(KK.keysound.writeup(b).headline)}</div></div>`;
     KK.ui.open(
       `<div class="vsi">
          <div class="vsi-bg"><i class="l"></i><i class="r"></i><b></b><b></b><b></b></div>
@@ -1173,8 +1182,10 @@
        </div>`,
       {}
     );
-    const kbs = document.querySelectorAll('#ovCard .vsi-kb');
-    [mine, m.oppBuild].forEach((b, i) => KK.kbview.create(kbs[i], { maxU: 20 }).update(b));
+    document.querySelectorAll('#ovCard .vsi-side').forEach((el, i) => {
+      const kb = el.querySelector('.vsi-kb');
+      if (kb) KK.kbview.create(kb, { maxU: 36 }).update(i ? m.oppBuild : mine);
+    });
     KK.sfx.whoosh(0);
     KK.sfx.whoosh(0.25);
     KK.sfx.slam(0.75);

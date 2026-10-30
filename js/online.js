@@ -125,8 +125,26 @@
     beatNow();
     beat = setInterval(beatNow, BEAT_MS);
     offs.push(N.ref('challenges/' + me.uid).on(onChallenges));
+    // who's online, for the home page count and the players list
+    offs.push(N.ref('presence').on((v) => {
+      players = v || {};
+      renderLobby();
+      countOnline();
+    }));
+    const recount = setInterval(countOnline, 10000); // drop players who went quiet
+    offs.push(() => clearInterval(recount));
     pullBuilds();
   };
+
+  const isOnline = (p) => p && N.now() - (p.at || 0) < GONE_MS;
+  let onlineCb = null;
+  O.watchOnline = (cb) => {
+    onlineCb = cb;
+    countOnline();
+  };
+  function countOnline() {
+    if (onlineCb) onlineCb(me ? Object.values(players).filter(isOnline).length : null);
+  }
 
   O.stop = function () {
     if (me) N.ref('presence/' + me.uid).remove();
@@ -136,6 +154,8 @@
     closeLobby();
     closeCh();
     me = null;
+    players = {};
+    countOnline();
   };
 
   O.matchEnded = function () {
@@ -153,7 +173,6 @@
   O.openLobby = function () {
     KK.app.show('lobby');
     closeLobby();
-    lobbyOffs.push(N.ref('presence').on((v) => { players = v || {}; renderLobby(); }));
     lobbyOffs.push(N.ref('builds').on((v) => { builds = v || {}; renderLobby(); }));
     const tick = setInterval(renderLobby, 5000); // drop players who went quiet
     lobbyOffs.push(() => clearInterval(tick));
@@ -177,9 +196,8 @@
 
   function renderLobby() {
     if (KK.app.screen !== 'lobby' || !me) return;
-    const now = N.now();
     const list = Object.entries(players)
-      .filter(([uid, p]) => uid !== me.uid && p && now - (p.at || 0) < GONE_MS)
+      .filter(([uid, p]) => uid !== me.uid && isOnline(p))
       .sort((a, b) => (a[1].state === 'idle' ? 0 : 1) - (b[1].state === 'idle' ? 0 : 1) || String(a[1].display).localeCompare(b[1].display));
     $('#lobbyCount').textContent = list.length ? `${list.length} online` : '';
     $('#lobbyList').innerHTML = list.length
@@ -189,25 +207,22 @@
         : '<p class="lobby-off">online play isn’t switched on yet, so only other tabs of this same browser window show up here — not other devices, other browsers or incognito windows. It turns on once the site is connected to Firebase (README → “Going online”).</p>';
   }
 
+  // just the keyboard they picked to play with
   function playerCard(uid, p) {
     const theirs = builds[uid] || {};
-    const ids = Object.keys(theirs).filter((k) => theirs[k] && theirs[k].build);
-    const rows = (ids.length ? ids : ['default']).map((id) => {
-      const x = theirs[id] || { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild() };
-      const d = describe(x.build);
-      const sel = id === p.pid;
-      return `<div class="pb${sel ? ' sel' : ''}">${swatch(d)}
-        <div class="pb-text"><div class="pb-name">${esc(x.name)}${sel ? ' <em>playing with</em>' : ''}</div>
-          <div class="pb-head">${esc(d.head)}</div>
-          <div class="pb-meta">${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</div></div>
-        <span class="pb-rec">${recText(x)}</span></div>`;
-    });
+    const id = theirs[p.pid] && theirs[p.pid].build ? p.pid : Object.keys(theirs).find((k) => theirs[k] && theirs[k].build && k !== 'default');
+    const x = (id && theirs[id]) || { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), ...(theirs.default || {}) };
+    const d = describe(x.build);
     const busy = p.state === 'match' || !!outgoing;
     return `<div class="pl-card">
       <div class="pl-head"><span class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></span><b>${esc(p.display || p.name)}</b>
         <span class="sub">${p.state === 'match' ? 'in a match' : 'online'}</span>
         <button class="btn primary sm" data-ch="${esc(uid)}"${busy ? ' disabled' : ''}>challenge</button></div>
-      <div class="pl-builds">${rows.join('')}</div></div>`;
+      <div class="pb">${swatch(d)}
+        <div class="pb-text"><div class="pb-name">${esc(x.name)}</div>
+          <div class="pb-head">${esc(d.head)}</div>
+          <div class="pb-meta">${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</div></div>
+        <span class="pb-rec">${recText(x)}</span></div></div>`;
   }
 
   $('#lobbyPick').addEventListener('change', (e) => {
