@@ -127,7 +127,16 @@ The config values are public by design. The database rules are what keep each pl
    - A spec sheet of your build sits beside the in-game keyboard.
    - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.
    - **Word sizes**: words fall in four sizes, and the smaller the word, the more it's worth: tiny ×2, small ×1.5, normal ×1, large ×0.7. Longer words score more too, so small long words are the jackpot (an 8-letter word scores 160 tiny vs 56 large).
-   - A fight-game announcer shouts your switch's word on combos: 5x "Creamy!", 10x "Double Creamy!", 15x "Triple Creamy!", 20x "Ultra Creaaammmyyyy!", and "WOW!!!" at 25x and every 5 after. The word is "Creamy" for linear or silent switches, "Thocky" for tactile and "Clicky" for clicky.
+   - **Announcer** (switch in the footer: "announcer: dragon / classic"):
+     - **dragon** (default): the [DRAGON Announcer Audio Pack](https://voicebosch.itch.io/dragon-announcer-audio-pack) by **VoiceBosch**, licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The credit sits in the footer, and details are in `audio/dragon/CREDITS.txt`. 13 of its lines were mixed to mono, resampled to 22 kHz and trimmed (826 KB total). They're used like this:
+       - combos at 5x / 10x / 15x / 20x / 25x+: "Vicious!", "Savagery!", "Ferocity!", "Killing Frenzy!", "Berserk!" (the on-screen combo names match)
+       - VS card: "Embrace the Fury!"
+       - each vs round: "First / Second / Third Round", then "Fight!" on go
+       - overflow: "K.O.!"
+       - winning a vs match: "Victor!"
+       - single-player game over: "Game Over"
+     - **classic**: the synthesized calls below.
+   - The classic announcer shouts your switch's word on combos: 5x "Creamy!", 10x "Double Creamy!", 15x "Triple Creamy!", 20x "Ultra Creaaammmyyyy!", and "WOW!!!" at 25x and every 5 after. The word is "Creamy" for linear or silent switches, "Thocky" for tactile and "Clicky" for clicky.
      - The lines were rendered offline with the Windows "Microsoft David" voice (raised pitch, slowed stressed words) and are embedded in `js/data-announcer.js`.
      - At playback they get an arcade treatment: grit, chest and presence EQ, heavy compression, a stadium hall, ping-pong echoes, and a boom-and-fanfare stinger that grows with each tier.
      - To use your own recorded voice, replace the base64 WAVs in that file. Keep the same keys.

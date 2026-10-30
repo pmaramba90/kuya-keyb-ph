@@ -129,9 +129,35 @@
     clicky: ['', 'clicky!', 'double clicky!', 'triple clicky!', 'ultra cliiickkyyyy!'],
   };
 
+  // Two announcer packs (footer toggle, settings.announcer):
+  //   dragon  — VoiceBosch's DRAGON pack (audio/dragon, CC BY-SA 4.0): recorded lines,
+  //             played clean; combo tiers become vicious → savagery → ferocity →
+  //             killing frenzy → berserk, and it also calls the rounds, K.O., victor
+  //             and game over
+  //   classic — the synthesized creamy / thocky / clicky calls (data-announcer.js)
+  const DRAGON_LABELS = ['', 'vicious!', 'savagery!', 'ferocity!', 'killing frenzy!'];
+  const DRAGON_TIER = { 1: 'vicious', 2: 'savagery', 3: 'ferocity', 4: 'frenzy', wow: 'berserk' };
+  const DRAGON_CALL = { versus: 'fury', fight: 'fight', round1: 'round1', round2: 'round2', round3: 'round3', victor: 'victor', gameover: 'gameover', ko: 'ko' };
+  V.dragon = {};
+  V.pack = () => (KK.app && KK.app.settings && KK.app.settings.announcer === 'classic' ? 'classic' : 'dragon');
+
   // 5x → 1, 10x → 2, 15x → 3, 20x → 4, 25x+ → wow
   V.tierFor = (combo) => (combo >= 25 ? 'wow' : Math.floor(combo / 5));
-  V.label = (word, tier) => (tier === 'wow' ? 'WOW!!!' : LABELS[word][tier]);
+  V.label = (word, tier) =>
+    V.pack() === 'dragon' ? (tier === 'wow' ? 'BERSERK!!!' : DRAGON_LABELS[tier]) : tier === 'wow' ? 'WOW!!!' : LABELS[word][tier];
+
+  // a recorded DRAGON line, straight to the sfx bus (it's already produced)
+  function dragonLine(file, at, gain) {
+    const buf = V.dragon[file];
+    if (!buf) return false;
+    const src = A.ctx.createBufferSource();
+    src.buffer = buf;
+    const g = A.ctx.createGain();
+    g.gain.value = gain || 0.85;
+    src.connect(g).connect(A.sfxBus);
+    src.start(A.ctx.currentTime + (at || 0));
+    return true;
+  }
 
   function shout(buf) {
     // pre-process once: normalize, add grit, and an 8-bit arcade-sample texture
@@ -192,6 +218,13 @@
   V.load = function () {
     if (V.loaded || !A.ready || !window.ANNOUNCER) return;
     V.loaded = true;
+    new Set(Object.values(DRAGON_TIER).concat(Object.values(DRAGON_CALL))).forEach((f) =>
+      fetch('audio/dragon/' + f + '.wav')
+        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
+        .then((ab) => A.ctx.decodeAudioData(ab))
+        .then((b) => (V.dragon[f] = normalize(b)))
+        .catch(() => {}) // missing → that call falls back to the classic voice
+    );
     Object.entries(window.ANNOUNCER).forEach(([k, b64]) => {
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
@@ -321,6 +354,7 @@
     if (!A.ready || A.sfxVol <= 0) return;
     X.shatter();
     if (KK.music.dip) KK.music.dip(2.8, 0.25);
+    if (V.pack() === 'dragon' && dragonLine('ko', 0.55, 1)) return; // "K.O.!"
     const buf = V.bufs.overflow;
     if (buf) {
       const src = A.ctx.createBufferSource();
@@ -347,6 +381,7 @@
     const buf = V.bufs[key];
     stinger(tier);
     if (KK.music.dip) KK.music.dip(tier === 'wow' || tier === 4 ? 2.2 : 1.4);
+    if (V.pack() === 'dragon' && dragonLine(DRAGON_TIER[tier], 0.04)) return;
     if (buf) {
       const src = A.ctx.createBufferSource();
       src.buffer = buf;
@@ -395,9 +430,15 @@
 
   // "VERSUS!" / "FIGHT!" — the clean vocal path, at natural speed, so the words are
   // easy to make out over the slam
+  // key: versus | fight, and with the DRAGON pack also round1-3 | victor | gameover
   V.call = function (key, at) {
     if (!A.ready || A.sfxVol <= 0) return;
     const buf = V.bufs[key];
+    if (V.pack() === 'dragon' && DRAGON_CALL[key]) {
+      if (KK.music.dip) KK.music.dip(2.2, 0.25);
+      if (dragonLine(DRAGON_CALL[key], at)) return;
+    }
+    if (!buf && !/^(versus|fight)$/.test(key)) return; // the classic pack has no round / victor / game over lines
     if (KK.music.dip) KK.music.dip(key === 'versus' ? 2.4 : 1.6, 0.25);
     if (buf) {
       const src = A.ctx.createBufferSource();

@@ -1,0 +1,25 @@
+DRAGON - Announcer Audio Pack
+by VoiceBosch (SoundBiter SFX library)
+https://voicebosch.itch.io/dragon-announcer-audio-pack
+
+License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Changes made for Kuya Keyb PH: 13 of the 28 lines were mixed to mono, resampled to
+22.05 kHz, and had leading/trailing silence trimmed. File names were shortened:
+
+  fight.wav     <- 02. Fight.wav
+  fury.wav      <- 03. Embrace the Fury.wav
+  round1.wav    <- 09. First Round.wav
+  round2.wav    <- 10. Second Round.wav
+  round3.wav    <- 11. Third Round.wav
+  victor.wav    <- 14. Victor.wav
+  ko.wav        <- 17. KO.wav
+  gameover.wav  <- 28. Game Over.wav
+  vicious.wav   <- 27. Vicious.wav
+  savagery.wav  <- 21. Savagery.wav
+  ferocity.wav  <- 24. Ferocity.wav
+  frenzy.wav    <- 06. Killing Frenzy.wav
+  berserk.wav   <- 08. Berserk.wav
+
+These modified audio files are likewise released under CC BY-SA 4.0.

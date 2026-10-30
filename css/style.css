@@ -778,6 +778,9 @@ input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 12p
 input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--main); border: 0; }
 .foot-btn { background: none; border: 0; color: var(--sub); cursor: pointer; font-size: 12px; padding: 4px 6px; border-radius: 4px; }
 .foot-btn:hover { color: var(--text); }
+.foot-credit { text-decoration: none; opacity: .6; }
+.foot-credit[hidden] { display: none; }
+.foot-credit:hover { opacity: 1; }
 .now-playing { max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--main); opacity: .75; }
 .now-playing:hover { opacity: 1; color: var(--main); }
 body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: hidden; }

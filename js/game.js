@@ -701,7 +701,10 @@
     KK.app.recordProfileScore(total);
 
     if (survived) KK.sfx.clear();
-    else KK.sfx.fail();
+    else {
+      KK.sfx.fail();
+      KK.voice.call('gameover', 0.35);
+    }
     KK.music.duck(true);
 
     const level = run.level;
@@ -778,7 +781,8 @@
     Object.assign(run, { time: ROUND_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: ROUND_SECONDS, running: false, paused: false, hud: {} });
     vsHud(true);
     KK.music.duck(false);
-    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 1:30 · your combos fill the AI's overflow, your misses lower it · smaller words score more`);
+    KK.voice.call('round' + Math.min(run.round, 3), 0.1);
+    KK.ui.countdown(begin, `round ${run.round} · best of 3 · 1:30 · your combos fill the AI's overflow, your misses lower it · smaller words score more`, () => KK.voice.call('fight'));
   }
 
   // combo milestone → the opponent's overflow bar rises: a bit less than a miss at
@@ -939,6 +943,7 @@
     KK.music.duck(true);
     if (w === 'you') KK.sfx.clear();
     else if (w === 'ai') KK.sfx.fail();
+    if (over && run.wins[0] > run.wins[1]) KK.voice.call('victor', 0.35);
 
     const stat = (b) => `<div><span class="hud-lbl">score</span><b>${b.score.toLocaleString()}</b><span class="hud-lbl">max combo ${b.maxCombo}x · acc ${b.acc()}% · overflow ${Math.round(b.bar * 100)}%</span></div>`;
     const head = over
@@ -1207,6 +1212,7 @@
         if (r !== run || run.over) return;
         run.oppAt = KK.net.now() + 4000; // the countdown
         KK.music.duck(false);
+        KK.voice.call('round' + Math.min(round, 3), 0.1);
         KK.ui.countdown(begin, `round ${round} · best of 3 · 1:30 · vs ${run.m.oppName} · your combos fill their overflow, your misses lower it · smaller words score more`, () => KK.voice.call('fight'));
       };
       if (round === 1) vsIntro(go);
@@ -1313,6 +1319,7 @@
     KK.music.duck(true);
     if (w === 'you') KK.sfx.clear();
     else if (w === 'opp') KK.sfx.fail();
+    if (over && run.wins[0] > run.wins[1]) KK.voice.call('victor', 0.35);
     const why = mine.dead || theirs.dead ? 'overflow' : 'time · higher score';
     const head = over
       ? run.wins[0] > run.wins[1] ? `you beat ${name} ${run.wins[0]}–${run.wins[1]}` : `${name} wins the match ${run.wins[1]}–${run.wins[0]}`
@@ -1347,8 +1354,10 @@
     run.running = false;
     run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
     KK.music.duck(true);
-    if (won) KK.sfx.clear();
-    else KK.sfx.fail();
+    if (won) {
+      KK.sfx.clear();
+      KK.voice.call('victor', 0.35);
+    } else KK.sfx.fail();
     const rec = KK.online.record(won);
     KK.ui.open(
       `<div class="ov-h">${head}</div>

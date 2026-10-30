@@ -565,6 +565,23 @@
   });
   applyKb();
 
+  // announcer voice: DRAGON (VoiceBosch) or the classic creamy / thocky / clicky calls
+  const annBtn = $('#annBtn');
+  const applyAnn = () => {
+    const dragon = app.settings.announcer !== 'classic';
+    annBtn.textContent = 'announcer: ' + (dragon ? 'dragon' : 'classic');
+    $('.foot-credit').hidden = !dragon;
+  };
+  annBtn.addEventListener('click', () => {
+    annBtn.blur();
+    gesture();
+    app.settings.announcer = app.settings.announcer === 'classic' ? 'dragon' : 'classic';
+    app.saveSettings();
+    applyAnn();
+    KK.voice.announce(KK.keysound.comboKey(app.build), 1); // a sample of the new voice
+  });
+  applyAnn();
+
   /* ---------------------------------- input ---------------------------------- */
   const allViews = () => views.concat(KK.builder.kb || [], KK.kbs.view || []);
   const pressAll = (code) => allViews().forEach((v) => v.press(code));
