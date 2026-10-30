@@ -58,6 +58,20 @@
     check();
   };
 
+  // phone typing: the on-screen keyboard's input event, with how many letters it added.
+  // (No key-up there, so the instant-key check doesn't apply; the rest does.)
+  AC.input = function (e, letters) {
+    if (flag) return;
+    if (!e || e.isTrusted !== true) {
+      if (++fake >= 3) raise('keys sent by a script, not a keyboard');
+      return;
+    }
+    AC.chars += letters;
+    downs.push(e.timeStamp || performance.now());
+    if (downs.length > SPEED) downs.shift();
+    check();
+  };
+
   AC.up = function (e) {
     const t0 = open[e.code];
     if (t0 == null) return;

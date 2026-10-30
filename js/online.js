@@ -271,6 +271,10 @@
     chActs = acts;
     chCard.innerHTML = html;
     chEl.hidden = false;
+    if (KK.app.typing) {
+      KK.app.typing.hide(); // phones: put the keyboard away so accept / decline can be tapped
+      KK.app.typing.update();
+    }
     if (until) {
       const bar = chCard.querySelector('.ch-time i'), num = chCard.querySelector('.ch-secs');
       const step = () => {
@@ -288,7 +292,9 @@
     chEl.hidden = true;
     chCard.innerHTML = '';
     chActs = null;
+    if (KK.app.typing) KK.app.typing.update();
   }
+  O.chOpen = () => !chEl.hidden;
   const flash = (html) => {
     openCh(`<div class="ov-h">${html}</div>`, {});
     setTimeout(() => chActs && !Object.keys(chActs).length && closeCh(), 2200);
@@ -398,7 +404,7 @@
        <div class="ch-time"><i></i></div>
        <div class="ov-sub">best of 3 · 1:30 rounds · <span class="ch-secs">${CH_SECS}</span>s to answer</div>
        <div class="ov-btns"><button class="btn primary" data-ch-act="yes" data-ch-primary>accept</button><button class="btn ghost" data-ch-act="no">decline</button></div>
-       <p class="hint"><span class="kbd">enter</span> accept · <span class="kbd">esc</span> decline</p>`,
+       ${KK.app.touch ? '' : '<p class="hint"><span class="kbd">enter</span> accept · <span class="kbd">esc</span> decline</p>'}`,
       {
         yes: () => { const pid = incoming.pid; end(); accept(from, ch, path, pid); },
         no: () => { N.ref(path).update({ status: 'declined' }); end(); },

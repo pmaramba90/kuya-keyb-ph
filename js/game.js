@@ -1516,17 +1516,31 @@
       }
       return false;
     }
-    if (e.key === 'Backspace') {
+    return press(e.key, e.code);
+  };
+
+  // a key that types: a letter, Backspace, or space / Enter (clear the word)
+  function press(key, code) {
+    const b = G.human();
+    if (key === 'Backspace') {
       b.backspace();
       return true;
     }
-    if (e.key === ' ' || e.key === 'Enter') {
+    if (key === ' ' || key === 'Enter') {
       b.clearInput();
       return true;
     }
-    if (e.key.length !== 1) return false;
-    if (b.typeChar(e.key.toLowerCase()) === 'err') KK.app.flashKey(e.code, 'err');
+    if (key.length !== 1) return false;
+    if (b.typeChar(key.toLowerCase()) === 'err' && code) KK.app.flashKey(code, 'err');
     if (run && run.kind === 'solo') soloHud();
     return true;
+  }
+
+  // phone typing: what the on-screen keyboard typed (KK.app passes it in one key at a
+  // time; KK.anticheat has already seen the input event)
+  G.typed = function (key, code) {
+    if (!run || !run.running || run.paused) return;
+    press(key, code);
   };
+  G.buffer = () => (run && G.human() ? G.human().buffer : '');
 })();

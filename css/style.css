@@ -1035,6 +1035,23 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   .type-hint { display: none; }
 }
 
+/* phone typing: the hidden box that holds the on-screen keyboard, "tap here to type"
+   while it's down, and a pause button (there's no esc) */
+.mobile-type { position: fixed; top: 0; left: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; font-size: 16px; pointer-events: none; }
+.type-btn { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 45; padding: 13px 24px; font-size: 15px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.pad-pause { position: fixed; top: 8px; right: 10px; z-index: 45; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--bg3); border-radius: 50%; background: var(--bg2); color: var(--text); cursor: pointer; }
+.pad-pause svg { width: 16px; height: 16px; }
+.type-btn[hidden], .pad-pause[hidden] { display: none; }
+body.touch .keys-hint { display: none; }
+
+/* the invite: fits any screen (the build picker wraps instead of pushing it wider) */
+.overlay { overflow-y: auto; }
+.ov-card { min-width: 0; }
+.ch-card { max-width: min(560px, 100%); }
+.ch-pick { flex-wrap: wrap; }
+.ch-pick .select { min-width: 0; max-width: 100%; }
+.ch-build { text-align: left; }
+
 /* phones: the tabs become a bar along the bottom, your name just your picture, and
    everything fits the screen's width (nothing scrolls sideways) */
 @media (max-width: 700px) {
@@ -1086,4 +1103,20 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   body.pvp #scr-vs .vs-half { grid-template-columns: minmax(0, 1fr); }
   body.pvp #scr-vs .game-build { grid-column: 1; grid-row: 3; margin-top: 8px; }
   .bottom { gap: 10px 16px; padding: 18px 0 20px; }
+  /* the invite card */
+  .ch-overlay { padding: 12px; }
+  .ch-card { padding: 20px 16px; }
+  .ch-card .ov-h { font-size: 24px; }
+  .ch-pick .select { flex: 1 1 100%; }
+  /* playing on a phone: no header, and a shorter play area so the words and what you've
+     typed stay above the on-screen keyboard */
+  body.touch[data-screen='game'] .top, body.touch[data-screen='vs'] .top { display: none; }
+  body.touch[data-screen='game'] #app, body.touch[data-screen='vs'] #app { padding-top: 50px; } /* the pause button's strip */
+  body.touch #scr-game .hud { gap: 8px; margin-bottom: 4px; }
+  body.touch #hudLevel, body.touch #scr-game .hud-mini, body.touch .cm-bar, body.touch .cm-next { display: none; }
+  body.touch .hud-time { font-size: 30px; }
+  body.touch .powers { min-height: 18px; }
+  body.touch #scr-game .field { height: 28vh; min-height: 180px; }
+  body.touch .lane .field { height: 26vh; min-height: 160px; }
+  body.touch .typed { height: 34px; margin: 4px 0; font-size: 24px; }
 }

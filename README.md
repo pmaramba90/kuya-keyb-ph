@@ -17,6 +17,14 @@ The top bar has **home · profile · play · friends · marketplace**, plus your
 
 On a phone the tabs move to a bar along the bottom (icons with small names), your name shrinks to just your picture at the top right, and every page fits the screen's width. The bar hides while you're playing. On a tablet the tabs show as icons only.
 
+**Playing on a phone.** Phones don't send key presses to a web page, so during a game a hidden text box holds the phone's own keyboard open. Whatever you type into it goes to the game: letters type, ⌫ deletes, and space clears the word. It reads keyboards that compose or autocorrect whole words (like Gboard) by comparing what's in the box before and after each change.
+- The keyboard comes up with the countdown.
+- If it's hidden, **⌨ tap here to type** (or a tap on the play area) brings it back.
+- The **pause** button at the top right stands in for Esc.
+- Any card that opens (pause, results, an invite) puts the keyboard away so its buttons can be tapped.
+- The play area is shorter on phones and the scores are compact, so the falling words and what you've typed stay above the keyboard.
+- Cheat detection still applies: phone typing counts as real typing, and fake input events from a script are caught.
+
 - **home**: a feed, like X or Facebook.
   - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
   - **Reactions and replies**: under every post, **♥** and **😂** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.

@@ -211,17 +211,22 @@
   /* --------------------------------- overlay --------------------------------- */
   const ui = (KK.ui = {});
   let actions = null, cdTimer = null;
-  ui.open = function (html, acts) {
+  // keepTyping: phones keep the on-screen keyboard up (the countdown); any other card
+  // puts it away so its buttons can be tapped
+  ui.open = function (html, acts, keepTyping) {
     clearTimeout(cdTimer);
     actions = acts || {};
     $('#ovCard').innerHTML = html;
     $('#overlay').hidden = false;
+    if (!keepTyping && app.typing) app.typing.hide();
+    if (app.typing) app.typing.update();
   };
   ui.close = function () {
     clearTimeout(cdTimer);
     $('#overlay').hidden = true;
     $('#ovCard').innerHTML = '';
     actions = null;
+    if (app.typing) app.typing.update();
   };
   ui.isOpen = () => !$('#overlay').hidden;
   ui.key = function (e) {
@@ -242,11 +247,13 @@
   });
   // onGo: runs as "go" shows (vs players: the FIGHT! call)
   ui.countdown = function (cb, msg, onGo) {
-    ui.open('', {});
+    ui.open('', {}, true);
+    if (app.typing) app.typing.show(); // phones: the keyboard comes up, ready
     let n = 3;
+    const keysTip = app.touch ? 'space clears the word · ❚❚ pauses' : '<span class="kbd">space</span> clears · <span class="kbd">esc</span> pauses';
     const step = () => {
       if (n > 0) {
-        $('#ovCard').innerHTML = `<div class="count-big">${n}</div><div class="ov-sub">${esc(msg || '')}<br><span class="kbd">space</span> clears · <span class="kbd">esc</span> pauses · type glowing words for power-ups</div>`;
+        $('#ovCard').innerHTML = `<div class="count-big">${n}</div><div class="ov-sub">${esc(msg || '')}<br>${keysTip} · type glowing words for power-ups</div>`;
         KK.sfx.count(n--);
         cdTimer = setTimeout(step, 650);
       } else {
@@ -302,6 +309,10 @@
     document.body.dataset.screen = name;
     document.body.classList.toggle('signed-out', !app.user);
     syncMusic();
+    if (app.typing) {
+      if (!PLAY_SCREENS[name]) app.typing.hide();
+      app.typing.update();
+    }
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
     const tab = name === 'user' ? NAV_TAB[app.userFrom] || app.userFrom || 'friends' : NAV_TAB[name] || name;
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
@@ -760,6 +771,9 @@
   const releaseAll = (code) => allViews().forEach((v) => v.release(code));
 
   document.addEventListener('keydown', (e) => {
+    // the phone box's own key events: its input event does the typing (below); Esc
+    // (a tablet's keyboard) still pauses
+    if (e.target === mobBox && e.key !== 'Escape') return;
     gesture();
     if (!e.repeat) {
       KK.keysound.down(e.code);
@@ -777,9 +791,11 @@
     }
     const inField = e.target.matches && e.target.matches('input, select, textarea');
     if (inField) return;
-    if (e.code === 'Space' || e.code === 'Backspace' || e.key === "'" || e.key === '/') e.preventDefault();  });
+    if (e.code === 'Space' || e.code === 'Backspace' || e.key === "'" || e.key === '/') e.preventDefault();
+  });
 
   document.addEventListener('keyup', (e) => {
+    if (e.target === mobBox) return;
     KK.anticheat.up(e);
     KK.keysound.up(e.code);
     releaseAll(e.code);
@@ -789,6 +805,83 @@
     document.querySelectorAll('.k.on').forEach((k) => k.classList.remove('on'));
     if (KK.game.isRunning()) KK.game.pause();
   });
+
+  /* ------------------------------- phone typing ------------------------------- */
+  // Phones send no usable key presses: while a game is on, a hidden text box holds the
+  // on-screen keyboard open, and whatever lands in it is compared with what was there
+  // before: new letters are typed, deleted ones are backspaces, a space clears the word.
+  // (Comparing copes with keyboards that compose or autocorrect whole words.)
+  app.touch = matchMedia('(pointer: coarse)').matches;
+  document.body.classList.toggle('touch', app.touch);
+  const mobBox = $('#mobileType'), typeBtn = $('#typeBtn'), padPause = $('#padPause');
+  let mobLast = '', composing = false;
+  const mobReset = () => {
+    mobBox.value = '';
+    mobLast = '';
+  };
+  const typingOn = () => app.touch && PLAY_SCREENS[app.screen];
+  app.typing = {
+    show() {
+      if (!typingOn()) return;
+      mobReset();
+      mobBox.focus({ preventScroll: true });
+      window.scrollTo(0, 0);
+      app.typing.update();
+    },
+    hide() {
+      if (document.activeElement === mobBox) mobBox.blur();
+    },
+    // "tap here to type" while the keyboard is down; pause while playing
+    update() {
+      const on = typingOn() && !ui.isOpen() && !KK.online.chOpen();
+      typeBtn.hidden = !on || document.activeElement === mobBox;
+      padPause.hidden = !on;
+    },
+  };
+  // the box's text since the last reset vs. before: deletions → backspaces, new text → keys
+  mobBox.addEventListener('input', (e) => {
+    const now = mobBox.value;
+    let same = 0;
+    while (same < mobLast.length && same < now.length && mobLast[same] === now[same]) same++;
+    const back = mobLast.length - same, added = now.slice(same);
+    mobLast = now;
+    if (!typingOn()) return mobReset();
+    KK.anticheat.input(e, added.replace(/\s/g, '').length);
+    for (let i = 0; i < back; i++) phoneKey('Backspace');
+    for (const ch of added) phoneKey(/\s/.test(ch) ? ' ' : ch);
+    tidy();
+  });
+  mobBox.addEventListener('compositionstart', () => (composing = true));
+  mobBox.addEventListener('compositionend', () => {
+    composing = false;
+    tidy();
+  });
+  // start the box afresh once the game's word is empty (cleared or typed), never mid-word
+  function tidy() {
+    if (!composing && !KK.game.buffer()) mobReset();
+  }
+  // one key: sound, the keyboard on screen lights up, then the game
+  function phoneKey(key) {
+    const code = key === 'Backspace' ? 'Backspace' : key === ' ' ? 'Space' : CODE_OF(key.toLowerCase());
+    if (code) {
+      KK.keysound.down(code);
+      pressAll(code);
+      setTimeout(() => {
+        KK.keysound.up(code);
+        releaseAll(code);
+      }, 70);
+    }
+    KK.game.typed(key, code);
+  }
+  mobBox.addEventListener('focus', () => app.typing.update());
+  mobBox.addEventListener('blur', () => app.typing.update());
+  typeBtn.addEventListener('click', () => app.typing.show());
+  padPause.addEventListener('click', () => {
+    padPause.blur();
+    if (KK.game.isRunning()) KK.game.pause(true);
+  });
+  // tapping the play area brings the keyboard back too
+  ['#scr-game', '#scr-vs'].forEach((s) => $(s).addEventListener('click', () => !ui.isOpen() && app.typing.show()));
 
   /* ----------------------------------- nav ----------------------------------- */
   document.querySelectorAll('.nav-btn').forEach((b) =>

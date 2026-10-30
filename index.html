@@ -373,6 +373,10 @@
   </div>
 
   <div class="overlay" id="overlay" hidden><div class="ov-card" id="ovCard"></div></div>
+  <!-- phones: a hidden text box holds the on-screen keyboard open while you play -->
+  <input id="mobileType" class="mobile-type" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="type here" tabindex="-1">
+  <button class="btn primary type-btn" id="typeBtn" hidden>⌨ tap here to type</button>
+  <button class="pad-pause" id="padPause" hidden aria-label="pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
   <div class="overlay ch-overlay" id="chOverlay" hidden><div class="ov-card ch-card" id="chCard"></div></div>
   <!-- profile picture: drag to position, zoom, save (Facebook-style) -->
   <div class="overlay av-overlay" id="avOverlay" hidden>
