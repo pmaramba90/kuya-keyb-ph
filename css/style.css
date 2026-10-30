@@ -605,11 +605,14 @@ body.no-game-kb .game-kb { display: none; }
 .vs-half.opp .vs-who { color: #7fd1ff; text-align: right; }
 .vs-kbrow { display: flex; align-items: center; justify-content: center; gap: 30px; }
 body.pvp #scr-vs .vs-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-body.pvp #scr-vs .vs-half { min-width: 0; }
-body.pvp #scr-vs .vs-kbrow { justify-content: space-between; }
-body.pvp #scr-vs .vs-kbrow { gap: 14px; }
-body.pvp #scr-vs .game-kb { flex: 1 1 0; min-width: 0; }
-body.pvp #scr-vs .game-build { flex: 0 0 210px; font-size: 10.5px; }
+/* each half: the player's name over their keyboard, on the same line as the build's
+   name in the spec sheet beside it — both halves laid out the same */
+body.pvp #scr-vs .vs-half { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 210px; column-gap: 14px; align-items: start; }
+body.pvp #scr-vs .vs-kbrow { display: contents; }
+body.pvp #scr-vs .vs-who { grid-column: 1; grid-row: 1; margin: 0; font-size: 13px; line-height: 1.6; font-weight: 700; text-align: left; }
+body.pvp #scr-vs .game-kb { grid-column: 1; grid-row: 2; min-width: 0; margin-top: 6px; }
+body.pvp #scr-vs .game-build { grid-column: 2; grid-row: 1 / span 2; font-size: 10.5px; }
+body.pvp #scr-vs .gb-name { line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* one line, so both sides' specs line up */
 body.pvp #scr-vs .vs-half.opp .gb-name { color: #7fd1ff; }
 
 /* vs players: the match intro card */
