@@ -175,7 +175,7 @@
           const b = C.sanitizeBuild(x.k.build);
           return `<div class="pop-card" data-user="${esc(x.owner)}" title="open ${esc(nameOf(x.owner))}'s profile">
             <div class="pop-head"><span class="pop-rank">${i + 1}</span>
-              <span class="kb-text"><b>${esc(x.k.name || 'keyboard')}</b><span>${esc(nameOf(x.owner))} · ${esc(KK.keysound.writeup(b).headline)}</span></span>
+              <span class="kb-text"><b>${esc(x.k.name || 'keyboard')}</b><b class="pop-by">by ${esc(nameOf(x.owner))}</b><span>${esc(KK.keysound.writeup(b).headline)}</span></span>
               ${F.heart(x.owner, x.pid)}</div>
             <div class="pop-kb"></div></div>`;
         }).join('')
