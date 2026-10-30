@@ -92,7 +92,7 @@
     });
     if (changed) app.storeProfiles();
     O.pushBuilds();
-    if (app.screen === 'title') app.renderProfiles();
+    if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
   }
 
   // after a match against a person: +1 win or loss on the build you played
@@ -130,13 +130,19 @@
       players = v || {};
       renderLobby();
       countOnline();
+      presenceCbs.forEach((f) => f());
     }));
     const recount = setInterval(countOnline, 10000); // drop players who went quiet
     offs.push(() => clearInterval(recount));
     pullBuilds();
   };
 
-  const isOnline = (p) => p && N.now() - (p.at || 0) < GONE_MS;
+  const isOnline = (p) => !!p && N.now() - (p.at || 0) < GONE_MS;
+  O.isOnline = isOnline;
+  O.players = () => players;
+  // others who want to know when the online list changes (the friends page)
+  const presenceCbs = new Set();
+  O.onPresence = (f) => presenceCbs.add(f);
   let onlineCb = null;
   O.watchOnline = (cb) => {
     onlineCb = cb;
@@ -215,7 +221,7 @@
     const d = describe(x.build);
     const busy = p.state === 'match' || !!outgoing;
     return `<div class="pl-card">
-      <div class="pl-head"><span class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></span><b>${esc(p.display || p.name)}</b>
+      <div class="pl-head"><span class="av-wrap">${KK.social.avatarImg(uid, 'sm')}<i class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></i></span><b>${esc(p.display || p.name)}</b>
         <span class="sub">${p.state === 'match' ? 'in a match' : 'online'}</span>
         <button class="btn primary sm" data-ch="${esc(uid)}"${busy ? ' disabled' : ''}>challenge</button></div>
       <div class="pb">${swatch(d)}
@@ -322,6 +328,7 @@
     });
     openCh(
       `<div class="ch-tag">challenge sent</div>
+       ${KK.social.avatarImg(uid, 'lg ch-av')}
        <div class="ov-h">waiting for ${esc(display)}…</div>
        <div class="ov-sub">you're playing with <b>${esc(pick.name)}</b> · they have <span class="ch-secs">${CH_SECS}</span>s to accept</div>
        <div class="ch-time"><i></i></div>
@@ -368,6 +375,7 @@
     };
     openCh(
       `<div class="ch-tag">⚔ you've been challenged</div>
+       ${KK.social.avatarImg(from, 'lg ch-av')}
        <div class="ov-h"><b>${esc(ch.fromName)}</b> challenges you!</div>
        <div class="ch-build">${swatch(d)}<span><b>${esc(ch.pname)}</b> · ${esc(d.head)}<br>${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</span></div>
        <label class="ch-pick"><span class="hud-lbl">play with</span><select class="select" id="chPick">${opts}</select></label>

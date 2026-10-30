@@ -281,6 +281,8 @@
     });
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
+  // the nav tab each screen belongs to
+  const NAV_TAB = { title: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play' };
   const HINT_SOLO = $('#keysHint').innerHTML;
   const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
@@ -294,8 +296,13 @@
     app.screen = name;
     document.body.dataset.screen = name;
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
-    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
+    const tab = NAV_TAB[name] || name;
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
+    $('#navUser').classList.toggle('on', name === 'profile');
     if (name === 'title') renderHome();
+    if (name === 'play') renderPlay();
+    if (name === 'friends') KK.social.renderFriends();
+    if (name === 'profile') KK.social.renderProfile();
     if (name === 'game') {
       app.gameKb.update(app.build);
       renderGameBuild($('#gameBuild'));
@@ -303,6 +310,8 @@
     }
     if (name === 'vs') {
       $('#keysHint').innerHTML = HINT_VS;
+      KK.social.setImg($('#vsAvL'), KK.net.me && KK.net.me.uid);
+      $('#vsAvR').hidden = true; // the AI has no picture; vs players shows theirs
       app.vsKb.update(app.build);
       renderGameBuild($('#vsBuild'));
       $('#vsSubL').textContent = $('#vsSubR').textContent = '';
@@ -388,6 +397,8 @@
     $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
     $('#vsSubR').textContent = `${opp.name} · ${opp.d.head}`;
     $('#vsSubR').title = `${opp.d.board} · ${opp.d.sw} · ${opp.d.caps}`;
+    KK.social.setImg($('#vsAvR'), m.opp);
+    $('#vsAvR').hidden = false;
     // both keyboards side by side under the lanes
     document.body.classList.add('pvp');
     $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; misses lower their overflow &nbsp;·&nbsp; alt-tab keeps the match running';
@@ -417,22 +428,50 @@
 
   /* ----------------------------------- home ----------------------------------- */
   let authMode = 'login';
+  // home: signed out — sign in / sign up; signed in — best scores and your keyboards
   function renderHome() {
     const inn = !!app.user;
     $('#authForm').hidden = inn || !app.netReady; // not before we know if you're signed in
     $('#homeIn').hidden = !inn;
     document.body.classList.toggle('signed-out', !inn);
-    $('#navUser').innerHTML = inn ? `<span>@${esc(app.userName())}</span><button class="foot-btn" id="logoutBtn">log out</button>` : '';
-    if (inn) {
-      const vs = app.progress.vs || {};
-      const rec = ['easy', 'medium', 'hard'].filter((d) => vs[d]).map((d) => `${d} ${vs[d].w}–${vs[d].l}`).join(' · ');
-      const dflt = app.progress.pvpDefault;
-      $('#homeHi').innerHTML = `welcome, <b>${esc(app.userName())}</b>${app.progress.bestTotal ? ` · best total ${app.progress.bestTotal.toLocaleString()}` : ''}${rec ? ` · vs ai ${rec}` : ''}${dflt && !app.profiles.length ? ` · ${esc(C.PVP_DEFAULT_NAME)} <b>wins: ${dflt.w} · losses: ${dflt.l}</b>` : ''}`;
-      $('#btnQuick').hidden = !app.hasSaved;
-      renderProfiles();
-    } else {
+    if (!inn) {
       setTimeout(() => $('#authUser').focus(), 50);
+      return;
     }
+    const me = KK.net.me || {}, p = app.progress, cur = app.settings.currency || 'usd';
+    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div><div class="hint">welcome back</div></div>`;
+    const add = (a, r) => ({ w: a.w + ((r && r.w) || 0), l: a.l + ((r && r.l) || 0) });
+    const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
+    const pvp = app.profiles.reduce(add, add({ w: 0, l: 0 }, p.pvpDefault));
+    const rec = (r) => (r.w + r.l ? ` · ${r.w}–${r.l}` : '');
+    const tile = (label, best, sub) => `<div class="tile"><span class="hud-lbl">${label}</span><b>${best ? best.toLocaleString() : '—'}</b><span class="hint">${sub}</span></div>`;
+    $('#dashBest').innerHTML = tile('single player', p.bestTotal, 'best total') + tile('vs ai', p.vsBest, 'best round' + rec(ai)) + tile('vs players', p.pvpBest, 'best round' + rec(pvp));
+    const kbs = app.profiles.map((x) => ({ id: x.id, name: x.name, build: x.build, w: x.w || 0, l: x.l || 0 }));
+    if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
+    $('#dashKbs').innerHTML = kbs.length
+      ? kbs.map((k) => {
+          const b = C.sanitizeBuild(k.build), c = C.keycapById[b.keycap].colors, games = k.w + k.l;
+          return `<button class="kb-card"${k.id ? ` data-id="${k.id}"` : ''}>
+            <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
+            <span class="kb-text"><b>${esc(k.name)}</b><span>${esc(KK.keysound.writeup(b).headline)}</span></span>
+            <span class="kb-num"><b>${C.money(C.billOfMaterials(b).total, cur)}</b><span>est. price</span></span>
+            <span class="kb-num"><b>${games ? Math.round((k.w / games) * 100) + '%' : '—'}</b><span>${games ? `${k.w}W ${k.l}L` : 'no matches'}</span></span>
+          </button>`;
+        }).join('')
+      : '<p class="hint">no saved keyboards yet — build one from play.</p>';
+  }
+  $('#dashKbs').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-id]');
+    if (c) app.loadProfile(c.dataset.id);
+  });
+
+  // play: the modes, building, your saved builds
+  function renderPlay() {
+    const vs = app.progress.vs || {};
+    const rec = ['easy', 'medium', 'hard'].filter((d) => vs[d]).map((d) => `${d} ${vs[d].w}–${vs[d].l}`).join(' · ');
+    $('#homeHi').innerHTML = rec ? `vs ai ${rec}` : '';
+    $('#btnQuick').hidden = !app.hasSaved;
+    renderProfiles();
   }
 
   function setAuthMode(m) {
@@ -457,20 +496,21 @@
       const imported = authMode === 'signup' && claimLegacyData(user);
       setUser(user);
       KK.online.start();
+      KK.social.start();
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
       app.show('title');
-      if (imported) $('#homeHi').innerHTML += ' · imported your existing builds';
+      if (imported) $('#dashHi').innerHTML += '<span class="hint"> · imported your existing builds</span>';
     } catch (ex) {
       err.textContent = ex.message;
       KK.sfx.error();
     }
   });
 
-  $('#navUser').addEventListener('click', (e) => {
-    if (e.target.id !== 'logoutBtn') return;
+  $('#logoutBtn').addEventListener('click', () => {
     if (KK.game.isRunning() || KK.game.mode() === 'pvp') KK.game.quit();
     KK.online.stop();
+    KK.social.stop();
     KK.net.logout();
     clearUser();
     setAuthMode('login');
@@ -549,7 +589,7 @@
     const inField = e.target.matches && e.target.matches('input, select, textarea');
     if (inField) return;
     if (e.code === 'Space' || e.code === 'Backspace' || e.key === "'" || e.key === '/') e.preventDefault();
-    if (app.screen === 'title' && app.user && e.key === 'Enter') KK.builder.open(0);
+    if (app.screen === 'play' && e.key === 'Enter') KK.builder.open(0);
   });
 
   document.addEventListener('keyup', (e) => {
@@ -567,9 +607,7 @@
     b.addEventListener('click', () => {
       b.blur();
       KK.sfx.ui();
-      if (b.dataset.go === 'build') KK.builder.open(0);
-      else if (b.dataset.go === 'kbs') KK.kbs.open();
-      else KK.builder.open(4);
+      app.show(b.dataset.go);
     })
   );
   $('#logo').addEventListener('click', (e) => {
@@ -609,6 +647,7 @@
     if (who && !app.user) {
       setUser(who.name);
       KK.online.start();
+      KK.social.start();
     }
     if (app.screen === 'title') app.show('title');
   });

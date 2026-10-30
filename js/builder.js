@@ -45,7 +45,7 @@
       if (b) B.go(+b.dataset.step);
     });
     B.kb = KK.kbview.create($('#buildKb'), { maxU: 46 });
-    $('#prevStep').addEventListener('click', () => (B.step === 0 ? KK.app.show('title') : B.go(B.step - 1)));
+    $('#prevStep').addEventListener('click', () => (B.step === 0 ? KK.app.show('play') : B.go(B.step - 1)));
     $('#nextStep').addEventListener('click', () => (B.step < 4 ? B.go(B.step + 1) : startPlay()));
 
     const body = $('#stepBody');

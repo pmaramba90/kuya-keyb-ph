@@ -22,29 +22,35 @@
         <span class="logo-text"><span class="logo-top">build · type · thock</span><span class="logo-main">kuya keyb <b>ph</b></span></span>
       </a>
       <nav class="nav">
-        <button class="nav-btn" data-go="build" title="build your keyboard">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-          <span>build</span>
-        </button>
-        <button class="nav-btn" data-go="kbs" title="full keyboards">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 10h2M10 10h2M14 10h2M18 10h0M7 14h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <span>keyboards</span>
+        <button class="nav-btn" data-go="title" title="home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>home</span>
         </button>
         <button class="nav-btn" data-go="play" title="play">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>
           <span>play</span>
         </button>
-        <span class="nav-user" id="navUser"></span>
+        <button class="nav-btn" data-go="friends" title="friends">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.4 3.4 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.5 3.5 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>friends</span><i class="nav-badge" id="friendsBadge" hidden></i>
+        </button>
+        <button class="nav-btn" data-go="market" title="marketplace">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.3 3 2.7 3S9.3 11 9.3 9c0 2 1.3 3 2.7 3s2.7-1 2.7-3c0 2 1.3 3 2.6 3S20 11 20 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>marketplace</span>
+        </button>
+        <button class="nav-user" id="navUser" title="your profile"></button>
       </nav>
     </header>
 
     <main>
-      <!-- home: minimal logo + wordmark; sign in / sign up when logged out -->
+      <!-- home: signed out — logo, wordmark, sign in / sign up; signed in — your dashboard -->
       <section class="screen active" id="scr-title">
         <div class="home">
-          <svg class="home-logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="7" width="28" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><g fill="currentColor"><rect x="6.5" y="11.5" width="3" height="3" rx=".8"/><rect x="11.5" y="11.5" width="3" height="3" rx=".8"/><rect x="16.5" y="11.5" width="3" height="3" rx=".8"/><rect x="21.5" y="11.5" width="3" height="3" rx=".8"/><rect x="9" y="18" width="14" height="3" rx=".8"/></g></svg>
-          <h1 class="home-word">kuya keyb <b>ph</b></h1>
-          <p class="home-tag">build your board · type the falling words</p>
+          <div class="home-hero">
+            <svg class="home-logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="7" width="28" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><g fill="currentColor"><rect x="6.5" y="11.5" width="3" height="3" rx=".8"/><rect x="11.5" y="11.5" width="3" height="3" rx=".8"/><rect x="16.5" y="11.5" width="3" height="3" rx=".8"/><rect x="21.5" y="11.5" width="3" height="3" rx=".8"/><rect x="9" y="18" width="14" height="3" rx=".8"/></g></svg>
+            <h1 class="home-word">kuya keyb <b>ph</b></h1>
+            <p class="home-tag">build your board · type the falling words</p>
+          </div>
           <p class="home-count" id="homeCount"></p>
           <p class="home-count home-online" id="homeOnline"></p>
 
@@ -61,23 +67,70 @@
             <p class="hint" id="authHint"></p>
           </form>
 
-          <div class="home-in" id="homeIn" hidden>
-            <p class="home-hi" id="homeHi"></p>
-            <div class="title-actions">
-              <button class="btn primary" id="btnSolo">single player</button>
-              <button class="btn primary" id="btnVs">vs AI</button>
-              <button class="btn primary" id="btnPvp">vs players</button>
-            </div>
-            <div class="title-actions">
-              <button class="btn" id="btnBuild">build a new keyboard</button>
-              <button class="btn" id="btnKbs">full keyboards</button>
-              <button class="btn" id="btnQuick" hidden>continue last build</button>
-            </div>
-            <div class="saved" id="savedWrap" hidden>
-              <div class="grp-h">your saved builds</div>
-              <div class="saved-list" id="savedList"></div>
-            </div>
+          <div class="dash" id="homeIn" hidden>
+            <div class="dash-hi" id="dashHi"></div>
+            <div class="dash-best" id="dashBest"></div>
+            <div class="grp-h">your keyboards</div>
+            <div class="dash-kbs" id="dashKbs"></div>
           </div>
+        </div>
+      </section>
+
+      <!-- play: the game modes, building, your saved builds -->
+      <section class="screen" id="scr-play">
+        <div class="home play">
+          <p class="home-hi" id="homeHi"></p>
+          <div class="title-actions">
+            <button class="btn primary" id="btnSolo">single player</button>
+            <button class="btn primary" id="btnVs">vs AI</button>
+            <button class="btn primary" id="btnPvp">vs players</button>
+          </div>
+          <div class="title-actions">
+            <button class="btn" id="btnBuild">build a new keyboard</button>
+            <button class="btn" id="btnKbs">full keyboards</button>
+            <button class="btn" id="btnQuick" hidden>continue last build</button>
+          </div>
+          <div class="saved" id="savedWrap" hidden>
+            <div class="grp-h">your saved builds</div>
+            <div class="saved-list" id="savedList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- friends -->
+      <section class="screen" id="scr-friends">
+        <div class="narrow">
+          <div class="grp-h">friends <span class="sub" id="friendsCount"></span></div>
+          <form class="add-friend" id="addFriend" autocomplete="off">
+            <input class="search" id="addFriendName" placeholder="add a friend by username" spellcheck="false" maxlength="20">
+            <button class="btn primary" type="submit">send request</button>
+          </form>
+          <p class="hint add-msg" id="addFriendMsg"></p>
+          <div id="friendReqs"></div>
+          <div class="friend-list" id="friendList"></div>
+        </div>
+      </section>
+
+      <!-- marketplace: later -->
+      <section class="screen" id="scr-market">
+        <div class="narrow empty-page"><div class="grp-h">marketplace</div><p class="hint">coming soon.</p></div>
+      </section>
+
+      <!-- your profile -->
+      <section class="screen" id="scr-profile">
+        <div class="narrow profile">
+          <button class="av-edit" id="avEdit" title="change profile picture"><img class="av xl" id="profileAv" alt=""><span>change photo</span></button>
+          <input type="file" id="avFile" accept="image/*" hidden>
+          <button class="link-btn" id="avRemove" hidden>remove photo</button>
+          <div class="profile-name" id="profileName"></div>
+          <form class="profile-form" id="profileForm" autocomplete="off">
+            <label><span>nickname</span><input class="search" id="pfNick" maxlength="30" placeholder="optional"></label>
+            <label><span>city</span><input class="search" id="pfCity" maxlength="40" placeholder="optional"></label>
+            <label><span>country</span><input class="search" id="pfCountry" maxlength="40" placeholder="optional"></label>
+            <label><span>email</span><input class="search" id="pfEmail" type="email" maxlength="80" placeholder="optional · only you see this"></label>
+            <div class="profile-btns"><button class="btn primary" type="submit">save</button><span class="hint" id="pfMsg"></span></div>
+          </form>
+          <button class="link-btn" id="logoutBtn">log out</button>
         </div>
       </section>
 
@@ -172,13 +225,13 @@
       <!-- vs AI: two fields, you on the left, the AI on the right -->
       <section class="screen" id="scr-vs">
         <div class="vs-top">
-          <div class="vs-side"><span class="hud-lbl" id="vsNameL">you</span><span class="vs-sub" id="vsSubL"></span><b id="vsScoreL">0</b></div>
+          <div class="vs-side"><span class="vs-who-top"><img class="av sm" id="vsAvL" alt=""><span class="hud-lbl" id="vsNameL">you</span></span><span class="vs-sub" id="vsSubL"></span><b id="vsScoreL">0</b></div>
           <div class="vs-center">
             <div class="hud-lbl" id="vsRound">round 1 · best of 3</div>
             <div class="hud-time" id="vsTime">1:30</div>
             <div class="vs-wins" id="vsWins"></div>
           </div>
-          <div class="vs-side r"><span class="hud-lbl" id="vsNameR">ai</span><span class="vs-sub" id="vsSubR"></span><b id="vsScoreR">0</b></div>
+          <div class="vs-side r"><span class="vs-who-top"><span class="hud-lbl" id="vsNameR">ai</span><img class="av sm" id="vsAvR" alt="" hidden></span><span class="vs-sub" id="vsSubR"></span><b id="vsScoreR">0</b></div>
         </div>
         <div class="vs-lanes">
           <div class="lane" id="laneL">
@@ -245,6 +298,16 @@
 
   <div class="overlay" id="overlay" hidden><div class="ov-card" id="ovCard"></div></div>
   <div class="overlay ch-overlay" id="chOverlay" hidden><div class="ov-card ch-card" id="chCard"></div></div>
+  <!-- profile picture: drag to position, zoom, save (Facebook-style) -->
+  <div class="overlay av-overlay" id="avOverlay" hidden>
+    <div class="ov-card av-card">
+      <div class="ov-h">profile picture</div>
+      <div class="av-crop" id="avCrop"><canvas id="avCanvas" width="280" height="280"></canvas><i class="av-ring"></i></div>
+      <input type="range" id="avZoom" min="1" max="3" step="0.01" value="1" aria-label="zoom">
+      <p class="hint">drag to reposition · slide to zoom</p>
+      <div class="ov-btns"><button class="btn primary" id="avSave">save</button><button class="btn ghost" id="avCancel">cancel</button></div>
+    </div>
+  </div>
 
   <script src="js/util.js"></script>
   <script src="js/auth.js"></script>
@@ -266,6 +329,7 @@
   <script src="js/kbs.js"></script>
   <script src="js/game.js"></script>
   <script src="js/online.js"></script>
+  <script src="js/social.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

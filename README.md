@@ -11,6 +11,20 @@ No build step and no install. Either:
 
 Click or press any key once the page opens. Browsers block audio until you interact with the page.
 
+## Sections
+
+The top bar has **home · play · friends · marketplace**, plus your picture and name (your profile).
+
+- **home**: signed out, the logo with sign in / sign up. Signed in, a dashboard:
+  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record
+  - every saved keyboard with how it sounds, its estimated price and its win rate against players; click one to open it
+- **play**: the game modes (single player, vs AI, vs players), build a new keyboard, full keyboards, continue last build, and your saved builds (load, rename, delete).
+- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice).
+- **marketplace**: coming soon.
+- **profile** (click your name): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
+
+**Profile pictures** work like Facebook's: pick a photo, then drag to position it in the circle and zoom with the slider (or the mouse wheel). It's cropped in the browser to a 192 px square JPEG (a few KB) and saved in the database, because file storage would need Firebase's paid plan. Without a picture you get the keyboard logo. Pictures show in the nav, on home, on friends, in the vs players list, on challenges, on the VS card and beside both names at the top of the match.
+
 ## Accounts
 
 The home page is the logo, the wordmark, a count of players who have signed up, and **log in / sign up** (username and password).
@@ -201,6 +215,7 @@ js/auth.js            local sign up / log in (PBKDF2-hashed passwords)
 js/net-config.js      Firebase web config (null = everything stays in this browser)
 js/net.js             online layer: Firebase Auth + Realtime Database, or a localStorage stand-in
 js/online.js          vs players: presence, lobby, challenges, build sync, records, user count
+js/social.js          profiles, profile pictures (crop + store), friends and friend requests
 js/data-*.js          switches, keycap sets, word lists (english + tagalog)
 js/catalog.js         parts, sound multipliers, switch/keycap inference
 js/audio-core.js      audio context, buses, DSP primitives

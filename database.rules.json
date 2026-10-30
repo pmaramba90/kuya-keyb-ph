@@ -10,6 +10,41 @@
       ".read": "auth != null",
       "$uid": { ".write": "auth != null && auth.uid === $uid" }
     },
+    "names": {
+      ".read": "auth != null",
+      "$name": { ".write": "auth != null && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)" }
+    },
+    "avatars": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 300000"
+      }
+    },
+    "profiles": {
+      ".read": "auth != null",
+      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+    },
+    "private": {
+      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" }
+    },
+    "friendReqs": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".read": "auth != null && auth.uid === $from",
+          ".write": "auth != null && (auth.uid === $to || auth.uid === $from)"
+        }
+      }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$other": {
+          ".write": "auth != null && (auth.uid === $uid || (auth.uid === $other && (!newData.exists() || root.child('friendReqs').child($other).child($uid).exists())))"
+        }
+      }
+    },
     "builds": {
       ".read": "auth != null",
       "$uid": { ".write": "auth != null && auth.uid === $uid" }

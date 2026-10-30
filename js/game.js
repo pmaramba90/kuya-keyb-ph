@@ -728,8 +728,8 @@
         retry: () => { KK.ui.close(); KK.app.startGame(level, 'retry'); },
         restart: () => { KK.ui.close(); KK.app.startGame(1); },
         build: () => { KK.ui.close(); G.quit(); KK.builder.open(4); },
-        menu: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
-        esc: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
+        menu: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
+        esc: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
       }
     );
   }
@@ -899,6 +899,15 @@
     app.classList.add('quake');
   }
 
+  // the home page shows your best round score per mode (vsBest: vs AI, pvpBest: vs players)
+  function bestRound(key, score) {
+    const prog = KK.app.progress;
+    if (score > (prog[key] || 0)) {
+      prog[key] = score;
+      KK.app.saveProgress();
+    }
+  }
+
   function roundEnd() {
     if (run && run.kind === 'pvp') return roundEndPvp();
     if (!run || run.kind !== 'vs' || !run.running) return;
@@ -921,6 +930,7 @@
     else w = 'draw';
     if (w === 'you') run.wins[0]++;
     if (w === 'ai') run.wins[1]++;
+    bestRound('vsBest', y.score);
     const why = y.dead || a.dead ? 'overflow' : 'time · higher score';
     run.history.push({ w, you: y.score, ai: a.score });
     run.boards.forEach((b) => !b.dead && b.words.slice().forEach((x) => b.removeWord(x, 'done')));
@@ -958,8 +968,8 @@
         nextRound: () => { KK.ui.close(); startRound(); },
         rematch: () => { KK.ui.close(); G.startVs(diff, lang); },
         diff: () => { KK.ui.close(); G.quit(); KK.builder.mode = 'vs'; KK.builder.open(4); },
-        menu: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
-        esc: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
+        menu: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
+        esc: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
       }
     );
   }
@@ -1221,17 +1231,17 @@
         ? `<div class="vsi-hero photo"><img alt="" src="${esc(img + (img.includes('?') ? '&' : '?') + 'width=900')}"></div>`
         : '<div class="vsi-hero"><div class="vsi-kb"></div></div>';
     };
-    const side = (cls, name, title, b) => `<div class="vsi-side ${cls}">
-        <div class="vsi-name">${esc(name)}</div>
+    const side = (cls, uid, name, title, b) => `<div class="vsi-side ${cls}">
+        <div class="vsi-who">${KK.social.avatarImg(uid, 'lg')}<div class="vsi-name">${esc(name)}</div></div>
         ${hero(b)}
         <div class="vsi-build">${esc(title)}</div>
         <div class="vsi-tags">${esc(KK.keysound.writeup(b).headline)}</div></div>`;
     KK.ui.open(
       `<div class="vsi">
          <div class="vsi-bg"><i class="l"></i><i class="r"></i><b></b><b></b><b></b></div>
-         ${side('vsi-l', KK.app.userName(), KK.app.pvpName || 'your keyboard', mine)}
+         ${side('vsi-l', m.me, KK.app.userName(), KK.app.pvpName || 'your keyboard', mine)}
          <div class="vsi-vs"><span>VS</span><i class="vsi-ring"></i></div>
-         ${side('vsi-r', m.oppName, m.oppBuildName || 'their keyboard', m.oppBuild)}
+         ${side('vsi-r', m.opp, m.oppName, m.oppBuildName || 'their keyboard', m.oppBuild)}
          <div class="vsi-foot">best of 3 · 1:30 rounds · combos attack the other overflow bar</div>
        </div>`,
       {}
@@ -1291,6 +1301,7 @@
     else w = 'draw';
     if (w === 'you') run.wins[0]++;
     if (w === 'opp') run.wins[1]++;
+    bestRound('pvpBest', mine.sc);
     run.history.push({ w, you: mine.sc, opp: theirs.sc });
     run.you.words.slice().forEach((x) => run.you.removeWord(x, 'done'));
     vsHud(true);
@@ -1342,7 +1353,7 @@
        <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to players</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
       {
         lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
-        menu: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
+        menu: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
         esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby(); },
       }
     );
@@ -1367,7 +1378,7 @@
   function leaveMatch() {
     KK.ui.close();
     G.quit();
-    KK.app.show('title');
+    KK.app.show('play');
   }
 
   // esc against a person: the match keeps running behind this
@@ -1416,7 +1427,7 @@
           else KK.app.startGame(run.level, 'retry');
         },
         build: () => { KK.ui.close(); G.quit(); KK.builder.open(0); },
-        quit: () => { KK.ui.close(); G.quit(); KK.app.show('title'); },
+        quit: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
       }
     );
   };

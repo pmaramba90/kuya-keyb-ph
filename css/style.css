@@ -75,10 +75,104 @@ body[data-screen='game'] .nav, body[data-screen='vs'] .nav { opacity: .25; point
 .home-in { display: flex; flex-direction: column; align-items: center; width: 100%; }
 .home-in[hidden] { display: none; }
 .title-actions { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; justify-content: center; }
-#btnSolo, #btnVs { min-width: 170px; padding: 13px 22px; font-size: 15px; }
-body[data-screen='title'] .logo { visibility: hidden; }
+#btnSolo, #btnVs, #btnPvp { min-width: 170px; padding: 13px 22px; font-size: 15px; }
+body.signed-out[data-screen='title'] .logo { visibility: hidden; }
 body.signed-out .nav-btn { display: none; }
-.nav-user { display: flex; align-items: center; gap: 6px; margin-left: 8px; font-size: 12px; color: var(--sub); }
+body:not(.signed-out) .home-hero { display: none; }
+body:not(.signed-out) #scr-title .home { padding-top: 2vh; }
+body:not(.signed-out) .home-count { margin: 0 0 2px; }
+.nav-user { display: flex; align-items: center; gap: 8px; margin-left: 10px; padding: 4px 10px 4px 4px; background: none; border: 0; border-radius: 20px; font-size: 12px; color: var(--sub); cursor: pointer; transition: color .15s, background .15s; }
+.nav-user:hover, .nav-user.on { color: var(--text); background: var(--bg2); }
+.nav-user[hidden] { display: none; }
+.nav-btn { position: relative; }
+.nav-badge { position: absolute; top: 2px; right: 0; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; background: var(--err); color: #fff; font-size: 10px; font-style: normal; line-height: 15px; text-align: center; }
+.nav-badge[hidden] { display: none; }
+
+/* profile pictures: always circles */
+.av { display: inline-block; flex: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg3); vertical-align: middle; }
+.av.xs { width: 24px; height: 24px; }
+.av.sm { width: 32px; height: 32px; }
+.av.md { width: 52px; height: 52px; }
+.av.lg { width: 72px; height: 72px; }
+.av.xl { width: 128px; height: 128px; }
+.av-wrap { position: relative; display: inline-flex; flex: none; }
+.av-wrap .pl-dot { position: absolute; right: -1px; bottom: -1px; border: 2px solid var(--bg2); width: 11px; height: 11px; box-sizing: content-box; }
+.pl-dot.off { background: var(--bg3); box-shadow: none; }
+
+/* home dashboard */
+.dash { width: 100%; max-width: 760px; text-align: left; margin-top: 18px; }
+.dash[hidden] { display: none; }
+.dash-hi { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.dash-name { font-size: 20px; color: var(--text); }
+.dash-hi .hint { margin: 0; }
+.dash-best { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
+.tile { display: flex; flex-direction: column; gap: 2px; background: var(--bg2); border-radius: var(--r); padding: 14px 16px; }
+.tile b { font-size: 26px; font-weight: 400; color: var(--main); line-height: 1.2; }
+.tile .hint { margin: 0; font-size: 11px; }
+.dash-kbs { display: flex; flex-direction: column; gap: 8px; }
+.kb-card { display: grid; grid-template-columns: auto 1fr 90px 90px; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--bg2); border: 2px solid transparent; border-radius: var(--r); padding: 10px 14px; color: var(--text); cursor: pointer; transition: border-color .15s; }
+.kb-card:not([data-id]) { cursor: default; }
+.kb-card[data-id]:hover { border-color: color-mix(in srgb, var(--main) 45%, transparent); }
+.kb-text { display: flex; flex-direction: column; min-width: 0; }
+.kb-text b { font-weight: 400; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-text span, .kb-num span { font-size: 11px; color: var(--sub); }
+.kb-num { display: flex; flex-direction: column; text-align: right; }
+.kb-num b { font-weight: 400; font-size: 15px; color: var(--main); }
+
+/* friends, marketplace, profile: one narrow column */
+.narrow { max-width: 620px; margin: 0 auto; padding-top: 2vh; }
+.empty-page { text-align: center; padding-top: 12vh; }
+.add-friend { display: flex; gap: 8px; }
+.add-friend .search { flex: 1; min-width: 0; }
+.add-msg { min-height: 18px; margin: 8px 0 14px; }
+#friendReqs:not(:empty) { margin-bottom: 18px; }
+.friend-list, #friendReqs { display: flex; flex-direction: column; gap: 8px; }
+.fr-card { display: flex; align-items: center; gap: 12px; background: var(--bg2); border-radius: var(--r); padding: 10px 12px; }
+.fr-card.req { border: 1px solid color-mix(in srgb, var(--main) 45%, transparent); }
+.fr-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fr-text b { font-weight: 400; font-size: 14px; color: var(--text); }
+.fr-text span { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.av-edit { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: 0; color: var(--sub); font-size: 12px; cursor: pointer; }
+.av-edit:hover { color: var(--text); }
+.av-edit:hover .av { box-shadow: 0 0 0 3px var(--main); }
+.link-btn { background: none; border: 0; color: var(--sub); font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; margin-top: 6px; }
+.link-btn:hover { color: var(--text); }
+.link-btn[hidden] { display: none; }
+.profile-name { display: flex; flex-direction: column; margin: 16px 0 22px; }
+.profile-name b { font-weight: 400; font-size: 20px; color: var(--text); }
+.profile-name span { font-size: 12px; color: var(--sub); }
+.profile-form { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; text-align: left; }
+.profile-form label { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 10px; font-size: 12px; color: var(--sub); }
+.profile-form .search { min-width: 0; width: 100%; }
+.profile-btns { display: flex; align-items: center; gap: 12px; margin: 6px 0 18px 90px; }
+.profile-btns .hint { margin: 0; }
+#logoutBtn { margin-top: 10px; }
+
+/* profile picture crop: drag + zoom inside a circle, like Facebook */
+.av-overlay { z-index: 80; }
+.av-card { max-width: 360px; }
+.av-crop { position: relative; width: 280px; height: 280px; margin: 14px auto 12px; border-radius: 10px; overflow: hidden; background: #000; touch-action: none; }
+.av-crop canvas { display: block; cursor: grab; }
+.av-crop canvas:active { cursor: grabbing; }
+.av-ring { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 200px rgba(15, 26, 46, .65); border: 2px solid rgba(255, 255, 255, .8); pointer-events: none; }
+#avZoom { width: 220px; }
+
+/* pictures in vs mode */
+.vs-who-top { display: flex; align-items: center; gap: 8px; }
+.vs-side.r .vs-who-top { justify-content: flex-end; }
+.vs-who-top .av { width: 26px; height: 26px; }
+.vs-who-top .av[hidden] { display: none; }
+.vsi-who { display: flex; align-items: center; gap: 16px; }
+.vsi-l .vsi-who { flex-direction: row-reverse; }
+.vsi-l .vsi-who .av { box-shadow: 0 0 0 3px var(--main), 0 0 24px rgba(226, 183, 20, .5); }
+.vsi-r .vsi-who .av { box-shadow: 0 0 0 3px #7fd1ff, 0 0 24px rgba(127, 209, 255, .5); }
+.ch-av { margin: 6px auto 10px; display: block; box-shadow: 0 0 0 3px var(--main); }
+@media (max-width: 700px) {
+  .dash-best { grid-template-columns: 1fr; }
+  .kb-card { grid-template-columns: auto 1fr; }
+  .kb-num { text-align: left; }
+}
 
 .auth { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
 .auth[hidden] { display: none; }
