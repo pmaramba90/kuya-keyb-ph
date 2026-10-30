@@ -110,6 +110,7 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .tile b { font-size: 26px; font-weight: 400; color: var(--main); line-height: 1.2; }
 .tile .hint { margin: 0; font-size: 11px; }
 .dash-kbs { display: flex; flex-direction: column; gap: 8px; }
+.dash-actions { justify-content: flex-start; margin: -14px 0 22px; }
 .kb-card { display: grid; grid-template-columns: auto 1fr 90px 90px 104px; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--bg2); border: 2px solid transparent; border-radius: var(--r); padding: 10px 14px; color: var(--text); transition: border-color .15s; }
 .kb-card.open { cursor: pointer; }
 .kb-card.open:hover { border-color: color-mix(in srgb, var(--main) 45%, transparent); }

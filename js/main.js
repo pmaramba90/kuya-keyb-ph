@@ -452,6 +452,7 @@
     $('#dashBest').innerHTML = tile('single player', p.bestTotal, 'best total') + tile('vs ai', p.vsBest, 'best round' + rec(ai)) + tile('vs players', p.pvpBest, 'best round' + rec(pvp));
     const kbs = app.profiles.map((x) => ({ id: x.id, name: x.name, build: x.build, w: x.w || 0, l: x.l || 0 }));
     if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
+    $('#homeQuick').hidden = !app.hasSaved;
     const main = kbs.find((k) => k.id && k.id === app.mainBuildId()) || kbs[0];
     renderFeatured(FEAT_HOME, main);
     const rest = kbs.filter((k) => k !== main);
@@ -724,6 +725,14 @@
   });
   $('#btnQuick').addEventListener('click', () => KK.builder.open(4));
   $('#btnKbs').addEventListener('click', () => KK.kbs.open());
+  // the same three on the home page: they just press play's buttons
+  const HOME_BTN = { build: '#btnBuild', kbs: '#btnKbs', quick: '#btnQuick' };
+  $('#dashActions').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-home]');
+    if (!b) return;
+    b.blur();
+    $(HOME_BTN[b.dataset.home]).click();
+  });
   $('#btnSolo').addEventListener('click', () => {
     KK.builder.mode = 'solo';
     KK.builder.open(4);
