@@ -268,6 +268,10 @@
   app.gameKb = KK.kbview.create($('#gameKb'), { maxU: 26 });
   app.vsKb = KK.kbview.create($('#vsKb'), { maxU: 22 });
   views.push(app.gameKb, app.vsKb);
+  // featured keyboards: yours on home (lights up as you type) and a friend's on their page
+  app.featView = KK.kbview.create($('#featKb'), { maxU: 46 });
+  app.userFeatView = KK.kbview.create($('#userFeatKb'), { maxU: 46 });
+  views.push(app.featView);
   // your opponent's board (vs players): not in `views`, so your own key presses don't
   // light it up — theirs do, from their live snapshots (app.oppPress)
   app.oppKb = KK.kbview.create($('#vsOppKb'), { maxU: 22 });
@@ -282,7 +286,7 @@
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
   // the nav tab each screen belongs to
-  const NAV_TAB = { title: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play' };
+  const NAV_TAB = { title: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
   const HINT_SOLO = $('#keysHint').innerHTML;
   const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
@@ -316,7 +320,7 @@
       renderGameBuild($('#vsBuild'));
       $('#vsSubL').textContent = $('#vsSubR').textContent = '';
     }
-    requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb).forEach((v) => v.fit()));
+    requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb, app.userFeatView).forEach((v) => v.fit()));
   };
 
   // compact spec sheet shown beside the keyboard while playing (yours, or with b and
@@ -448,22 +452,103 @@
     $('#dashBest').innerHTML = tile('single player', p.bestTotal, 'best total') + tile('vs ai', p.vsBest, 'best round' + rec(ai)) + tile('vs players', p.pvpBest, 'best round' + rec(pvp));
     const kbs = app.profiles.map((x) => ({ id: x.id, name: x.name, build: x.build, w: x.w || 0, l: x.l || 0 }));
     if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
-    $('#dashKbs').innerHTML = kbs.length
-      ? kbs.map((k) => {
-          const b = C.sanitizeBuild(k.build), c = C.keycapById[b.keycap].colors, games = k.w + k.l;
-          return `<button class="kb-card"${k.id ? ` data-id="${k.id}"` : ''}>
-            <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
-            <span class="kb-text"><b>${esc(k.name)}</b><span>${esc(KK.keysound.writeup(b).headline)}</span></span>
-            <span class="kb-num"><b>${C.money(C.billOfMaterials(b).total, cur)}</b><span>est. price</span></span>
-            <span class="kb-num"><b>${games ? Math.round((k.w / games) * 100) + '%' : '—'}</b><span>${games ? `${k.w}W ${k.l}L` : 'no matches'}</span></span>
-          </button>`;
-        }).join('')
-      : '<p class="hint">no saved keyboards yet — build one from play.</p>';
+    const main = kbs.find((k) => k.id && k.id === app.mainBuildId()) || kbs[0];
+    renderFeatured(FEAT_HOME, main);
+    const rest = kbs.filter((k) => k !== main);
+    $('#dashKbs').innerHTML = rest.length
+      ? rest.map((k) => kbCard(k, { open: true, canMain: true })).join('')
+      : `<p class="hint">${kbs.length ? 'build more keyboards from play — they show up here.' : 'no saved keyboards yet — build one from play.'}</p>`;
   }
   $('#dashKbs').addEventListener('click', (e) => {
+    const m = e.target.closest('[data-main]');
+    if (m) {
+      KK.sfx.select();
+      return app.setMain(m.dataset.main);
+    }
     const c = e.target.closest('[data-id]');
     if (c) app.loadProfile(c.dataset.id);
   });
+
+  /* ------------------------- featured / main keyboard ------------------------- */
+  // your main keyboard: the one shown big on your home page and to friends. With
+  // builds but no main yet, the first one becomes it.
+  app.mainBuildId = () => {
+    let id = KK.store.uget('mainBuild', null);
+    if (!app.profiles.some((x) => x.id === id)) {
+      id = app.profiles[0] ? app.profiles[0].id : null;
+      if (id) KK.store.uset('mainBuild', id);
+    }
+    return id;
+  };
+  app.setMain = (id) => {
+    KK.store.uset('mainBuild', id);
+    app.storeProfiles(); // the online copy marks it, so friends see it too
+    renderHome();
+  };
+
+  const winRate = (k) => {
+    const g = (k.w || 0) + (k.l || 0);
+    return { pct: g ? Math.round(((k.w || 0) / g) * 100) + '%' : '—', rec: g ? `${k.w || 0}W ${k.l || 0}L` : 'no matches' };
+  };
+
+  // a keyboard row: swatch, name and sound, price, win rate (+ make main / open)
+  function kbCard(k, o) {
+    const b = C.sanitizeBuild(k.build), c = C.keycapById[b.keycap].colors, wr = winRate(k);
+    const cur = app.settings.currency || 'usd';
+    return `<div class="kb-card${o.open && k.id ? ' open' : ''}"${o.open && k.id ? ` data-id="${esc(k.id)}" role="button" tabindex="0"` : ''}>
+      <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
+      <span class="kb-text"><b>${esc(k.name)}</b><span>${esc(KK.keysound.writeup(b).headline)}</span></span>
+      <span class="kb-num"><b>${C.money(C.billOfMaterials(b).total, cur)}</b><span>est. price</span></span>
+      <span class="kb-num"><b>${wr.pct}</b><span>${wr.rec}</span></span>
+      ${o.canMain && k.id ? `<button class="btn sm ghost" data-main="${esc(k.id)}">make main</button>` : '<span></span>'}
+    </div>`;
+  }
+
+  // the featured keyboard: the board drawn full size plus everything about it
+  const FEAT_HOME = { box: '#dashFeat', name: '#featName', tags: '#featTags', spec: '#featSpec', stats: '#featStats', view: () => app.featView };
+  const FEAT_USER = { box: '#userFeat', name: '#userFeatName', tags: '#userFeatTags', spec: '#userFeatSpec', stats: '#userFeatStats', view: () => app.userFeatView };
+  function renderFeatured(F, k) {
+    $(F.box).hidden = !k;
+    if (!k) return;
+    const b = C.sanitizeBuild(k.build), wr = winRate(k), cur = app.settings.currency || 'usd';
+    $(F.name).textContent = k.name;
+    $(F.tags).textContent = KK.keysound.writeup(b).headline;
+    renderGameBuild($(F.spec), b, k.name);
+    const stat = (v, l) => `<div class="tile"><b>${v}</b><span class="hint">${l}</span></div>`;
+    $(F.stats).innerHTML = stat(C.money(C.billOfMaterials(b).total, cur), 'estimated price') + stat(wr.pct, 'win rate vs players') + stat(wr.rec, 'record');
+    F.view().update(b);
+    requestAnimationFrame(() => F.view().fit());
+  }
+
+  /* -------------------------------- a friend's page -------------------------------- */
+  app.showUser = async function (uid) {
+    if (!uid) return;
+    app.viewUid = uid;
+    app.show('user');
+    $('#userHi').innerHTML = `${KK.social.avatarImg(uid, 'md')}<div><div class="dash-name">…</div></div>`;
+    $('#userFeat').hidden = true;
+    $('#userKbs').innerHTML = '';
+    const N = KK.net;
+    const [u, pf, bs] = await Promise.all(['users/', 'profiles/', 'builds/'].map((p) => N.ref(p + uid).once().catch(() => null)));
+    if (app.viewUid !== uid || app.screen !== 'user') return;
+    const pres = KK.online.players()[uid];
+    const st = !KK.online.isOnline(pres) ? 'offline' : pres.state === 'match' ? 'in a match' : 'online';
+    const name = (u && u.display) || (pres && pres.display) || (u && u.name) || 'player';
+    const sub = [pf && pf.nickname && `“${pf.nickname}”`, pf && [pf.city, pf.country].filter(Boolean).join(', '), st].filter(Boolean).join(' · ');
+    $('#userHi').innerHTML = `<span class="av-wrap">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
+      <div class="user-who"><div class="dash-name">${esc(name)}</div><div class="hint">${esc(sub)}</div></div>
+      ${st === 'online' ? `<button class="btn primary sm" id="userChallenge">challenge</button>` : ''}`;
+    const all = bs || {};
+    const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
+    const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
+    renderFeatured(FEAT_USER, main);
+    const rest = kbs.filter((k) => k !== main);
+    $('#userKbsH').hidden = !rest.length;
+    $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, {})).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
+    const ch = $('#userChallenge');
+    if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
+  };
+  $('#userBack').addEventListener('click', () => app.show('friends'));
 
   // play: the modes, building, your saved builds
   function renderPlay() {

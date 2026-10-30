@@ -17,9 +17,10 @@ The top bar has **home · play · friends · marketplace**, plus your picture an
 
 - **home**: signed out, the logo with sign in / sign up. Signed in, a dashboard:
   - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record
-  - every saved keyboard with how it sounds, its estimated price and its win rate against players; click one to open it
+  - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record
+  - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
 - **play**: the game modes (single player, vs AI, vs players), build a new keyboard, full keyboards, continue last build, and your saved builds (load, rename, delete).
-- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice).
+- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its details, and their other keyboards.
 - **marketplace**: coming soon.
 - **profile** (click your name): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 

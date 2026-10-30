@@ -302,7 +302,7 @@
           if (!f.display) f.display = p.display || f.name;
           const where = [f.city, f.country].filter(Boolean).join(', ');
           const sub = [f.nickname && `“${f.nickname}”`, where, st].filter(Boolean).join(' · ');
-          return `<div class="fr-card"><span class="av-wrap">${S.avatarImg(uid, 'sm')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
+          return `<div class="fr-card link" data-user="${esc(uid)}" title="view profile"><span class="av-wrap">${S.avatarImg(uid, 'sm')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
             <div class="fr-text"><b>${esc(f.display || f.name || '…')}</b><span>${esc(sub)}</span></div>
             ${st === 'online' ? `<button class="btn primary sm" data-fr="challenge" data-uid="${esc(uid)}">challenge</button>` : ''}
             <button class="picon" data-fr="remove" data-uid="${esc(uid)}" title="remove friend">✕</button></div>`;
@@ -313,6 +313,8 @@
 
   document.querySelector('#scr-friends').addEventListener('click', (e) => {
     const b = e.target.closest('[data-fr]');
+    const card = e.target.closest('[data-user]');
+    if (!b && card) return KK.app.showUser(card.dataset.user); // their page
     if (!b || !me) return;
     b.blur();
     KK.sfx.ui();

@@ -58,8 +58,8 @@
   // keep the online copy of your builds in step with this browser
   O.pushBuilds = function () {
     if (!me) return;
-    const out = {};
-    KK.app.profiles.forEach((p) => (out[p.id] = { name: p.name, build: p.build, w: p.w || 0, l: p.l || 0, updated: p.updated || p.created || 0 }));
+    const out = {}, mainId = KK.app.mainBuildId();
+    KK.app.profiles.forEach((p) => (out[p.id] = { name: p.name, build: p.build, w: p.w || 0, l: p.l || 0, updated: p.updated || p.created || 0, main: p.id === mainId }));
     const d = KK.app.progress.pvpDefault;
     if (d) out.default = { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: d.w || 0, l: d.l || 0, updated: 0 };
     N.ref('builds/' + me.uid).set(out);
@@ -92,6 +92,9 @@
       p.l = Math.max(p.l || 0, c.l || 0);
       changed = true;
     });
+    // the main keyboard you picked on another device
+    const cloudMain = Object.keys(cloud).find((id) => id !== 'default' && cloud[id] && cloud[id].main);
+    if (cloudMain && app.profiles.some((p) => p.id === cloudMain)) KK.store.uset('mainBuild', cloudMain);
     if (changed) app.storeProfiles();
     O.pushBuilds();
     if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
