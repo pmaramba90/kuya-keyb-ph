@@ -78,9 +78,9 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 **vs players** on the home page lists everyone online: each player's username and the keyboard they've picked to play with (name, how it sounds, board, switch, keycaps, and its win–loss record). Once you're signed in, the home page also shows how many players are online now, under the sign-up count.
 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
-- **Challenge** someone. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
+- **Challenge** someone. They hear an arcade alarm, a two-tone siren then a sword-clash "shing", with a softer reminder at 5 seconds, and their tab title flashes "⚔ challenged!" if they're elsewhere. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
 - Same rules as vs AI at medium speed (level 4): best of 3, 1:30 rounds, combos attack the other player's overflow bar.
-- Before round 1 a **VS card** plays (about 4 seconds). Each player's selected keyboard is the main image: the store photo for a full keyboard, otherwise the build drawn large. Both sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!".
+- Before round 1 a **VS card** plays (about 4 seconds). Each player's selected keyboard is the main image: the store photo for a full keyboard, otherwise the build drawn large. Both sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!". Both calls use the clean vocal path (like OVERFLOW), not the gritty combo chain, and come in after the slam's crash so they're easy to make out. The takes were chosen by running Windows speech recognition on the candidates against soundalike words.
 - During the match both keyboards sit under the lanes, each with its owner's name and full setup. Your opponent's keys light up as they type.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
 - Esc doesn't pause against a person. It asks whether to forfeit.
@@ -108,6 +108,7 @@ The config values are public by design. The database rules are what keep each pl
    - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
+   - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
    - A spec sheet of your build sits beside the in-game keyboard.
    - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.

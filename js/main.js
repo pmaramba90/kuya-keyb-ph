@@ -252,8 +252,8 @@
         cdTimer = setTimeout(step, 650);
       } else {
         $('#ovCard').innerHTML = '<div class="count-big">go</div>';
-        KK.sfx.count(0);
-        if (onGo) onGo();
+        if (onGo) onGo(); // replaces the go beep so nothing masks it
+        else KK.sfx.count(0);
         cdTimer = setTimeout(() => {
           ui.close();
           cb();

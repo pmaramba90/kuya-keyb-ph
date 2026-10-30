@@ -319,9 +319,9 @@
       this.emit('change');
     }
 
+    // a word reaching the bottom doesn't touch your combo — only a typo does (typeChar)
     miss(w) {
       this.missed++;
-      this.combo = 0;
       if (this.missFills) this.bar = Math.min(1, this.bar + this.p.missDamage + w.text.length * 0.003);
       const g = this.goodPrefix(this.buffer);
       this.removeWord(w, 'dead');
@@ -1243,7 +1243,7 @@
     KK.sfx.whoosh(0);
     KK.sfx.whoosh(0.25);
     KK.sfx.slam(0.75);
-    KK.voice.call('versus', 0.85);
+    KK.voice.call('versus', 1.15); // after the slam's crash has died down, so it's heard clearly
     const r = run;
     setTimeout(() => {
       const el = document.querySelector('#ovCard .vsi');

@@ -353,7 +353,16 @@
     incoming = { from, ch, path, pid: cur.pid };
     const d = describe(ch.build);
     const opts = picks().map((p) => `<option value="${esc(p.pid)}"${p.pid === cur.pid ? ' selected' : ''}>${esc(p.name)} · ${recText(p.rec)}</option>`).join('');
+    // sound the alarm (again, softer, at 5 s) and flash the tab title in case you're elsewhere
+    KK.sfx.challenge();
+    const title = document.title;
+    let blink = 0;
+    const titleBlink = setInterval(() => (document.title = blink++ % 2 ? title : '⚔ challenged!'), 700);
+    const remind = setTimeout(() => incoming && KK.sfx.challenge(true), Math.max(0, ch.at + 5000 - N.now()));
     const end = () => {
+      clearInterval(titleBlink);
+      clearTimeout(remind);
+      document.title = title;
       incoming = null;
       closeCh();
     };

@@ -188,6 +188,7 @@
     return (clean = input);
   }
 
+  const CLEAN = { overflow: 1, versus: 1, fight: 1 };
   V.load = function () {
     if (V.loaded || !A.ready || !window.ANNOUNCER) return;
     V.loaded = true;
@@ -195,8 +196,9 @@
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      // the long OVERFLOW call stays clean (grit + 8-bit smear a stretched vowel); combo calls get the arcade grit
-      A.ctx.decodeAudioData(bytes.buffer).then((b) => (V.bufs[k] = k === 'overflow' ? normalize(b) : shout(b))).catch(() => {});
+      // OVERFLOW / VERSUS / FIGHT stay clean (grit + 8-bit smear make them hard to make
+      // out); the combo calls get the arcade grit
+      A.ctx.decodeAudioData(bytes.buffer).then((b) => (V.bufs[k] = CLEAN[k] ? normalize(b) : shout(b))).catch(() => {});
     });
   };
   A.onReady(V.load);
@@ -363,6 +365,18 @@
     }
   };
 
+  /* ------------------------------ vs players ------------------------------ */
+  // someone challenged you: a two-tone arcade siren, then a sword-clash shing and a
+  // short fanfare (soft: just the siren, as a reminder)
+  X.challenge = function (soft) {
+    const v = soft ? 0.55 : 1;
+    [0, 0.13, 0.26, 0.39].forEach((t, k) => tone(k % 2 ? 990 : 740, t, 0.12, { type: 'square', vol: 0.055 * v, lp: 3500 }));
+    if (soft) return;
+    noise(0.58, 0.4, 0.13, 9500, 2200);
+    tone(2900, 0.58, 0.55, { type: 'triangle', to: 1900, vol: 0.03, lp: 12000 });
+    [72, 76, 79, 84].forEach((m, k) => note(m, 0.62 + k * 0.06, 0.12, { vol: 0.045 }));
+  };
+
   /* --------------------------- vs players: match intro --------------------------- */
   // a name card sweeping in from the side
   X.whoosh = (at) => {
@@ -379,16 +393,18 @@
     [48, 55, 60].forEach((m, k) => note(m, t + 0.35 + k * 0.12, 0.5, { vol: 0.04 }));
   };
 
-  // "VERSUS!" / "FIGHT!" — the combo calls' arcade chain
+  // "VERSUS!" / "FIGHT!" — the clean vocal path, at natural speed, so the words are
+  // easy to make out over the slam
   V.call = function (key, at) {
     if (!A.ready || A.sfxVol <= 0) return;
     const buf = V.bufs[key];
-    if (KK.music.dip) KK.music.dip(key === 'versus' ? 3.2 : 1.6);
+    if (KK.music.dip) KK.music.dip(key === 'versus' ? 2.4 : 1.6, 0.25);
     if (buf) {
       const src = A.ctx.createBufferSource();
       src.buffer = buf;
-      src.playbackRate.value = 0.94;
-      src.connect(voiceChain());
+      const g = A.ctx.createGain();
+      g.gain.value = 1.15;
+      src.connect(g).connect(cleanChain());
       src.start(A.ctx.currentTime + (at || 0));
     } else if ('speechSynthesis' in window) {
       const u = new SpeechSynthesisUtterance(key + '!');
