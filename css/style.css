@@ -1113,7 +1113,8 @@ b.official { white-space: nowrap; color: #ffd84a !important; text-shadow: 0 0 6p
 /* profile badges: top 3 popular keyboard / single-player high score (gold, silver, bronze) */
 .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .badges:empty { display: none; }
-.badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; border: 1px solid; font-size: 11px; white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 6px; border-radius: 999px; border: 1px solid; font-size: 11px; white-space: nowrap; }
+.badge .medal { font-style: normal; font-size: 14px; line-height: 1; }
 .badge.r1 { color: #ffd84a; border-color: rgba(255, 216, 74, .6); background: rgba(255, 216, 74, .1); box-shadow: 0 0 10px rgba(255, 216, 74, .18); }
 .badge.r2 { color: #dfe4ee; border-color: rgba(223, 228, 238, .5); background: rgba(223, 228, 238, .08); }
 .badge.r3 { color: #e3a46e; border-color: rgba(227, 164, 110, .55); background: rgba(227, 164, 110, .1); }

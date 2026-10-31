@@ -360,11 +360,12 @@
   }
 
   // a player's top-3 spots (Popular Keyboards, High Scores) as badges for their profile
+  const MEDALS = ['🥇', '🥈', '🥉'];
   F.badges = async function (uid) {
     const [pop, high] = await Promise.all([popTop(3), highScores()]);
     const out = [];
-    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}">♥ #${i + 1} most popular keyboard</span>`));
-    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}">★ #${i + 1} single player high score</span>`));
+    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}"><i class="medal">${MEDALS[i]}</i>#${i + 1} most popular keyboard</span>`));
+    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}"><i class="medal">${MEDALS[i]}</i>#${i + 1} single player high score</span>`));
     return out.join('');
   };
   // fill the badge row on whichever profile is showing
@@ -379,7 +380,7 @@
   F.paintBadges = paintBadges;
 
   /* ------------------------------- this week's board ------------------------------- */
-  // you and your friends: best single-player total and most wins against players
+  // you and your friends: most wins against players (high scores have their own card)
   let boardToken = 0;
   async function renderBoard() {
     if (!me) return;
@@ -396,8 +397,7 @@
         ? t.map((x, i) => `<div class="board-row${x.uid === me.uid ? ' me' : ''}" data-user="${esc(x.uid)}"><span class="pop-rank">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}<b>${esc(nameOf(x.uid))}</b><span class="board-n">${Math.floor(+x.s[key]).toLocaleString()}${unit}</span></div>`).join('')
         : '<p class="hint">nobody yet this week</p>';
     };
-    $('#feedBoard').innerHTML = `<div class="board-sec"><span class="hud-lbl">single player · best total</span>${list('solo', '')}</div>
-      <div class="board-sec"><span class="hud-lbl">vs players · wins</span>${list('wins', '')}</div>
+    $('#feedBoard').innerHTML = `<div class="board-sec"><span class="hud-lbl">vs players · wins</span>${list('wins', '')}</div>
       <p class="hint board-foot">you and your friends · starts fresh every monday</p>`;
   }
 

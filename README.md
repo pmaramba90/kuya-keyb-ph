@@ -56,7 +56,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
     - **Popular Keyboards**: the three keyboards on the site with the most hearts, from anyone, not just friends. **show more** lists up to 10, and **show less** goes back to 3. Each is drawn whole, scaled down. Click one to open its owner's page.
     - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have.
     - **High Scores**: the top 3 all-time single-player best totals on the site, from everyone. Each player's best is saved online (only ever going up), and older bests are filled in the next time that player signs in.
-    - **This Week**: you and your friends ranked by best single-player total and by wins against players. It starts fresh every Monday.
+    - **This Week**: you and your friends ranked by wins against players. It starts fresh every Monday.
   - **The bell** (top right, next to your picture) shows a red count of new notifications:
     - someone reacted to or replied to your post
     - hearted your keyboard
@@ -70,7 +70,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
   - **your posts**: everything you've posted (posts, reviews, new-keyboard and personal-best posts), newest first and 10 at a time, exactly as in the feed. You can react, reply and delete here too. Other players' pages show their posts the same way.
-  - **Badges** under a player's name (theirs and yours): **♥ #1 / #2 / #3 most popular keyboard** for a keyboard in the top 3 of Popular Keyboards, and **★ #1 / #2 / #3 single player high score** for a top-3 spot in High Scores, in gold, silver and bronze.
+  - **Badges** under a player's name (theirs and yours): **#1 / #2 / #3 most popular keyboard** for a keyboard in the top 3 of Popular Keyboards, and **#1 / #2 / #3 single player high score** for a top-3 spot in High Scores, each with a 🥇 gold, 🥈 silver or 🥉 bronze medal.
   - **Hearts**: every keyboard on a player's page has a ♥ with its count. Click it to heart someone else's keyboard, and click again to take the heart back. On your own keyboards you just see the count, since you can't heart your own.
 - **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **Anyone's profile**: you can open any player's page, friend or not. Type a username on friends and press **view profile**, or click someone in popular keyboards, the vs players list or your match history. If you're not friends, the page has an **add friend** button. Once you've sent a request it shows **request sent**; if they've asked you, it shows **accept friend request**; once you're friends it shows **✓ friends**.
