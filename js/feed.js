@@ -29,6 +29,8 @@
   let mode = 'friends'; // feed tab: 'friends' | 'everyone'
   const PAGE = 15;
   let limit = PAGE; // posts shown ("load more" adds a page)
+  let switching = false; // a tab was just switched: keep showing the old posts until the new arrive
+  let myPosts = 0; // how many posts you've made (the welcome checklist), whatever the tab
   // what the feed follows, per post owner: their posts, the reactions and the replies
   const T = { posts: {}, reacts: {}, replies: {} };
   const names = {}; // uid → display name, for players who aren't your friends
@@ -68,6 +70,10 @@
       hearts = v || {};
       refreshHearts();
     }));
+    offs.push(N.ref('posts/' + me.uid).on((v) => {
+      myPosts = Object.keys(v || {}).length;
+      if (KK.app.screen === 'home') renderWelcome();
+    }));
     F.sync();
     N.ref('names/' + OFFICIAL).once().then((uid) => {
       if (typeof uid !== 'string' || !me) return;
@@ -94,6 +100,7 @@
     const stop = Object.keys(T).map((t) => N.ref(uid === '*' ? t : `${t}/${uid}`).on((v) => {
       if (uid === '*') T[t] = v || {};
       else T[t][uid] = v || {};
+      switching = false; // the new tab's posts are coming in
       if (KK.app.screen === 'home') renderPosts();
     }));
     return () => stop.forEach((f) => f());
@@ -380,6 +387,7 @@
     b.blur();
     KK.sfx.ui();
     mode = b.dataset.ft;
+    switching = true;
     limit = PAGE;
     renderTabs();
     F.sync();
@@ -401,7 +409,7 @@
       ['friends', 'add a friend', KK.social.friendIds().length > 0],
       ['build', 'build a keyboard', app.profiles.length > 0],
       ['play', 'play a game', (p.bestTotal || 0) > 0 || (p.vsBest || 0) > 0 || (p.pvpBest || 0) > 0],
-      ['post', 'post something', Object.keys(T.posts[me.uid] || {}).length > 0],
+      ['post', 'post something', myPosts > 0],
     ];
     const done = steps.filter((s) => s[2]).length;
     el.hidden = done === steps.length;
@@ -523,6 +531,7 @@
   const drafts = {}; // "owner/id" → a reply being typed (kept across redraws)
 
   function renderPosts() {
+    if (switching) return; // until the other tab's posts arrive, the old ones stay up
     const box = $('#feedPosts');
     // a redraw mustn't lose the reply you're typing
     const act = document.activeElement, typing = act && act.dataset && act.dataset.replyIn;
@@ -541,7 +550,7 @@
       back.focus();
       back.setSelectionRange(caret[0], caret[1]);
     }
-    if (me && KK.app.screen === 'home') renderWelcome(); // "post something" may be done now
+
   }
   $('#feedMore').addEventListener('click', () => {
     $('#feedMore').blur();
