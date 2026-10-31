@@ -1002,6 +1002,7 @@ body.pvp #scr-vs .vs-half.opp .gb-name { color: #7fd1ff; }
 
 /* --------------------------------- footer --------------------------------- */
 /* the footer (music, sfx, now playing, …) stays along the bottom of the window */
+html { scroll-padding-bottom: 76px; } /* things scrolled into view stop above it */
 .bottom { position: sticky; bottom: 0; z-index: 60; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0 16px; background: var(--bg); box-shadow: 0 -10px 18px var(--bg); color: var(--sub); font-size: 12px; flex-wrap: wrap; }
 .vol { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .vol label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -1106,6 +1107,8 @@ b.official { white-space: nowrap; color: #ffd84a !important; text-shadow: 0 0 6p
 .whats-btns button:has(.gif-tag) .gif-tag { font-size: 9px; }
 .feed-tabs { display: flex; gap: 6px; margin: 4px 0 12px; }
 .feed-more { display: block; margin: 14px auto 0; }
+.dash-posts-h { margin-top: 30px; }
+.dash-posts .post { text-align: left; }
 .feed-more[hidden] { display: none; }
 
 /* a post's extras: a shared keyboard, an activity card, a photo */
@@ -1219,6 +1222,7 @@ body.touch .keys-hint { display: none; }
   /* phones: the footer wraps to several rows, so it stays at the end of the page rather
      than covering the screen above the tab bar */
   .bottom { position: relative; gap: 10px 16px; padding: 18px 0 20px; box-shadow: none; }
+  html { scroll-padding-bottom: 0; }
   .whats-btns { flex-wrap: wrap; }
   .whats-btns button { flex: 1 1 40%; }
   .bell-wrap { margin-left: auto; }

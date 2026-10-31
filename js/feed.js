@@ -532,7 +532,7 @@
     all.sort((a, b) => (+b.p.at || 0) - (+a.p.at || 0));
     const shown = all.slice(0, limit);
     box.innerHTML = all.length
-      ? shown.map(postHtml).join('')
+      ? shown.map((x) => postHtml(x)).join('')
       : `<p class="hint feed-empty">${mode === 'everyone' ? 'nobody has posted yet. Be the first!' : 'nothing here yet. Share something above, and add friends to see their posts.'}</p>`;
     $('#feedMore').hidden = all.length <= limit;
     placeKeyboards(box, shown);
@@ -637,7 +637,8 @@
       ${open ? `<form class="reply-form" data-reply-form="${esc(key)}" autocomplete="off"><input class="search" data-reply-in="${esc(key)}" maxlength="500" placeholder="write a reply…" value="${esc(drafts[key] || '')}"><button class="btn primary sm" type="submit">reply</button></form>` : ''}</div>`;
   }
 
-  function postHtml({ uid, id, p }) {
+  function postHtml({ uid, id, p }, src) {
+    src = src || T;
     const review = p.type === 'review';
     const act = p.type === 'activity' ? activityHtml(uid, p) : null;
     if (p.type === 'activity' && !act) return '';
@@ -645,8 +646,8 @@
     const r = rating(p.rating), shop = review && shopOf(p.link), avg = it && avgOf(p.kind, p.item);
     const key = uid + '/' + id;
     const kb = p.kb && typeof p.kb === 'object' && p.kb.build && typeof p.kb.build === 'object' ? p.kb : null;
-    const rx = (T.reacts[uid] || {})[id];
-    const reps = Object.entries((T.replies[uid] || {})[id] || {})
+    const rx = (src.reacts[uid] || {})[id];
+    const reps = Object.entries((src.replies[uid] || {})[id] || {})
       .filter(([, x]) => x && typeof x === 'object' && typeof x.uid === 'string')
       .sort((a, b) => (+a[1].at || 0) - (+b[1].at || 0));
     return `<article class="post${F.isOfficial(uid) ? ' official-post' : ''}">
@@ -681,7 +682,47 @@
   }
   const warn = (err) => console.warn('kkph posts', err);
 
-  $('#scr-home').addEventListener('click', (e) => {
+  // a player's own posts, newest first, on their page (yours on your profile); live
+  const PT = { uid: null, el: null, limit: 10, offs: [], posts: {}, reacts: {}, replies: {} };
+  F.showPostsOf = function (uid, el) {
+    if (PT.uid === uid && PT.el === el && PT.offs.length) return renderPostsOf();
+    PT.offs.forEach((off) => off());
+    Object.assign(PT, { uid, el, limit: 10, offs: [], posts: {}, reacts: {}, replies: {} });
+    if (!uid || !el) return;
+    el.innerHTML = '<p class="hint">loading posts…</p>';
+    ['posts', 'reacts', 'replies'].forEach((t) => PT.offs.push(N.ref(`${t}/${uid}`).on((v) => {
+      PT[t] = { [uid]: v || {} };
+      renderPostsOf();
+    })));
+  };
+  function renderPostsOf() {
+    const el = PT.el;
+    if (!el || !PT.uid) return;
+    const list = Object.entries(PT.posts[PT.uid] || {})
+      .filter(([, p]) => p && typeof p === 'object')
+      .map(([id, p]) => ({ uid: PT.uid, id, p }))
+      .sort((a, b) => (+b.p.at || 0) - (+a.p.at || 0));
+    const html = list.slice(0, PT.limit).map((x) => postHtml(x, PT)).filter(Boolean);
+    el.innerHTML = html.length
+      ? html.join('') + (list.length > PT.limit ? '<button class="btn ghost feed-more" data-pmore="1">load more</button>' : '')
+      : `<p class="hint">${PT.uid === ME() ? 'nothing posted yet. Share something from home.' : 'no posts yet.'}</p>`;
+    placeKeyboards(el, list.slice(0, PT.limit));
+  }
+  const rerender = () => {
+    if (KK.app.screen === 'home') renderPosts();
+    renderPostsOf();
+  };
+
+  $('#scr-home').addEventListener('click', onPostsClick);
+  ['#dashPosts', '#userPosts'].forEach((id) => $(id).addEventListener('click', (e) => {
+    if (e.target.closest('[data-pmore]')) {
+      KK.sfx.ui();
+      PT.limit += 10;
+      return renderPostsOf();
+    }
+    onPostsClick(e);
+  }));
+  function onPostsClick(e) {
     const del = e.target.closest('[data-del]');
     if (del && me) {
       del.blur();
@@ -698,7 +739,7 @@
     const hb = e.target.closest('[data-hear]');
     if (hb) {
       hb.blur();
-      const [owner, id] = hb.dataset.hear.split('/'), p = (T.posts[owner] || {})[id];
+      const [owner, id] = hb.dataset.hear.split('/'), p = (T.posts[owner] || {})[id] || (PT.posts[owner] || {})[id];
       if (p && p.kb && p.kb.build) hear(p.kb.build);
       return;
     }
@@ -721,8 +762,8 @@
       const key = rb.dataset.reply;
       if (openReplies.has(key)) openReplies.delete(key);
       else openReplies.add(key);
-      renderPosts();
-      const input = $('#feedPosts').querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
+      rerender();
+      const input = e.currentTarget.querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
       if (input) input.focus();
       return;
     }
@@ -736,17 +777,21 @@
     }
     const u = e.target.closest('[data-user]');
     if (u) {
+      if (u.dataset.user === (KK.app.screen === 'user' ? KK.app.viewUid : null)) return; // already here
       KK.sfx.ui();
       if (u.dataset.user === ME()) KK.app.show('title');
-      else KK.app.showUser(u.dataset.user, 'home');
+      else KK.app.showUser(u.dataset.user, KK.app.screen);
     }
-  });
+  }
 
-  $('#feedPosts').addEventListener('input', (e) => {
-    const k = e.target.dataset.replyIn;
-    if (k) drafts[k] = e.target.value;
+  ['#feedPosts', '#dashPosts', '#userPosts'].forEach((id) => {
+    $(id).addEventListener('input', (e) => {
+      const k = e.target.dataset.replyIn;
+      if (k) drafts[k] = e.target.value;
+    });
+    $(id).addEventListener('submit', onReplySubmit);
   });
-  $('#feedPosts').addEventListener('submit', async (e) => {
+  async function onReplySubmit(e) {
     const f = e.target.closest('[data-reply-form]');
     if (!f || !me) return;
     e.preventDefault();
@@ -760,7 +805,7 @@
       KK.notify.send(owner, { t: 'reply', post: id, text: text.slice(0, 80) });
       delete drafts[key];
       KK.sfx.select();
-      const again = $('#feedPosts').querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
+      const again = e.currentTarget.querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
       if (again) {
         again.value = '';
         again.focus();
@@ -770,7 +815,7 @@
       btn.disabled = false;
       btn.textContent = 'try again';
     }
-  });
+  }
 
   /* --------------------------------- composer --------------------------------- */
   const form = $('#composer');
@@ -828,9 +873,21 @@
 
   const compMsg = (t) => ($('#compMsg').textContent = t);
 
+  // a post carries one extra at a time: opening a picker closes the other one, and
+  // choosing a GIF, keyboard or photo drops whichever was chosen before
+  function closePickers() {
+    ['#gifPick', '#kbPick'].forEach((id) => $(id) && ($(id).hidden = true));
+  }
+  function dropAttachments() {
+    if (!comp) return;
+    comp.gif = comp.kb = comp.photo = null;
+    ['#gifChosen', '#kbChosen', '#photoChosen'].forEach((id) => $(id) && ($(id).hidden = true));
+  }
+
   // attach one of your saved keyboards: it's drawn in the post, playable with ▶ hear it
   function showKbPick() {
     const el = $('#kbPick'), ps = KK.app.profiles;
+    closePickers();
     el.hidden = false;
     el.innerHTML = ps.length
       ? `<span class="hud-lbl">share one of your keyboards</span><div class="chips">${ps.map((p) => `<button type="button" class="chip" data-kbp="${esc(p.id)}">${esc(p.name)}</button>`).join('')}</div>`
@@ -839,6 +896,7 @@
   function pickKb(id) {
     const p = KK.app.profiles.find((x) => x.id === id);
     if (!p) return;
+    dropAttachments();
     comp.kb = kbOf(p.name, p.id, p.build);
     $('#kbPick').hidden = true;
     const el = $('#kbChosen');
@@ -884,7 +942,11 @@
     if (!/^image\//.test(f.type)) return compMsg("that isn't a picture");
     compMsg('shrinking the photo…');
     try {
-      comp.photo = await shrinkPhoto(f);
+      const photo = await shrinkPhoto(f);
+      if (!comp) return;
+      closePickers();
+      dropAttachments();
+      comp.photo = photo;
       const el = $('#photoChosen');
       el.hidden = false;
       el.innerHTML = `<img src="${comp.photo}" alt=""><button type="button" class="picon" data-comp="nophoto" title="remove the photo">✕</button>`;
@@ -898,8 +960,9 @@
   const GIPHY_KEY = String(window.KK_GIPHY_KEY || '').trim();
   let gifTimer = null, gifToken = 0;
   function toggleGifs() {
-    const pick = $('#gifPick');
-    pick.hidden = !pick.hidden;
+    const pick = $('#gifPick'), open = pick.hidden;
+    closePickers();
+    pick.hidden = !open;
     if (pick.hidden) return;
     if (GIPHY_KEY) {
       if (!$('#gifGrid').children.length) searchGifs('');
@@ -923,6 +986,7 @@
     }
   }
   function pickGif(id) {
+    dropAttachments();
     comp.gif = id;
     $('#gifPick').hidden = true;
     const el = $('#gifChosen');
@@ -1074,7 +1138,7 @@
     const text = $('#compText').value.trim().slice(0, 1000);
     const data = { type: comp.mode, text, at: N.now() };
     if (comp.mode === 'post') {
-      if (!text && !comp.gif && !comp.kb && !comp.photo) return compMsg('write something or add a GIF, keyboard or photo first');
+      if (!text && !comp.gif && !comp.kb && !comp.photo) return compMsg('write something or add a GIF, a keyboard or a photo first');
       if (comp.gif) data.gif = comp.gif;
       if (comp.kb) data.kb = comp.kb;
       if (comp.photo) data.photo = comp.photo;

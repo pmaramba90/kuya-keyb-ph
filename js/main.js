@@ -557,6 +557,7 @@
     $('#dashKbs').innerHTML = rest.length
       ? rest.map((k) => kbCard(k, { open: true, canMain: true, owner: me.uid })).join('')
       : `<p class="hint">${kbs.length ? 'build more keyboards from play — they show up here.' : 'no saved keyboards yet — build one from play.'}</p>`;
+    KK.feed.showPostsOf(me.uid, $('#dashPosts')); // what you've posted, as it shows in the feed
   }
   $('#dashKbs').addEventListener('click', (e) => {
     const m = e.target.closest('[data-main]');
@@ -668,6 +669,7 @@
     const rest = kbs.filter((k) => k !== main);
     $('#userKbsH').hidden = !rest.length;
     $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, { owner: uid })).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
+    KK.feed.showPostsOf(uid, $('#userPosts')); // their posts, as they show in the feed
     const ch = $('#userChallenge');
     if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
   };
