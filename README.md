@@ -208,7 +208,7 @@ The config values are public by design. The database rules are what keep each pl
      - The lines were rendered offline with the Windows "Microsoft David" voice (raised pitch, slowed stressed words) and are embedded in `js/data-announcer.js`.
      - At playback they get an arcade treatment: grit, chest and presence EQ, heavy compression, a stadium hall, ping-pong echoes, and a boom-and-fanfare stinger that grows with each tier.
      - To use your own recorded voice, replace the base64 WAVs in that file. Keep the same keys.
-   - **Power-ups**: type a glowing word to grab its power. A **power-ups guide** describing each one shows before a new single-player run or vs AI match. Tick "don't show this before every game" to skip it; it's always there from **power-ups guide** on play.
+   - **Power-ups**: type a glowing word to grab its power. Glowing words flicker gently like a neon sign so they stand out from plain words, and the letters you've typed on them turn white (so they show even on double's yellow). A **power-ups guide** describing each one shows before a new single-player run or vs AI match. Tick "don't show this before every game" to skip it; it's always there from **power-ups guide** on play.
      - ❄ **freeze** stops all words for 4s. Only turns up when the field is crowded.
      - ◷ **slow** makes words fall at 40% speed for 7s. **It stacks**: each extra slow while one is on makes words slower still (×0.62 again, so 2 slows ≈ 25% speed) and adds another 7s.
      - ×2 **double** doubles your score for 10s.
