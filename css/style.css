@@ -295,7 +295,9 @@ button.heart:active svg { transform: scale(1.3); }
 .rev-kind { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--main); }
 .rev-rate { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 .rev-rate b { font-weight: 400; color: var(--main); }
-.feed-side { position: sticky; top: 16px; }
+/* the sidebar stays in view while the feed scrolls (and scrolls itself if it is taller) */
+.feed-side { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+.pop-more { display: block; margin: 2px auto 0; }
 .feed-count { color: var(--sub); font-size: 12px; margin: 0 0 4px; display: flex; align-items: center; gap: 7px; }
 .feed-count:empty { display: none; }
 .feed-count .pl-dot { display: inline-block; }
@@ -306,9 +308,9 @@ button.heart:active svg { transform: scale(1.3); }
 .post-who b:hover, .reply-body b:hover { color: var(--text); }
 .pop-list { display: flex; flex-direction: column; gap: 8px; }
 .pop-list { gap: 10px; }
-.pop-card { background: var(--bg2); border: 2px solid transparent; border-radius: 10px; padding: 10px 12px 12px; cursor: pointer; transition: border-color .15s; }
+.pop-card { background: var(--bg2); border: 2px solid transparent; border-radius: 10px; padding: 8px 12px 10px; cursor: pointer; transition: border-color .15s; }
 .pop-card:hover { border-color: color-mix(in srgb, var(--main) 45%, transparent); }
-.pop-head { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pop-head { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 6px; }
 .pop-rank { color: var(--main); font-size: 14px; text-align: center; align-self: start; }
 .kb-text .pop-by { font-size: 12px; }
 .pop-kb { display: flex; justify-content: center; min-height: 40px; }
@@ -382,7 +384,7 @@ body:not(.signed-out) #scr-title .home-count { display: none; }
 
 @media (max-width: 860px) {
   .feed { grid-template-columns: minmax(0, 1fr); }
-  .feed-side { position: static; order: -1; }
+  .feed-side { position: static; order: -1; max-height: none; overflow: visible; padding-right: 0; }
 }
 @media (max-width: 700px) {
   .dash-best { grid-template-columns: 1fr; }
@@ -800,6 +802,7 @@ body.no-game-kb .game-kb { display: none; }
 .field.frozen { box-shadow: inset 0 0 60px rgba(127, 209, 255, .14); }
 .field.frozen .fw:not(.pw) .r { color: #9fc7dc; }
 .field.slowed { box-shadow: inset 0 0 60px rgba(180, 138, 232, .12); }
+.field.exploding { box-shadow: inset 0 0 60px rgba(255, 159, 67, .16); }
 .field.doubled .deadline { background: linear-gradient(90deg, transparent, var(--main) 15%, var(--main) 85%, transparent); }
 .field.flash { animation: flash .45s ease-out; }
 @keyframes flash { 0% { background: rgba(255, 122, 107, .18); } 100% { background: transparent; } }

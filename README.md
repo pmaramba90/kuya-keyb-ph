@@ -31,12 +31,11 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
   - **What's on your mind?** (the composer). Click the box to write a post, or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
   - **friends / everyone** tabs: your posts and your friends', or every post on the site.
   - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
-  - **Activity posts** are written by the game itself, so the feed fills up even when nobody posts:
+  - **Activity posts** are written by the game itself, so the feed fills up even when nobody posts. Only three kinds, to keep it from getting spammy:
     - **built a new keyboard**: a newly saved keyboard, drawn small with **▶ hear it** and its ♥
-    - **won a match**: beat kuya 2–1 in vs players
-    - **levelled up**: cleared your highest single-player level yet
-    - **set a new best**: a new personal best total, posted when that run ends
-    - **hearted paul's keyboard**: with the keyboard drawn; taking the heart back removes the post
+    - **set a new best**: a new personal best total in single player, posted when that run ends
+    - **made the popular keyboards**: one of your keyboards reached the top 3 of Popular Keyboards, posted once per keyboard
+    - Older posts about wins, levels and hearts aren't shown any more.
   - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
   - **Moderator**: **akosipolnew1** sees every post on the site, not just friends', and can delete any of them. The database rules allow that one account and no other.
   - **Writing a post**: text plus any of a GIF, one of your saved keyboards, or a photo.
@@ -50,10 +49,10 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
     - A review: pick what you're reviewing (full keyboard, base (case), plate, switches, keycaps, lube or mods), search the catalog and pick the item, rate it out of 5 stars, then write the review. Clicking the left half of a star gives half a star; the arrow keys also move the rating in half stars. Keyboard reviews show the product photo.
     - Reviews can include an optional link to where you can buy the item. Only https links to Amazon, Lazada or Shopee are accepted (their short links too); anything else is refused, and other links are never shown. The link appears as a **buy on Lazada ↗** button and opens in a new tab.
   - Each review also shows its item's **average** once it has more than one review (for example "avg ★ 4 · 2 reviews").
-  - **On the side**, after the sign-up and online counts:
-    - **This Week**: you and your friends ranked by best single-player total and by wins against players. It starts fresh every Monday.
-    - **Popular Keyboards**: the five keyboards on the site with the most hearts, from anyone, not just friends. Each is drawn whole, scaled down to fit. Click one to open its owner's page.
+  - **On the side**, which stays in view while you scroll the feed (and scrolls by itself if it's taller than the window), after the sign-up and online counts:
+    - **Popular Keyboards**: the three keyboards on the site with the most hearts, from anyone, not just friends. **show more** lists up to 10, and **show less** goes back to 3. Each is drawn whole, scaled down. Click one to open its owner's page.
     - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have.
+    - **This Week**: you and your friends ranked by best single-player total and by wins against players. It starts fresh every Monday.
   - **The bell** (top right, next to your picture) shows a red count of new notifications:
     - someone reacted to or replied to your post
     - hearted your keyboard
@@ -169,7 +168,7 @@ The config values are public by design. The database rules are what keep each pl
 1. **Build**: choose the base (layout, case material and color, plate, mount), the switches (586 from keybumps.com), the keycaps (727 sets from mechanicalkeyboards.com), and any mods and lube.
 2. **Summary**: a write-up of how the board sounds, an estimated price (USD by default, PHP or EUR optional), and shop links for every part. Name and save the build here. Saved builds appear on the home screen after a refresh, where you can load, rename or delete them.
 3. **Play (survival)**: each level lasts 1 minute.
-   - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
+   - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - **Play → single player / vs AI** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.
    - **Word length grows with the level**: level 1 is 3-letter words, then the longest word grows by a letter every two levels. The levels in between add some words a letter longer:
@@ -185,7 +184,7 @@ The config values are public by design. The database rules are what keep each pl
 
      The shortest words also grow, staying within 2 letters of the longest. Glowing power-up words are never longer than the level's longest.
    - **Power-ups come more often as levels get harder**: about 1 in 10 words glows on level 1, rising by 2 points per level to about 1 in 4 by level 10 (the cap is 28%). From level 6, two glowing words can be on screen at once.
-   - These lengths are for single player only. vs AI and vs players keep their own word mix.
+   - These lengths are for single player only. **vs AI and vs players** use short words: 3–5 letters, mostly 3 and 4 (about two thirds), with about 1 in 10 being 6 letters. Words come about 20% less often than before (a word every ~0.8s at medium), with at most 22 on screen.
    - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
    - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
@@ -211,7 +210,7 @@ The config values are public by design. The database rules are what keep each pl
      - ×2 **double** doubles your score for 10s.
      - ✕ **erase** clears the screen and scores every word on it.
      - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s.
-     - ✸ **explode** blows up the words near it: every word within about a third of the field's width of where you typed it is cleared and scored, with an orange blast ring.
+     - ✸ **explode** is on for 8s (the field glows orange). The glowing word and every word you type while it's on blow up the words near them: everything within about a third of the field's width is cleared and scored, with an orange blast ring.
      - **Freeze and erase only turn up when the field is crowded**, meaning at least 6 words on screen (more on faster levels: 45% of the level's word limit). Otherwise the glowing word is one of the others.
    - `space` / `enter` clears what you've typed, `esc` pauses.
 

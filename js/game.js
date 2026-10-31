@@ -25,7 +25,7 @@
     double: { label: '×2 double', secs: 10, weight: 1 },
     erase: { label: '✕ erase', secs: 0, weight: 0.7 },
     subtract: { label: '− subtract', secs: 10, weight: 0.8 }, // each word typed lowers your overflow
-    explode: { label: '✸ explode', secs: 0, weight: 0.9 }, // clears the words around it
+    explode: { label: '✸ explode', secs: 8, weight: 0.9 }, // while on, each word you type clears the words around it
   };
   // freeze and erase only turn up when the field is crowded (this many words or more)
   const CROWD_ONLY = { freeze: 1, erase: 1 };
@@ -84,17 +84,23 @@
     p.stretch = L >= 3 && L % 2 ? 0.2 : 0; // share of words one letter over the max
     p.powerChance = Math.min(0.1 + 0.02 * (L - 1), 0.28);
     p.maxPowers = L >= 6 ? 2 : 1; // glowing words on the field at once
+    p.missScale = 0.5; // a missed word fills half as much of the bar as it used to
     return p;
   };
   G.soloParams = soloParams;
 
-  // vs modes: a busier field — words come ~1.5x as often and more can be on screen
+  // vs modes: a busier field than single player (words ~1.25x as often, a few more on
+  // screen), with short words: 3–5 letters, mostly 3 and 4, and the odd 6
   const vsParams = (L) => {
     const p = G.params(L);
-    p.spawn *= 0.65;
-    p.maxOn += 8;
+    p.spawn *= 0.8;
+    p.maxOn += 5;
+    p.minLen = 3;
+    p.maxLen = 5;
+    p.stretch = 0.1;
     return p;
   };
+  G.vsParams = vsParams;
 
   // one spawn event; in vs mode the same event is sent to both fields. Against another
   // player both sides draw from the same seeded generator, and the number of draws never
@@ -197,9 +203,9 @@
       Object.assign(this, {
         words: [], buffer: '', bar: 0, combo: 0, maxCombo: 0, score: 0,
         keys: 0, correct: 0, done: 0, missed: 0, powersUsed: 0, dead: false,
-        fx: { freeze: 0, slow: 0, double: 0, subtract: 0 },
+        fx: { freeze: 0, slow: 0, double: 0, subtract: 0, explode: 0 },
       });
-      this.field.classList.remove('frozen', 'slowed', 'doubled');
+      this.field.classList.remove('frozen', 'slowed', 'doubled', 'exploding');
       this.measure();
       this.renderTyped();
       this.renderPowers();
@@ -341,6 +347,7 @@
       renderMeter(this.meterEl, this, true);
       this.renderBar();
       if (w.power) this.activate(w.power, w);
+      else if (this.fx.explode > 0) this.blast(w); // explode is on: this word goes off too
       if (this.combo % 5 === 0) this.emit('combo', KK.voice.tierFor(this.combo));
       this.refreshMatches();
       this.renderTyped();
@@ -350,7 +357,7 @@
     // a word reaching the bottom doesn't touch your combo — only a typo does (typeChar)
     miss(w) {
       this.missed++;
-      if (this.missFills) this.bar = Math.min(1, this.bar + this.p.missDamage + w.text.length * 0.003);
+      if (this.missFills) this.bar = Math.min(1, this.bar + (this.p.missDamage + w.text.length * 0.003) * (this.p.missScale || 1));
       const g = this.goodPrefix(this.buffer);
       this.removeWord(w, 'dead');
       this.popup(w.x + w.width / 2, this.H - 56, 'miss', 'neg');
@@ -403,22 +410,9 @@
       this.powersUsed++;
       if (!this.ai) KK.sfx.power(type);
       if (type === 'explode') {
-        const cx = w ? w.x + w.width / 2 : this.W / 2, cy = w ? w.y : this.H / 2;
-        const r = Math.max(130, this.W * EXPLODE_R);
-        let sum = 0, n = 0;
-        this.words.slice().forEach((o) => {
-          if (Math.hypot(o.x + o.width / 2 - cx, o.y - cy) > r) return;
-          const pts = this.points(o, false);
-          sum += pts;
-          n++;
-          this.popup(o.x + o.width / 2, o.y, '+' + pts, 'dbl');
-          this.removeWord(o, 'done');
-        });
-        this.score += sum;
-        this.buffer = '';
-        this.boom(cx, cy, r);
-        this.shake('flash');
-        this.toast(n ? `boom! ${n} word${n > 1 ? 's' : ''} +${sum}` : 'boom!', 'pw-explode');
+        this.fx.explode = POWERS.explode.secs;
+        this.toast('explode!', 'pw-explode');
+        this.blast(w);
       } else if (type === 'erase') {
         let sum = 0;
         this.words.slice().forEach((o) => {
@@ -436,6 +430,26 @@
         this.toast(type + '!', 'pw-' + type);
       }
       this.renderPowers();
+    }
+
+    // a word typed while explode is on: the words near where it was are cleared and scored
+    blast(w) {
+      const cx = w ? w.x + w.width / 2 : this.W / 2, cy = w ? w.y : this.H / 2;
+      const r = Math.max(130, this.W * EXPLODE_R);
+      let sum = 0, n = 0;
+      this.words.slice().forEach((o) => {
+        if (Math.hypot(o.x + o.width / 2 - cx, o.y - cy) > r) return;
+        const pts = this.points(o, false);
+        sum += pts;
+        n++;
+        this.popup(o.x + o.width / 2, o.y, '+' + pts, 'dbl');
+        this.removeWord(o, 'done');
+      });
+      this.score += sum;
+      this.buffer = '';
+      this.boom(cx, cy, r);
+      if (!this.ai && n) KK.sfx.power('explode');
+      if (n) this.popup(cx, cy - 26, `boom ×${n}`, 'dbl');
     }
 
     // the blast: a ring that grows to the radius and fades
@@ -459,6 +473,7 @@
       this.field.classList.toggle('frozen', this.fx.freeze > 0);
       this.field.classList.toggle('slowed', this.fx.slow > 0);
       this.field.classList.toggle('doubled', this.fx.double > 0);
+      this.field.classList.toggle('exploding', this.fx.explode > 0);
       if (active) this.renderPowers();
     }
 
@@ -704,9 +719,9 @@
     return b;
   };
   G._activate = (type) => G.human().activate(type);
-  // n single-player spawns for a level, without playing: [{ len, power }]
-  G._spawns = (level, n, lang) => {
-    const fake = { kind: 'solo', p: soloParams(level), lang: lang || 'en', rnd: Math.random, recent: [], elapsed: 10, boards: [], sincePower: 0 };
+  // n spawns for a level without playing (vs: the vs word mix): [{ len, power }]
+  G._spawns = (level, n, lang, vs) => {
+    const fake = { kind: 'solo', p: vs ? vsParams(level) : soloParams(level), lang: lang || 'en', rnd: Math.random, recent: [], elapsed: 10, boards: [], sincePower: 0 };
     return Array.from({ length: n }, () => makeSpawn(fake)).filter(Boolean).map((e) => ({ len: e.text.length, power: e.power }));
   };
 
@@ -757,10 +772,8 @@
     if (b.score > prevBest) prog.best[run.level] = b.score;
     const newTotalBest = total > (prog.bestTotal || 0);
     if (newTotalBest) prog.bestTotal = total;
-    const newLevel = survived && run.level + 1 > (prog.unlocked || 1); // cleared your highest yet
     if (survived) prog.unlocked = Math.max(prog.unlocked, run.level + 1);
-    // your friends' feeds and this week's board
-    if (newLevel) KK.feed.activity('level', { level: run.level });
+    // your friends' feeds (a new personal best, when the run ends) and this week's board
     if (!survived && newTotalBest && total > 0) KK.feed.activity('best', { total });
     KK.feed.stat('solo', total);
     KK.app.saveProgress();
@@ -1069,7 +1082,7 @@
     }
     clear() {
       this.field.querySelectorAll('.fw, .pop, .wreck').forEach((n) => n.remove());
-      this.field.classList.remove('destroyed', 'danger', 'quaking', 'frozen', 'slowed', 'doubled');
+      this.field.classList.remove('destroyed', 'danger', 'quaking', 'frozen', 'slowed', 'doubled', 'exploding');
       this.els.clear();
       this.words = [];
     }
@@ -1131,7 +1144,7 @@
         this.typedEl.appendChild(w);
       }
       const fx = s.fx || {};
-      ['freeze', 'slow', 'double'].forEach((k) => this.field.classList.toggle({ freeze: 'frozen', slow: 'slowed', double: 'doubled' }[k], fx[k] > 0));
+      ['freeze', 'slow', 'double', 'explode'].forEach((k) => this.field.classList.toggle({ freeze: 'frozen', slow: 'slowed', double: 'doubled', explode: 'exploding' }[k], fx[k] > 0));
       this.powersEl.innerHTML = Object.keys(POWERS).filter((k) => fx[k] > 0).map((k) => `<span class="pchip pw-${k}">${POWERS[k].label} <b>${(+fx[k]).toFixed(1)}s</b></span>`).join('');
       renderMeter(this.meterEl, this, bump && this.combo % 5 === 0);
       renderOverflow(this.overflowEl, this.bar);
@@ -1214,7 +1227,7 @@
     KK.net.ref(`${run.base}/live/${run.m.me}`).set({
       r: run.round, sc: b.score, bar: +b.bar.toFixed(3), c: b.combo, mc: b.maxCombo, buf: b.buffer, dead: b.dead ? 1 : 0,
       w: b.words.map((w) => [w.text, +(w.x / (b.W || 1)).toFixed(3), +(w.y / (b.H || 1)).toFixed(3), w.power || 0, w.sz]),
-      fx: { freeze: +b.fx.freeze.toFixed(1), slow: +b.fx.slow.toFixed(1), double: +b.fx.double.toFixed(1), subtract: +b.fx.subtract.toFixed(1) },
+      fx: { freeze: +b.fx.freeze.toFixed(1), slow: +b.fx.slow.toFixed(1), double: +b.fx.double.toFixed(1), subtract: +b.fx.subtract.toFixed(1), explode: +b.fx.explode.toFixed(1) },
       at: KK.net.now(),
     });
   }

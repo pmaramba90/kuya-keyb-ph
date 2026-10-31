@@ -168,7 +168,32 @@
       const [owner, pid] = el.dataset.hk.split('/');
       el.innerHTML = heartInner(owner, pid);
     });
+    checkTop3();
     if (KK.app.screen === 'home') renderPopular();
+  }
+
+  // every hearted keyboard, most hearts first
+  const ranking = () => {
+    const list = [];
+    Object.keys(hearts).forEach((owner) => Object.keys(hearts[owner] || {}).forEach((pid) => {
+      const n = heartCount(owner, pid);
+      if (n) list.push({ owner, pid, n });
+    }));
+    return list.sort((a, b) => b.n - a.n);
+  };
+  // one of your keyboards reaches the top 3 of Popular Keyboards: a line in the feed (once
+  // per keyboard; it isn't taken back if it drops out again)
+  function checkTop3() {
+    if (!me) return;
+    const done = KK.store.uget('top3Posted', []) || [];
+    ranking().slice(0, 3).forEach((x, i) => {
+      if (x.owner !== me.uid || done.includes(x.pid)) return;
+      const p = KK.app.profiles.find((q) => q.id === x.pid);
+      if (!p) return;
+      done.push(x.pid);
+      KK.store.uset('top3Posted', done);
+      F.activity('top', { rank: i + 1, kb: kbOf(p.name, p.id, p.build) }, 't_' + p.id);
+    });
   }
 
   // capture phase, so a heart never also opens the card it sits on
@@ -181,18 +206,16 @@
     const owner = b.dataset.heart, pid = b.dataset.pid, on = hearted(owner, pid);
     const ref = N.ref(`hearts/${owner}/${pid}/${me.uid}`);
     (on ? ref.remove() : ref.set(true)).catch((err) => console.warn('kkph hearts', err));
-    // their bell, and a line in your friends' feeds (both taken back with the heart)
-    const nid = `h_${pid}_${me.uid}`, aid = `h_${owner}_${pid}`;
+    // their bell (taken back with the heart)
+    const nid = `h_${pid}_${me.uid}`;
     if (on) {
       KK.sfx.ui();
       KK.notify.unsend(owner, nid);
-      N.ref(`posts/${me.uid}/${aid}`).remove().catch(() => {});
     } else {
       KK.sfx.select();
       buildsOf(owner).then((bs) => {
         const k = bs && bs[pid];
         KK.notify.send(owner, { t: 'heart', pid, name: String((k && k.name) || '').slice(0, 60) }, nid);
-        if (k && k.build) F.activity('heart', { owner, oname: String(nameOf(owner)).slice(0, 40), kb: kbOf(k.name, pid, k.build) }, aid);
       });
     }
   }, true);
@@ -230,24 +253,22 @@
   /* ------------------------------ popular keyboards ------------------------------ */
   const buildsOf = (owner) => (buildsCache[owner] = buildsCache[owner] || N.ref('builds/' + owner).once().catch(() => null));
 
-  let popToken = 0, popSig = '';
+  let popToken = 0, popSig = '', popAll = false; // popAll: "show more" was clicked
+  const POP_SHOW = 3, POP_MAX = 10;
   async function renderPopular() {
     const token = ++popToken;
-    const list = [];
-    Object.keys(hearts).forEach((owner) => Object.keys(hearts[owner] || {}).forEach((pid) => {
-      const n = heartCount(owner, pid);
-      if (n) list.push({ owner, pid, n });
-    }));
-    list.sort((a, b) => b.n - a.n);
+    const list = ranking();
     const top = [];
     for (const x of list) {
-      if (top.length >= 5) break;
+      if (top.length >= (popAll ? POP_MAX : POP_SHOW + 1)) break; // one past 3: is there more?
       const k = ((await buildsOf(x.owner)) || {})[x.pid];
       if (k && k.build) top.push(Object.assign(x, { k }));
     }
     if (token !== popToken || KK.app.screen !== 'home') return;
-    // the same five in the same order, unchanged: keep the drawn boards (hearts update in place)
-    const sig = JSON.stringify(top.map((x) => [x.owner, x.pid, x.k.name, x.k.updated, nameOf(x.owner)]));
+    const more = !popAll && top.length > POP_SHOW;
+    if (!popAll) top.length = Math.min(top.length, POP_SHOW);
+    // the same ones in the same order, unchanged: keep the drawn boards (hearts update in place)
+    const sig = JSON.stringify([popAll, more, top.map((x) => [x.owner, x.pid, x.k.name, x.k.updated, nameOf(x.owner)])]);
     if (sig === popSig && document.querySelector('#feedPopular .pop-card')) return;
     popSig = sig;
     const box = $('#feedPopular');
@@ -261,13 +282,23 @@
             <div class="pop-kb"></div></div>`;
         }).join('')
       : '<p class="hint">no hearts yet. Heart the keyboards you like on players\' profiles and the favourites show up here.</p>';
+    if (more || popAll) box.insertAdjacentHTML('beforeend', `<button class="link-btn pop-more" data-pop="${popAll ? 'less' : 'more'}">${popAll ? 'show less' : 'show more'}</button>`);
     // each keyboard drawn whole, scaled down to fit the column
     box.querySelectorAll('.pop-kb').forEach((el, i) => {
-      const v = KK.kbview.create(el, { maxU: 22, legends: false });
+      const v = KK.kbview.create(el, { maxU: 15, legends: false }); // small, so Top Rated fits below
       v.update(C.sanitizeBuild(top[i].k.build));
       requestAnimationFrame(() => v.fit());
     });
   }
+
+  $('#feedPopular').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pop]');
+    if (!b) return;
+    e.stopPropagation(); // not a card's profile link
+    KK.sfx.ui();
+    popAll = b.dataset.pop === 'more';
+    renderPopular();
+  });
 
   /* ------------------------------- this week's board ------------------------------- */
   // you and your friends: best single-player total and most wins against players
@@ -551,14 +582,13 @@
   const PHOTO = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
   const isPhoto = (v) => typeof v === 'string' && v.length < 400000 && PHOTO.test(v);
 
-  // activity posts: what happened, in a line (and a card for wins, levels and bests)
+  // activity posts: a new keyboard, a personal best, a keyboard in the top 3 (older kinds
+  // — wins, levels, hearts — aren't shown any more)
   function activityHtml(uid, p) {
     const n = (v) => Math.floor(+v || 0).toLocaleString();
     switch (p.act) {
       case 'build': return { head: 'built a new keyboard', body: '' };
-      case 'heart': return { head: `hearted <b class="post-link" data-user="${esc(p.owner)}">${esc(String(p.oname || nameOf(p.owner)).slice(0, 40))}</b>&rsquo;s keyboard`, body: '' };
-      case 'win': return { head: 'won a match', body: `<div class="act-card"><span class="act-ico">⚔</span><span>beat <b class="post-link" data-user="${esc(p.opp)}">${esc(String(p.oppName || 'player').slice(0, 40))}</b> <em>${esc(String(p.score || '').slice(0, 12))}</em> in vs players</span></div>` };
-      case 'level': return { head: 'levelled up', body: `<div class="act-card"><span class="act-ico">🏆</span><span>cleared <b>level ${n(p.level)}</b> in single player</span></div>` };
+      case 'top': return { head: 'made the popular keyboards', body: `<div class="act-card"><span class="act-ico">🏆</span><span>this keyboard is <b>#${Math.min(3, Math.max(1, Math.floor(+p.rank || 1)))}</b> in Popular Keyboards</span></div>` };
       case 'best': return { head: 'set a new best', body: `<div class="act-card"><span class="act-ico">★</span><span>new personal best: <b>${n(p.total)}</b> points in single player</span></div>` };
       default: return null;
     }
