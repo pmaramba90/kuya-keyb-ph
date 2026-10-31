@@ -179,7 +179,15 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .add-friend { display: flex; gap: 8px; }
 .add-friend .search { flex: 1; min-width: 0; }
 .add-msg { min-height: 18px; margin: 8px 0 14px; }
-#friendReqs:not(:empty) { margin-bottom: 18px; }
+/* friends page: "your friends" and "friend requests" as two separate sections */
+.fr-sections { display: flex; flex-direction: column; gap: 26px; }
+.fr-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.fr-h b { font-size: 15px; font-weight: 700; color: var(--text); }
+.fr-h .sub { font-size: 12px; }
+.fr-reqs { border: 1px dashed var(--bg3); border-radius: 12px; padding: 14px; }
+.fr-reqs.waiting { order: -1; border: 1px solid color-mix(in srgb, var(--main) 45%, transparent); }
+.fr-reqs .fr-card { background: var(--bg); }
+.fr-reqs .req-tabs { margin-top: 0; }
 .req-tabs { display: flex; gap: 6px; margin: 4px 0 10px; }
 .req-tabs .chip b { margin-left: 4px; color: var(--main); }
 .fr-card.sent { border: 1px dashed var(--bg3); }

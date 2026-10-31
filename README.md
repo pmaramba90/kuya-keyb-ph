@@ -46,7 +46,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
   - **Hearts**: every keyboard on a player's page has a ♥ with its count. Click it to heart someone else's keyboard, and click again to take the heart back. On your own keyboards you just see the count, since you can't heart your own.
 - **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **Anyone's profile**: you can open any player's page, friend or not. Type a username on friends and press **view profile**, or click someone in popular keyboards, the vs players list or your match history. If you're not friends, the page has an **add friend** button. Once you've sent a request it shows **request sent**; if they've asked you, it shows **accept friend request**; once you're friends it shows **✓ friends**.
-- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. **requests received / requests sent** switch between the requests waiting for you and the ones you've sent that haven't been answered yet (cancel takes one back). Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
+- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The page has two separate sections: **your friends** (with how many are online) and **friend requests** (not friends yet), in its own outlined panel with **received** / **sent** tabs (cancel takes back one you sent). While someone is waiting on you, the requests panel moves above your friends and turns gold, and a new request switches it to received. Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
 - **marketplace**: coming soon.
 - **edit profile** (on your profile): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 
@@ -148,6 +148,21 @@ The config values are public by design. The database rules are what keep each pl
 3. **Play (survival)**: each level lasts 1 minute.
    - Every word that reaches the bottom fills the **overflow bar**, and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
+   - **Play → single player / vs AI** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.
+   - **Word length grows with the level**: level 1 is 3-letter words, then the longest word grows by a letter every two levels. The levels in between add some words a letter longer:
+
+     | level | words |
+     |---|---|
+     | 1 | 3 letters |
+     | 2 | up to 4 |
+     | 3 | up to 4, plus some 5s (about 1 in 5) |
+     | 4 | up to 5 |
+     | 5 | up to 5, plus some 6s |
+     | 6 | up to 6 … and so on (up to 12) |
+
+     The shortest words also grow, staying within 2 letters of the longest. Glowing power-up words are never longer than the level's longest.
+   - **Power-ups come more often as levels get harder**: about 1 in 10 words glows on level 1, rising by 2 points per level to about 1 in 4 by level 10 (the cap is 28%). From level 6, two glowing words can be on screen at once.
+   - These lengths are for single player only. vs AI and vs players keep their own word mix.
    - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
    - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.

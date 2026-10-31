@@ -912,14 +912,16 @@
     b.blur();
     HOME_BTN[b.dataset.home]();
   });
-  $('#btnSolo').addEventListener('click', () => {
-    KK.builder.mode = 'solo';
-    KK.builder.open(4);
-  });
-  $('#btnVs').addEventListener('click', () => {
-    KK.builder.mode = 'vs';
-    KK.builder.open(4);
-  });
+  // single player / vs AI: you play your main keyboard (its summary opens, ready to
+  // start); with no saved keyboards yet, whatever's in the builder
+  const playMain = (mode) => {
+    KK.builder.mode = mode;
+    const id = app.mainBuildId();
+    if (id) app.loadProfile(id);
+    else KK.builder.open(4);
+  };
+  $('#btnSolo').addEventListener('click', () => playMain('solo'));
+  $('#btnVs').addEventListener('click', () => playMain('vs'));
   $('#btnPvp').addEventListener('click', () => KK.online.openLobby());
 
   /* ----------------------------------- boot ----------------------------------- */

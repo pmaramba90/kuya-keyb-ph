@@ -155,16 +155,26 @@
       <!-- friends -->
       <section class="screen" id="scr-friends">
         <div class="narrow">
-          <div class="grp-h">friends <span class="sub" id="friendsCount"></span></div>
+          <div class="grp-h">find players</div>
           <form class="add-friend" id="addFriend" autocomplete="off">
             <input class="search" id="addFriendName" placeholder="find a player by username" spellcheck="false" maxlength="20">
             <button class="btn primary" type="submit">send request</button>
             <button class="btn" type="submit" data-view="1">view profile</button>
           </form>
           <p class="hint add-msg" id="addFriendMsg"></p>
-          <div class="req-tabs" id="reqTabs"></div>
-          <div id="friendReqs"></div>
-          <div class="friend-list" id="friendList"></div>
+          <div class="fr-sections">
+            <!-- your friends: requests that were accepted, either way -->
+            <section class="fr-section">
+              <div class="fr-h"><b>your friends</b><span class="sub" id="friendsCount"></span></div>
+              <div class="friend-list" id="friendList"></div>
+            </section>
+            <!-- requests: not friends yet; moves above your friends while someone's waiting on you -->
+            <section class="fr-section fr-reqs" id="frReqs">
+              <div class="fr-h"><b>friend requests</b><span class="sub">not friends yet</span></div>
+              <div class="req-tabs" id="reqTabs"></div>
+              <div id="friendReqs"></div>
+            </section>
+          </div>
         </div>
       </section>
 

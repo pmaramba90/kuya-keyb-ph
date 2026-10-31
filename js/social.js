@@ -80,7 +80,9 @@
       KK.feed.sync(); // the feed follows your friends' posts
     }));
     offs.push(N.ref('friendReqs/' + me.uid).on((v) => {
+      const before = Object.keys(reqs).length;
       reqs = v || {};
+      if (Object.keys(reqs).length > before) reqTab = 'in'; // a new one: show it
       Object.keys(reqs).forEach(loadAvatar);
       renderFriends();
       const n = Object.keys(reqs).length;
@@ -438,11 +440,12 @@
     if (!me || KK.app.screen !== 'friends') return;
     const ids = Object.keys(friends);
     const online = ids.filter((id) => stateOf(id) !== 'offline');
-    $('#friendsCount').textContent = ids.length ? `${ids.length} · ${online.length} online` : '';
+    $('#friendsCount').textContent = ids.length ? `${ids.length} · ${online.length} online` : '0';
     // requests: received (to answer) and sent (still waiting on them)
     const nIn = Object.keys(reqs).length, nOut = Object.keys(sent).length;
+    $('#frReqs').classList.toggle('waiting', nIn > 0); // someone's waiting on you: requests go first
     const tab = (t, label, n) => `<button class="chip${reqTab === t ? ' on' : ''}" data-rt="${t}">${label}${n ? `<b>${n}</b>` : ''}</button>`;
-    $('#reqTabs').innerHTML = tab('in', 'requests received', nIn) + tab('out', 'requests sent', nOut);
+    $('#reqTabs').innerHTML = tab('in', 'received', nIn) + tab('out', 'sent', nOut);
     $('#friendReqs').innerHTML = reqTab === 'in'
       ? Object.entries(reqs)
           .map(([uid, r]) => `<div class="fr-card req link" data-user="${esc(uid)}" title="view profile">${S.avatarImg(uid, 'sm')}
@@ -469,7 +472,7 @@
             ${st === 'online' ? `<button class="btn primary sm" data-fr="challenge" data-uid="${esc(uid)}">challenge</button>` : ''}
             <button class="picon" data-fr="remove" data-uid="${esc(uid)}" title="remove friend">✕</button></div>`;
         }).join('')
-      : '<p class="hint">no friends yet — add someone by their username.</p>';
+      : '<p class="hint">no friends yet. Find a player above and send them a request.</p>';
   }
   S.renderFriends = renderFriends;
 

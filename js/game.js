@@ -68,6 +68,21 @@
     };
   };
 
+  // single player: word length grows with the level — level 1 tops out at 3 letters,
+  // then one more letter every two levels, and the levels in between mix in a few
+  // words a letter longer (1: ≤3 · 2: ≤4 · 3: ≤4 + some 5 · 4: ≤5 · 5: ≤5 + some 6 …).
+  // Power-ups come more often as it gets harder, so there's more to survive with.
+  const soloParams = (L) => {
+    const p = G.params(L);
+    p.maxLen = Math.min(3 + Math.floor(L / 2), 12);
+    p.minLen = Math.max(3, p.maxLen - 2);
+    p.stretch = L >= 3 && L % 2 ? 0.2 : 0; // share of words one letter over the max
+    p.powerChance = Math.min(0.1 + 0.02 * (L - 1), 0.28);
+    p.maxPowers = L >= 6 ? 2 : 1; // glowing words on the field at once
+    return p;
+  };
+  G.soloParams = soloParams;
+
   // vs modes: a busier field — words come ~1.5x as often and more can be on screen
   const vsParams = (L) => {
     const p = G.params(L);
@@ -83,19 +98,24 @@
     const p = run.p, byLen = pool(run.lang), rnd = run.rnd;
     const roll = rnd(), pick = rnd(), sizeRoll = rnd();
     let power = null;
-    const busy = run.kind === 'pvp' ? run.sincePower < 8 : run.boards.some((b) => b.words.some((w) => w.power));
+    const onField = Math.max(0, ...run.boards.map((b) => b.words.filter((w) => w.power).length));
+    const busy = run.kind === 'pvp' ? run.sincePower < 8 : onField >= (p.maxPowers || 1);
     run.sincePower = (run.sincePower || 0) + 1;
-    if (run.elapsed > 4 && roll < 0.1 && !busy) {
+    if (run.elapsed > 4 && roll < (p.powerChance || 0.1) && !busy) {
       const entries = Object.entries(POWERS);
       let r = pick * entries.reduce((s, [, x]) => s + x.weight, 0);
       for (const [k, x] of entries) if ((r -= x.weight) <= 0) { power = k; break; }
       run.sincePower = 0;
     }
     for (let tries = 0; tries < 25; tries++) {
-      const len = power ? 4 + Math.floor(rnd() * 3) : p.minLen + Math.floor(Math.pow(rnd(), 1.4) * (p.maxLen - p.minLen + 1));
+      let len = power
+        ? Math.min(4 + Math.floor(rnd() * 3), p.maxLen) // no longer than the level allows
+        : p.minLen + Math.floor(Math.pow(rnd(), 1.4) * (p.maxLen - p.minLen + 1));
+      if (!power && p.stretch && rnd() < p.stretch) len = p.maxLen + 1; // single player's in-between levels
       const list = byLen[len] || byLen[Math.min(len, 9)] || byLen[5];
       const text = list ? list[Math.floor(rnd() * list.length)] : null;
-      if (!text || run.recent.includes(text)) continue;
+      // no repeats among recent words (fewer of them when that length has few words)
+      if (!text || run.recent.slice(-Math.min(40, Math.floor(list.length / 2))).includes(text)) continue;
       run.recent.push(text);
       if (run.recent.length > 40) run.recent.shift();
       return { text, power, xf: rnd(), vf: 0.8 + rnd() * 0.4, sz: power ? NORMAL : sizeFor(sizeRoll) };
@@ -649,11 +669,16 @@
     return b;
   };
   G._activate = (type) => G.human().activate(type);
+  // n single-player spawns for a level, without playing: [{ len, power }]
+  G._spawns = (level, n, lang) => {
+    const fake = { kind: 'solo', p: soloParams(level), lang: lang || 'en', rnd: Math.random, recent: [], elapsed: 10, boards: [], sincePower: 0 };
+    return Array.from({ length: n }, () => makeSpawn(fake)).filter(Boolean).map((e) => ({ len: e.text.length, power: e.power }));
+  };
 
   /* ---------------------------------- solo ---------------------------------- */
   G.start = function (level, lang, startTotal) {
     stopRun();
-    const p = G.params(level);
+    const p = soloParams(level);
     const board = new Board({
       field: $('#field'), typed: $('#typed'), powers: $('#powers'), meter: $('#cmeter'), overflow: $('#overflow'),
       word: KK.keysound.comboKey(KK.app.build), p,
