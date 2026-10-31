@@ -18,7 +18,11 @@
     app.hasSaved = true;
   };
   app.saveSettings = () => KK.store.set('settings', app.settings);
-  app.saveProgress = () => KK.store.uset('progress', app.progress);
+  let scoresSig = ''; // your scores as last copied online (app.publishScores)
+  app.saveProgress = () => {
+    KK.store.uset('progress', app.progress);
+    if (app.publishScores) app.publishScores();
+  };
   app.userName = () => (app.user ? (KK.net.me && KK.net.me.display) || KK.auth.displayName(app.user) : 'you');
 
   A.musicVol = app.settings.music;
@@ -53,6 +57,7 @@
 
   function setUser(user) {
     app.user = user;
+    scoresSig = '';
     KK.store.user = user;
     loadUserData();
   }
@@ -75,6 +80,7 @@
   app.storeProfiles = () => {
     KK.store.uset('profiles', app.profiles);
     KK.online.pushBuilds();
+    if (app.publishScores) app.publishScores(); // the vs-players record is kept per keyboard
   };
   const persistProfiles = () => {
     app.storeProfiles();
@@ -542,12 +548,7 @@
     const me = KK.net.me || {}, p = app.progress, cur = app.settings.currency || 'usd';
     $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${KK.feed.profileName(app.userName(), me.name === KK.feed.OFFICIAL)}</div><div class="badges" data-uid="${esc(me.uid || '')}"></div></div>
       <button class="btn ghost sm edit-profile" id="editProfile">edit profile</button>`;
-    const add = (a, r) => ({ w: a.w + ((r && r.w) || 0), l: a.l + ((r && r.l) || 0) });
-    const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
-    const pvp = app.profiles.reduce(add, add({ w: 0, l: 0 }, p.pvpDefault));
-    const rec = (r) => (r.w + r.l ? ` · ${r.w}–${r.l}` : '');
-    const tile = (label, best, sub) => `<div class="tile"><span class="hud-lbl">${label}</span><b>${best ? best.toLocaleString() : '—'}</b><span class="hint">${sub}</span></div>`;
-    $('#dashBest').innerHTML = tile('single player', p.bestTotal, 'best total') + tile('vs ai', p.vsBest, 'best round' + rec(ai)) + tile('vs players', p.pvpBest, 'best round' + rec(pvp));
+    $('#dashBest').innerHTML = scoreTiles(myScores());
     const kbs = app.profiles.map((x) => ({ id: x.id, name: x.name, build: x.build, w: x.w || 0, l: x.l || 0 }));
     if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
     $('#homeQuick').hidden = !app.hasSaved;
@@ -599,6 +600,37 @@
     return { pct: g ? Math.round(((k.w || 0) / g) * 100) + '%' : '—', rec: g ? `${k.w || 0}W ${k.l || 0}L` : 'no matches' };
   };
 
+  // your best score per mode and your records, as the score cards show them
+  function myScores() {
+    const p = app.progress;
+    const add = (a, r) => ({ w: a.w + ((r && +r.w) || 0), l: a.l + ((r && +r.l) || 0) });
+    const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
+    const pvp = app.profiles.reduce(add, add({ w: 0, l: 0 }, p.pvpDefault));
+    const n = (v) => Math.max(0, Math.floor(+v || 0));
+    return { solo: n(p.bestTotal), vs: n(p.vsBest), vsW: ai.w, vsL: ai.l, pvp: n(p.pvpBest), pvpW: pvp.w, pvpL: pvp.l };
+  }
+  // the three cards: single player (best total), vs AI and vs players (best round + record)
+  function scoreTiles(s) {
+    s = s || {};
+    const num = (v) => (+v > 0 ? Math.floor(+v).toLocaleString() : '—');
+    const rec = (w, l) => (+w || 0) + (+l || 0) ? ` · ${Math.floor(+w || 0)}–${Math.floor(+l || 0)}` : '';
+    const tile = (label, best, sub) => `<div class="tile"><span class="hud-lbl">${label}</span><b>${num(best)}</b><span class="hint">${sub}</span></div>`;
+    return tile('single player', s.solo, 'best total') + tile('vs ai', s.vs, 'best round' + rec(s.vsW, s.vsL)) + tile('vs players', s.pvp, 'best round' + rec(s.pvpW, s.pvpL));
+  }
+  // a copy online (scores/{uid}) so they show on your page for other players; only
+  // written when something changed
+  app.publishScores = () => {
+    const me = KK.net.me;
+    if (!me || !app.user || !app.progress) return;
+    const s = myScores(), sig = JSON.stringify(s);
+    if (sig === scoresSig) return;
+    scoresSig = sig;
+    KK.net.ref('scores/' + me.uid).set(Object.assign({ at: KK.net.now() }, s)).catch((err) => {
+      scoresSig = '';
+      console.warn('kkph scores', err);
+    });
+  };
+
   // a keyboard row: swatch, name and sound, price, win rate (+ make main / open)
   function kbCard(k, o) {
     const b = C.sanitizeBuild(k.build), c = C.keycapById[b.keycap].colors, wr = winRate(k);
@@ -648,9 +680,10 @@
     app.show('user');
     $('#userHi').innerHTML = `${KK.social.avatarImg(uid, 'md')}<div><div class="dash-name">…</div></div>`;
     $('#userFeat').hidden = true;
+    $('#userBest').innerHTML = '';
     $('#userKbs').innerHTML = '';
     const N = KK.net;
-    const [u, pf, bs] = await Promise.all(['users/', 'profiles/', 'builds/'].map((p) => N.ref(p + uid).once().catch(() => null)));
+    const [u, pf, bs, sc] = await Promise.all(['users/', 'profiles/', 'builds/', 'scores/'].map((p) => N.ref(p + uid).once().catch(() => null)));
     if (app.viewUid !== uid || app.screen !== 'user') return;
     const pres = KK.online.players()[uid];
     const st = !KK.online.isOnline(pres) ? 'offline' : pres.state === 'match' ? 'in a match' : 'online';
@@ -663,6 +696,7 @@
       ${st === 'online' ? `<button class="btn primary sm" id="userChallenge">challenge</button>` : ''}`;
     app.renderUserRel();
     KK.feed.paintBadges();
+    $('#userBest').innerHTML = scoreTiles(sc); // their best scores and records
     const all = bs || {};
     const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
     const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
@@ -760,6 +794,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
+      app.publishScores();
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
       app.show(imported ? 'title' : 'home');
@@ -1057,6 +1092,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
+      app.publishScores();
     }
     if (app.screen === 'title') {
       // a refresh comes back to the screen you were on

@@ -195,6 +195,22 @@
         ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000000"
       }
     },
+    "scores": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['at'])",
+        "at": { ".validate": "newData.isNumber()" },
+        "solo": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000" },
+        "vs": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000" },
+        "vsW": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "vsL": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "pvp": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000" },
+        "pvpW": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "pvpL": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "$other": { ".validate": false }
+      }
+    },
     "stats": {
       ".read": "auth != null",
       "$uid": {

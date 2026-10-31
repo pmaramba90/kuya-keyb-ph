@@ -65,7 +65,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
-  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record
+  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
   - **edit profile**, plus **build a new keyboard · full keyboards · continue last build**
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
