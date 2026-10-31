@@ -631,7 +631,8 @@
   function scoreTiles(s) {
     s = s || {};
     const num = (v) => (+v > 0 ? Math.floor(+v).toLocaleString() : '—');
-    const rec = (w, l) => (+w || 0) + (+l || 0) ? ` · ${Math.floor(+w || 0)}–${Math.floor(+l || 0)}` : '';
+    // phones show the record on its own line ("2–1 record"); elsewhere " · 2–1"
+    const rec = (w, l) => (+w || 0) + (+l || 0) ? `<span class="rec"><i> · </i>${Math.floor(+w || 0)}–${Math.floor(+l || 0)}<em> record</em></span>` : '';
     const tile = (label, best, sub) => `<div class="tile"><span class="hud-lbl">${label}</span><b>${num(best)}</b><span class="hint">${sub}</span></div>`;
     return tile('single player', s.solo, 'best total') + tile('vs ai', s.vs, 'best round' + rec(s.vsW, s.vsL)) + tile('vs players', s.pvp, 'best round' + rec(s.pvpW, s.pvpL));
   }
@@ -770,6 +771,7 @@
   }
 
   // newest first; vs players only (written by KK.online.record)
+  app.renderHistory = () => renderHistory();
   async function renderHistory() {
     const me = KK.net.me;
     if (!me) return;

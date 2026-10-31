@@ -120,7 +120,8 @@
         opp: String(m.opp), oppName: String(m.oppName || 'player').slice(0, 40), won: !!won,
         score: `${count(m.wins[0])}–${count(m.wins[1])}`, how: String(m.how || '').slice(0, 40),
         build: String(pick.name).slice(0, 60), at: N.now(),
-      }).catch((err) => console.warn('kkph history', err));
+      }).then(() => app.screen === 'play' && app.renderHistory()) // play may already be showing
+        .catch((err) => console.warn('kkph history', err));
       if (won) KK.feed.stat('win'); // one more on this week's board
     }
     return `${esc(pick.name)} is now ${recText(rec)} vs players`;

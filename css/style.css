@@ -140,6 +140,8 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .tile { display: flex; flex-direction: column; gap: 2px; background: var(--bg2); border-radius: var(--r); padding: 14px 16px; }
 .tile b { font-size: 26px; font-weight: 400; color: var(--main); line-height: 1.2; }
 .tile .hint { margin: 0; font-size: 11px; }
+.tile .rec i, .tile .rec em { font-style: normal; }
+.tile .rec em { display: none; }
 .dash-kbs { display: flex; flex-direction: column; gap: 8px; }
 .dash-actions { justify-content: flex-start; margin: -14px 0 22px; }
 .kb-card { display: grid; grid-template-columns: auto 1fr 90px 90px 104px; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--bg2); border: 2px solid transparent; border-radius: var(--r); padding: 10px 14px; color: var(--text); transition: border-color .15s; }
@@ -1311,13 +1313,37 @@ body.touch .keys-hint { display: none; }
   .lane .powers .hint { display: none; }
   #scr-build[data-step='4'] .stage-start { display: block; }
   .stage-start .btn { width: 100%; }
+  /* bell: a full-width panel under the header (it hung off the left edge) */
+  .bell-menu { position: fixed; top: 62px; left: 14px; right: 14px; width: auto; max-height: min(440px, calc(100dvh - 140px)); }
+  /* profile: the two actions side by side, the record under "best round" */
+  .dash-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .dash-actions .btn { flex: 1 1 40%; min-width: 0; padding: 11px 8px; font-size: 12.5px; }
+  .dash-actions .btn[hidden] { display: none; }
+  .dash-best .rec, .feat-stats .rec { display: block; }
+  .dash-best .rec i { display: none; }
+  .dash-best .rec em { display: inline; }
+  /* play: no empty line above the buttons */
+  .home.play { padding-top: 10px; }
+  .home-hi:empty { display: none; }
+  /* builder: the five steps as one row of tabs */
+  .steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; margin-bottom: 12px; border-bottom: 1px solid var(--bg2); }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 8px; border-radius: 0; font-size: 11px; line-height: 1.25; text-align: center; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .step .n { margin: 0; font-size: 10px; }
+  .step.on { border-bottom-color: var(--main); }
+  /* full keyboards: the picked keyboard on top (a tap on the list scrolls up to it) */
+  .kbs-detail { order: -1; scroll-margin-top: 10px; }
+  /* reviews use the composer's full width */
+  .whats.open:has(.rev-kinds) #whatsAv { display: none; }
+  .whats.open:has(.rev-kinds) .composer { grid-column: 1 / -1; }
+  /* saved builds: the whole line (with its record) wraps instead of being cut off */
+  .pmeta { white-space: normal; line-height: 1.45; }
   .badges { gap: 4px; }
   .badge { padding: 2px 5px; }
   .badge .badge-txt { display: none; }
   .badge .medal { font-size: 18px; }
   body.touch .ov-card p.hint:has(.kbd) { display: none; } /* esc / enter: no such keys on a phone */
-  .pg-list { margin: 12px auto 10px; }
-  .pg-row { grid-template-columns: 88px 1fr; gap: 8px; padding: 7px 10px; font-size: 12px; }
+  .pg-row { grid-template-columns: 84px 1fr; gap: 8px; padding: 7px 10px; font-size: 12px; }
+  .overlay { padding: 12px 14px; }
   .bell-wrap { margin-left: auto; }
   .bell-wrap + .nav-user-wrap { margin-left: 4px; }
   /* the invite card */
@@ -1325,15 +1351,95 @@ body.touch .keys-hint { display: none; }
   .ch-card { padding: 20px 16px; }
   .ch-card .ov-h { font-size: 24px; }
   .ch-pick .select { flex: 1 1 100%; }
-  /* playing on a phone: no header, and a shorter play area so the words and what you've
-     typed stay above the on-screen keyboard */
+  /* ---- playing on a phone: just the game. One row of numbers beside the pause button,
+     the overflow bar, the play area and what you've typed, all above the on-screen
+     keyboard (which covers everything below, so the drawn keyboard, the build card and
+     the footer step aside) ---- */
   body.touch[data-screen='game'] .top, body.touch[data-screen='vs'] .top { display: none; }
-  body.touch[data-screen='game'] #app, body.touch[data-screen='vs'] #app { padding-top: 50px; } /* the pause button's strip */
-  body.touch #scr-game .hud { gap: 8px; margin-bottom: 4px; }
+  body.touch[data-screen='game'] #app, body.touch[data-screen='vs'] #app { padding-top: 8px; }
+  body.touch[data-screen='game'] .bottom, body.touch[data-screen='vs'] .bottom { display: none; }
+  body.touch #scr-game .game-bottom, body.touch #scr-vs .game-bottom { display: none; }
   body.touch #hudLevel, body.touch #scr-game .hud-mini, body.touch .cm-bar, body.touch .cm-next { display: none; }
+  body.touch .powers .hint { display: none; }
+  body.touch .powers { min-height: 20px; }
   body.touch .hud-time { font-size: 30px; }
-  body.touch .powers { min-height: 18px; }
-  body.touch #scr-game .field { height: 28vh; min-height: 180px; }
-  body.touch .lane .field { height: 26vh; min-height: 160px; }
   body.touch .typed { height: 34px; margin: 4px 0; font-size: 24px; }
+  /* sized from the smallest visible height (browser bars showing), so what you type stays
+     above the on-screen keyboard on short phones too */
+  body.touch #scr-game .field, body.touch .lane .field { height: clamp(140px, 30vh, 260px); height: clamp(140px, 30svh, 260px); min-height: 0; }
+  /* single player: score · time · combo, clear of the pause button */
+  body.touch #scr-game .hud { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 40px; margin-bottom: 4px; padding-right: 46px; }
+  body.touch .hud-total #hudTotal { font-size: 22px; }
+  body.touch #scr-game .cmeter { min-width: 0; }
+  body.touch #scr-game .cm-main { gap: 4px; }
+  body.touch #scr-game .cm-count { font-size: calc(22px + var(--heat) * 2px); }
+  body.touch #scr-game .cm-tier { font-size: 10px; margin-top: 1px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  body.touch #scr-game .cmeter.t-5 .cm-tier { font-size: 12px; }
+  body.touch #scr-game > .meter-row { grid-template-columns: auto minmax(0, 1fr) 36px; gap: 8px; margin: 2px 0 2px; }
+  body.touch #scr-game > .meter-row .hud-lbl { font-size: 10px; }
+  /* vs AI / vs players: your lane only, full width. The other lane keeps running at full
+     size off screen (the game measures it); their score stays in the top row */
+  body.touch .vs-lanes { grid-template-columns: minmax(0, 1fr); }
+  body.touch #laneR { position: fixed; top: 0; left: -300vw; width: calc(100vw - 28px); visibility: hidden; pointer-events: none; }
+  body.touch .attack { display: none; }
+  body.touch #scr-vs .vs-top { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 40px; margin-bottom: 4px; padding-right: 46px; }
+  body.touch #scr-vs .vs-who-top .av, body.touch #scr-vs .vs-sub { display: none; }
+  body.touch #scr-vs .vs-side b { font-size: 22px; }
+  body.touch #scr-vs .vs-side.r b { font-size: 16px; color: var(--sub); }
+  body.touch #scr-vs .vs-side .hud-lbl { font-size: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.touch #vsRound { font-size: 10px; }
+  body.touch #scr-vs .vs-wins { margin-top: 2px; gap: 6px; font-size: 11px; }
+  body.touch #scr-vs .vs-wins i { width: 8px; height: 8px; }
+  /* your lane: overflow bar and combo on one row */
+  body.touch #laneL .lane-head { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-bottom: 0; }
+  body.touch #laneL .cmeter.mini .cm-x { display: none; }
+  body.touch #laneL .cmeter.mini .cm-tier { max-width: 110px; }
+  /* the countdown sits high, clear of the on-screen keyboard */
+  body.touch .ov-card:has(.count-big) { margin-block: 9vh auto; }
+  .count-big { font-size: 84px; }
+  .ov-card:has(.count-big) .ov-sub { font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+  /* ---- cards over the game (results, pause, rounds, guide) ---- */
+  .ov-h { font-size: 24px; line-height: 1.2; }
+  .ov-sub { font-size: 12px; margin-bottom: 16px; }
+  .stars { font-size: 18px; }
+  .res-big { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0 10px; }
+  .res-big > div { align-items: center; justify-content: center; padding: 10px 6px; background: var(--bg2); border-radius: 10px; }
+  .res-big .hud-lbl { font-size: 10px; }
+  .res-big b { font-size: 26px; }
+  .res-bonus { gap: 4px 14px; font-size: 12px; margin: 2px 0 8px; }
+  .res-small { font-size: 11px; }
+  .res-vs { gap: 8px; margin: 12px 0 4px; }
+  .res-vs > div { padding: 10px 6px; background: var(--bg2); border-radius: 10px; }
+  .res-vs b { font-size: 28px; }
+  .res-vs > div > div > .hud-lbl:last-child { font-size: 10px; line-height: 1.5; }
+  /* buttons: the main one full width, the rest in pairs (one on its own fills the row),
+     "menu" / "back" as a quiet link */
+  .ov-btns { gap: 8px; margin-top: 18px; }
+  .ov-btns .btn { flex: 1 1 40%; min-width: 0; padding: 11px 10px; font-size: 13px; }
+  .ov-btns .btn.primary, .ov-btns .btn.ghost { flex-basis: 100%; }
+  .ov-btns .btn.ghost { padding: 6px; }
+  /* the power-ups guide: title and buttons stay put, the list scrolls between them */
+  .ov-card:has(.pg-list) { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); }
+  .ov-card:has(.pg-list) .pg-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 10px 0 8px; padding-right: 2px; }
+  .ov-card:has(.pg-list) .ov-btns { margin-top: 10px; flex: none; }
+  .ov-card:has(.pg-list) .pg-hide { flex: none; justify-content: center; margin: 0; }
+  .pg-desc { font-size: 12px; line-height: 1.4; }
+  .pg-desc em { font-size: 10.5px; }
+}
+
+/* touch screens: no stuck hover looks after a tap */
+@media (hover: none) {
+  .nav-btn:hover:not(.on) { color: var(--sub); }
+  .btn:hover { background: var(--bg2); color: var(--text); }
+  .btn.primary:hover { background: var(--main); color: var(--bg); }
+  .btn.ghost:hover { background: transparent; color: var(--sub); }
+  .chip:hover:not(.on) { color: var(--sub); }
+  .react:hover:not(.on) { background: none; color: var(--sub); }
+  .react:hover:not(.on) .emo { filter: grayscale(1); opacity: .65; }
+  .link-btn:hover, .picon:hover, .foot-btn:hover { color: var(--sub); }
+  .board-row:hover { background: none; }
+  .kbc:hover { background: var(--bg2); }
+  .whats-in:hover { background: var(--bg); }
+  .whats-btns button:hover { background: none; color: var(--sub); }
+  .pop-card:hover { border-color: transparent; }
 }

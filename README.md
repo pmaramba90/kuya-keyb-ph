@@ -17,14 +17,16 @@ The top bar has **home · profile · play · friends · marketplace**, plus your
 
 **Back button**: every screen is a step in the browser's history, so Back and Forward move between screens (home, profile, play, friends, a player's page, …) instead of leaving the site, and a refresh comes back to the screen you were on. A game isn't a step of its own: Back after a game goes to where you started it, and Back in the middle of a game pauses it (in vs players it asks before forfeiting) instead of leaving. Back on the first page you opened leaves the site, as usual.
 
-On a phone the tabs move to a bar along the bottom (icons with small names), your name shrinks to just your picture at the top right, and every page fits the screen's width. The bar hides while you're playing. On a tablet the tabs show as icons only.
+On a phone (all of this is phone-only; the desktop site is unchanged) the tabs move to a bar along the bottom (icons with small names), your name shrinks to just your picture at the top right, and every page fits the screen's width. The bar hides while you're playing. Tapping doesn't leave hover looks stuck (a lit tab, an inverted button). The bell opens as a full-width panel, the builder's five steps are one row of tabs, a picked full keyboard shows above the list, profile score cards show the record on its own line, and play → single player / vs AI has its start button right under the keyboard. On a tablet the tabs show as icons only.
 
 **Playing on a phone.** Phones don't send key presses to a web page, so during a game a hidden text box holds the phone's own keyboard open. Whatever you type into it goes to the game: letters type, ⌫ deletes, and space clears the word. It reads keyboards that compose or autocorrect whole words (like Gboard) by comparing what's in the box before and after each change.
 - The keyboard comes up with the countdown.
 - If it's hidden, **⌨ tap here to type** (or a tap on the play area) brings it back.
 - The **pause** button at the top right stands in for Esc.
 - Any card that opens (pause, results, an invite) puts the keyboard away so its buttons can be tapped.
-- The play area is shorter on phones and the scores are compact, so the falling words and what you've typed stay above the keyboard.
+- The game screen is just the game: one row with your score, the clock and your combo beside the pause button, the overflow bar, active power-ups, the play area and what you've typed. The play area is sized from the smallest visible height so it all stays above the phone's keyboard. The drawn keyboard, the spec card and the footer step aside while you play.
+- **vs AI / vs players** show only your lane, full width. The other side keeps playing off screen; their name and score stay in the top row.
+- Cards over the game are compact: results as a 2×2 grid of tiles, the main button full width, the rest in pairs, menu as a quiet link. The power-ups guide keeps its title and buttons on screen and scrolls the list between them. The countdown sits high, clear of the keyboard.
 - Cheat detection still applies: phone typing counts as real typing, and fake input events from a script are caught.
 
 - **home**: a feed, like X or Facebook. Top to bottom:

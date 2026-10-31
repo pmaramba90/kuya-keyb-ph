@@ -50,6 +50,8 @@
       card.blur();
       KK.sfx.ui();
       select(card.dataset.kb);
+      // phones: the picked keyboard shows above the list
+      if (matchMedia('(max-width: 700px)').matches) $('#kbDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     $('#kbDetail').addEventListener('click', onDetail);
   };
