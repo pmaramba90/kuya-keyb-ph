@@ -793,7 +793,7 @@ body.no-game-kb .game-kb { display: none; }
 .powers { min-height: 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12px; }
 .pchip { padding: 2px 10px; border-radius: 12px; background: var(--bg2); color: var(--pc); }
 .pchip b { font-weight: 400; color: var(--text); margin-left: 4px; }
-.pw-freeze { --pc: #7fd1ff; } .pw-slow { --pc: #b48ae8; } .pw-double { --pc: #e2b714; } .pw-erase { --pc: #ff7a6b; } .pw-subtract { --pc: #5fd38a; } .pw-explode { --pc: #ff9f43; }
+.pw-freeze { --pc: #7fd1ff; } .pw-slow { --pc: #b48ae8; } .pw-double { --pc: #e2b714; } .pw-erase { --pc: #ff7a6b; } .pw-subtract { --pc: #5fd38a; } .pw-explode { --pc: #ff9f43; } .pw-reset { --pc: #4fd1c5; }
 
 /* power-up words */
 .fw.pw .r, .fw.pw .t { text-shadow: 0 0 12px color-mix(in srgb, var(--pc) 55%, transparent); }
@@ -820,7 +820,15 @@ body.no-game-kb .game-kb { display: none; }
   28%, 75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
 }
-.toast.pw-freeze, .toast.pw-slow, .toast.pw-double, .toast.pw-erase, .toast.pw-subtract, .toast.pw-explode { color: var(--pc); font-size: 28px; }
+.toast.pw-freeze, .toast.pw-slow, .toast.pw-double, .toast.pw-erase, .toast.pw-subtract, .toast.pw-explode, .toast.pw-reset { color: var(--pc); font-size: 28px; }
+/* the power-ups guide */
+.pg-list { display: flex; flex-direction: column; gap: 6px; margin: 16px auto 14px; max-width: 560px; text-align: left; }
+.pg-row { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: baseline; background: var(--bg2); border-radius: 8px; padding: 9px 12px; }
+.pg-name { color: var(--pc); font-weight: 700; font-size: 13px; white-space: nowrap; }
+.pg-desc { font-size: 13px; color: var(--text); line-height: 1.45; }
+.pg-desc em { display: block; font-style: normal; font-size: 11px; color: var(--sub); margin-top: 2px; }
+.pg-hide { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--sub); cursor: pointer; margin-bottom: 4px; }
+.guide-link { margin-top: 2px; }
 /* explode: a ring that grows to the blast radius */
 .boom { position: absolute; width: var(--r); height: var(--r); margin: calc(var(--r) / -2) 0 0 calc(var(--r) / -2); border-radius: 50%; pointer-events: none; border: 3px solid #ff9f43; background: radial-gradient(circle, rgba(255, 159, 67, .45), rgba(255, 90, 31, .12) 55%, transparent 70%); animation: boom .65s ease-out forwards; }
 @keyframes boom { from { transform: scale(.15); opacity: 1; } 60% { opacity: .8; } to { transform: scale(1); opacity: 0; } }
@@ -1061,7 +1069,8 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
 .nt-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .nt-text > b:first-child { color: var(--main); }
 
-/* the official account's name glows, with a tick */
+/* the official account: its posts get a gold border, its name glows with a tick */
+.post.official-post { border: 1px solid rgba(255, 216, 74, .75); box-shadow: 0 0 0 1px rgba(255, 216, 74, .18), 0 0 22px rgba(255, 190, 40, .14); background: linear-gradient(180deg, rgba(255, 216, 74, .06), transparent 120px), var(--bg2); }
 b.official { white-space: nowrap; color: #ffd84a !important; text-shadow: 0 0 6px rgba(255, 216, 74, .85), 0 0 14px rgba(255, 170, 30, .55); animation: official-glow 2.4s ease-in-out infinite; }
 @keyframes official-glow { 50% { text-shadow: 0 0 10px rgba(255, 216, 74, 1), 0 0 22px rgba(255, 170, 30, .8); } }
 .official-tick { display: inline-grid; place-items: center; width: 13px; height: 13px; margin-left: 5px; border-radius: 50%; background: #ffd84a; color: var(--bg); font-size: 9px; font-style: normal; font-weight: 700; vertical-align: 1px; text-shadow: none; }

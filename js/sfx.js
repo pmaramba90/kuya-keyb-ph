@@ -106,6 +106,10 @@
       noise(0, 0.5, 0.25, 3000, 120);
       tone(110, 0, 0.6, { type: 'sine', to: 35, vol: 0.12 });
       tone(420, 0.02, 0.25, { type: 'square', to: 90, vol: 0.05, lp: 2000 });
+    } else if (type === 'reset') {
+      // the bar draining all the way down, then a bright chime
+      tone(1200, 0, 0.5, { type: 'sine', to: 180, vol: 0.05 });
+      [72, 79, 84, 91].forEach((n, k) => note(n, 0.35 + k * 0.05, 0.14, { vol: 0.045, type: 'triangle' }));
     } else if (type === 'subtract') {
       // the overflow draining away
       [88, 84, 79, 76, 72, 67].forEach((n, k) => note(n, k * 0.05, 0.1, { vol: 0.04, type: 'triangle' }));

@@ -40,7 +40,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
     - Older posts about wins, levels and hearts aren't shown any more.
   - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
   - **Admins**: **akosipolnew1** and **kuyakeybph** start on the everyone tab and can delete any post or reply on the site. The database rules allow those two accounts and no others.
-  - **Official account**: **kuyakeybph**'s posts show in everyone's feed, friends or not, and its name glows gold with a ✓ on posts, replies and notifications.
+  - **Official account**: **kuyakeybph**'s posts show in everyone's feed, friends or not, in a card with a gold border, and its name glows gold with a ✓ on posts, replies and notifications.
   - **Writing a post**: text plus any of a GIF, one of your saved keyboards, or a photo.
     - **⌨ keyboard** shares one of your saved keyboards. The post shows it drawn small, with its sound tags, its ♥ and **▶ hear it**, which plays it for a few seconds before your own keyboard comes back.
     - **📷 photo**: pick a picture and it's shrunk in your browser to a JPEG under about 380 KB (at most 1024px across), then saved with the post. File storage would need Firebase's paid plan, so photos go in the database like profile pictures. Only real JPEG photos are ever shown.
@@ -207,14 +207,16 @@ The config values are public by design. The database rules are what keep each pl
      - The lines were rendered offline with the Windows "Microsoft David" voice (raised pitch, slowed stressed words) and are embedded in `js/data-announcer.js`.
      - At playback they get an arcade treatment: grit, chest and presence EQ, heavy compression, a stadium hall, ping-pong echoes, and a boom-and-fanfare stinger that grows with each tier.
      - To use your own recorded voice, replace the base64 WAVs in that file. Keep the same keys.
-   - **Power-ups**: type a glowing word to grab its power.
-     - ❄ **freeze** stops all words for 4s.
-     - ◷ **slow** makes words fall at 40% speed for 7s.
+   - **Power-ups**: type a glowing word to grab its power. A **power-ups guide** describing each one shows before a new single-player run or vs AI match. Tick "don't show this before every game" to skip it; it's always there from **power-ups guide** on play.
+     - ❄ **freeze** stops all words for 4s. Only turns up when the field is crowded.
+     - ◷ **slow** makes words fall at 40% speed for 7s. **It stacks**: each extra slow while one is on makes words slower still (×0.62 again, so 2 slows ≈ 25% speed) and adds another 7s.
      - ×2 **double** doubles your score for 10s.
-     - ✕ **erase** clears the screen and scores every word on it.
-     - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s.
+     - ✕ **erase** clears the screen and scores every word on it. Only turns up when the field is crowded.
+     - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s. Only turns up once your overflow bar has started filling.
      - ✸ **explode** is on for 8s (the field glows orange). The glowing word and every word you type while it's on blow up the words near them: everything within about a third of the field's width is cleared and scored, with an orange blast ring.
-     - **Freeze and erase only turn up when the field is crowded**, meaning at least 6 words on screen (more on faster levels: 45% of the level's word limit). Otherwise the glowing word is one of the others.
+     - ↺ **reset** empties your overflow bar. Single player only, from level 7, and only once the bar has started filling.
+     - **Power-ups you destroy are yours**: when explode or erase clears a glowing word, you get its power-up too.
+     - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
 Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer). The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).

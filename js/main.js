@@ -432,8 +432,33 @@
   }
 
   // mode: undefined = new run (total starts at 0), 'next' = carry the total, 'retry' = redo this level
-  app.startGame = function (level, mode) {
+  // the power-ups guide: before a new single-player run or vs AI match (unless you've
+  // turned it off), and any time from "power-ups guide" on play. go: what "start" does.
+  function powerGuide(go, label) {
+    ui.open(
+      `<div class="ov-h">power-ups</div>
+       <div class="ov-sub">type a glowing word to grab its power-up</div>
+       <div class="pg-list">${KK.game.powerGuide()}</div>
+       ${go ? `<label class="pg-hide"><input type="checkbox" id="pgHide"> don't show this before every game</label>` : ''}
+       <div class="ov-btns">${go ? `<button class="btn primary" data-ov="go" data-primary>${label} →</button><button class="btn ghost" data-ov="back">back</button>` : '<button class="btn primary" data-ov="back" data-primary>got it</button>'}</div>`,
+      {
+        go: () => {
+          if ($('#pgHide') && $('#pgHide').checked) {
+            app.settings.hideGuide = true;
+            app.saveSettings();
+          }
+          go();
+        },
+        back: () => ui.close(),
+        esc: () => ui.close(),
+      }
+    );
+  }
+  const wantGuide = () => !app.settings.hideGuide;
+
+  app.startGame = function (level, mode, seenGuide) {
     gesture();
+    if (!mode && !seenGuide && wantGuide()) return powerGuide(() => app.startGame(level, mode, true), `play level ${Math.max(1, Math.min(level, app.progress.unlocked))}`);
     ui.close();
     level = Math.max(1, Math.min(level, app.progress.unlocked));
     const start = mode === 'next' ? app.run.total : mode === 'retry' ? app.run.levelStart : 0;
@@ -446,8 +471,9 @@
   };
 
   // vs AI: best of 3, speed level 3 / 4 / 5 for easy / medium / hard
-  app.startVs = function (diff) {
+  app.startVs = function (diff, seenGuide) {
     gesture();
+    if (!seenGuide && wantGuide()) return powerGuide(() => app.startVs(diff, true), 'play vs AI');
     ui.close();
     diff = { easy: 1, medium: 1, hard: 1 }[diff] ? diff : 'medium';
     app.settings.vsDiff = diff;
@@ -981,6 +1007,11 @@
   $('#btnSolo').addEventListener('click', () => playMain('solo'));
   $('#btnVs').addEventListener('click', () => playMain('vs'));
   $('#btnPvp').addEventListener('click', () => KK.online.openLobby());
+  $('#btnGuide').addEventListener('click', () => {
+    $('#btnGuide').blur();
+    KK.sfx.ui();
+    powerGuide(null);
+  });
 
   /* ----------------------------------- boot ----------------------------------- */
   clearUser();

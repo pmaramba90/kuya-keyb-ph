@@ -649,7 +649,7 @@
     const reps = Object.entries((T.replies[uid] || {})[id] || {})
       .filter(([, x]) => x && typeof x === 'object' && typeof x.uid === 'string')
       .sort((a, b) => (+a[1].at || 0) - (+b[1].at || 0));
-    return `<article class="post">
+    return `<article class="post${F.isOfficial(uid) ? ' official-post' : ''}">
       <div class="post-head">
         <span class="post-av" data-user="${esc(uid)}">${KK.social.avatarImg(uid, 'sm')}</span>
         <div class="post-who">${F.nameHtml(uid)}<span>${act ? act.head : review ? 'wrote a review' : 'posted'} · ${F.ago(p.at)}</span></div>
