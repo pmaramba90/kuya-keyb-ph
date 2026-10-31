@@ -814,6 +814,7 @@
     // your friends' feeds (a new personal best, when the run ends) and this week's board
     if (!survived && newTotalBest && total > 0) KK.feed.activity('best', { total });
     KK.feed.stat('solo', total);
+    if (newTotalBest) KK.feed.saveBest(total); // the all-time high scores
     KK.app.saveProgress();
     KK.app.run.total = total;
     KK.builder.level = 1; // a new run always starts at level 1; only "next level" continues

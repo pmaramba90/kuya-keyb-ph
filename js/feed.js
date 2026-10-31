@@ -44,8 +44,12 @@
   const OFFICIAL = 'kuyakeybph';
   let officialUid = null;
   F.isOfficial = (uid) => !!uid && (uid === officialUid || String(nameOf(uid)).toLowerCase() === OFFICIAL);
+  F.ADMIN_BADGE = '<i class="admin-badge" title="Kuya Keyb PH admin">admin</i>';
   // a player's name as it shows on posts, replies and notifications
-  F.nameHtml = (uid) => `<b data-user="${esc(uid)}"${F.isOfficial(uid) ? ' class="official" title="official Kuya Keyb PH account"' : ''}>${esc(nameOf(uid))}${F.isOfficial(uid) ? '<i class="official-tick">✓</i>' : ''}</b>`;
+  F.nameHtml = (uid) => `<b data-user="${esc(uid)}"${F.isOfficial(uid) ? ' class="official" title="official Kuya Keyb PH account"' : ''}>${esc(nameOf(uid))}${F.isOfficial(uid) ? '<i class="official-tick">✓</i>' + F.ADMIN_BADGE : ''}</b>`;
+  // the name at the top of a profile page (glowing, with ✓ and the admin badge, for the official account)
+  F.profileName = (name, official) => (official ? `<b class="official">${esc(name)}<i class="official-tick">✓</i>${F.ADMIN_BADGE}</b>` : esc(name));
+  F.OFFICIAL = OFFICIAL;
   const canDelete = (uid) => uid === ME() || isMod();
   const newId = () => N.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -75,6 +79,7 @@
       if (KK.app.screen === 'home') renderWelcome();
     }));
     F.sync();
+    if (KK.app.progress && KK.app.progress.bestTotal > 0) F.saveBest(KK.app.progress.bestTotal);
     N.ref('names/' + OFFICIAL).once().then((uid) => {
       if (typeof uid !== 'string' || !me) return;
       officialUid = uid;
@@ -147,6 +152,7 @@
     renderOnline();
     renderPosts();
     renderPopular();
+    renderHigh();
     renderBoard();
     renderRated();
   };
@@ -190,6 +196,7 @@
     });
     checkTop3();
     if (KK.app.screen === 'home') renderPopular();
+    paintBadges(); // a keyboard may have moved into (or out of) the top 3
   }
 
   // every hearted keyboard, most hearts first
@@ -199,7 +206,7 @@
       const n = heartCount(owner, pid);
       if (n) list.push({ owner, pid, n });
     }));
-    return list.sort((a, b) => b.n - a.n);
+    return list.sort((a, b) => b.n - a.n || (a.owner + '/' + a.pid < b.owner + '/' + b.pid ? -1 : 1));
   };
   // one of your keyboards reaches the top 3 of Popular Keyboards: a line in the feed (once
   // per keyboard; it isn't taken back if it drops out again)
@@ -273,17 +280,22 @@
   /* ------------------------------ popular keyboards ------------------------------ */
   const buildsOf = (owner) => (buildsCache[owner] = buildsCache[owner] || N.ref('builds/' + owner).once().catch(() => null));
 
+  // the n most-hearted keyboards that still exist (with their builds)
+  async function popTop(n) {
+    const top = [];
+    for (const x of ranking()) {
+      if (top.length >= n) break;
+      const k = ((await buildsOf(x.owner)) || {})[x.pid];
+      if (k && k.build) top.push(Object.assign({}, x, { k }));
+    }
+    return top;
+  }
+
   let popToken = 0, popSig = '', popAll = false; // popAll: "show more" was clicked
   const POP_SHOW = 3, POP_MAX = 10;
   async function renderPopular() {
     const token = ++popToken;
-    const list = ranking();
-    const top = [];
-    for (const x of list) {
-      if (top.length >= (popAll ? POP_MAX : POP_SHOW + 1)) break; // one past 3: is there more?
-      const k = ((await buildsOf(x.owner)) || {})[x.pid];
-      if (k && k.build) top.push(Object.assign(x, { k }));
-    }
+    const top = await popTop(popAll ? POP_MAX : POP_SHOW + 1); // one past 3: is there more?
     if (token !== popToken || KK.app.screen !== 'home') return;
     const more = !popAll && top.length > POP_SHOW;
     if (!popAll) top.length = Math.min(top.length, POP_SHOW);
@@ -319,6 +331,52 @@
     popAll = b.dataset.pop === 'more';
     renderPopular();
   });
+
+  /* ----------------------------- high scores + badges ----------------------------- */
+  // everyone's all-time best single-player total (best/{uid}, only ever goes up)
+  let bests = null, bestsAt = 0;
+  F.saveBest = function (total) {
+    total = Math.floor(+total || 0);
+    if (!me || total <= 0) return Promise.resolve();
+    return N.ref('best/' + me.uid).transaction((cur) => (total > (+cur || 0) ? total : undefined))
+      .then(() => (bests = null))
+      .catch((err) => console.warn('kkph best', err));
+  };
+  async function highScores() {
+    if (!bests || N.now() - bestsAt > 30000) {
+      bestsAt = N.now();
+      bests = (await N.ref('best').once().catch(() => null)) || {};
+    }
+    return Object.keys(bests).filter((uid) => +bests[uid] > 0)
+      .map((uid) => ({ uid, total: Math.floor(+bests[uid]) }))
+      .sort((a, b) => b.total - a.total || (a.uid < b.uid ? -1 : 1));
+  }
+  async function renderHigh() {
+    const top = (await highScores()).slice(0, 3);
+    if (KK.app.screen !== 'home') return;
+    $('#feedHigh').innerHTML = top.length
+      ? top.map((x, i) => `<div class="board-row${me && x.uid === me.uid ? ' me' : ''}" data-user="${esc(x.uid)}"><span class="pop-rank">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}<b>${esc(nameOf(x.uid))}</b><span class="board-n">${x.total.toLocaleString()}</span></div>`).join('') + '<p class="hint board-foot">single player · best total · everyone</p>'
+      : '<p class="hint">no scores yet. Play single player to get on the board.</p>';
+  }
+
+  // a player's top-3 spots (Popular Keyboards, High Scores) as badges for their profile
+  F.badges = async function (uid) {
+    const [pop, high] = await Promise.all([popTop(3), highScores()]);
+    const out = [];
+    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}">♥ #${i + 1} most popular keyboard</span>`));
+    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}">★ #${i + 1} single player high score</span>`));
+    return out.join('');
+  };
+  // fill the badge row on whichever profile is showing
+  let badgeToken = 0;
+  async function paintBadges() {
+    const el = document.querySelector('.screen.active .badges[data-uid]');
+    if (!el || !me) return;
+    const token = ++badgeToken, uid = el.dataset.uid;
+    const html = await F.badges(uid);
+    if (token === badgeToken && el.isConnected && el.dataset.uid === uid) el.innerHTML = html;
+  }
+  F.paintBadges = paintBadges;
 
   /* ------------------------------- this week's board ------------------------------- */
   // you and your friends: best single-player total and most wins against players
@@ -385,7 +443,7 @@
     const b = e.target.closest('[data-ft]');
     if (!b || !me || b.dataset.ft === mode) return;
     b.blur();
-    KK.sfx.ui();
+    KK.sfx.tab();
     mode = b.dataset.ft;
     switching = true;
     limit = PAGE;

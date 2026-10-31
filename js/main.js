@@ -540,7 +540,7 @@
       return;
     }
     const me = KK.net.me || {}, p = app.progress, cur = app.settings.currency || 'usd';
-    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${esc(app.userName())}</div></div>
+    $('#dashHi').innerHTML = `${KK.social.avatarImg(me.uid, 'md')}<div><div class="dash-name">${KK.feed.profileName(app.userName(), me.name === KK.feed.OFFICIAL)}</div><div class="badges" data-uid="${esc(me.uid || '')}"></div></div>
       <button class="btn ghost sm edit-profile" id="editProfile">edit profile</button>`;
     const add = (a, r) => ({ w: a.w + ((r && r.w) || 0), l: a.l + ((r && r.l) || 0) });
     const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
@@ -558,6 +558,7 @@
       ? rest.map((k) => kbCard(k, { open: true, canMain: true, owner: me.uid })).join('')
       : `<p class="hint">${kbs.length ? 'build more keyboards from play — they show up here.' : 'no saved keyboards yet — build one from play.'}</p>`;
     KK.feed.showPostsOf(me.uid, $('#dashPosts')); // what you've posted, as it shows in the feed
+    KK.feed.paintBadges();
   }
   $('#dashKbs').addEventListener('click', (e) => {
     const m = e.target.closest('[data-main]');
@@ -657,10 +658,11 @@
     const sub = [pf && pf.nickname && `“${pf.nickname}”`, pf && [pf.city, pf.country].filter(Boolean).join(', '), st].filter(Boolean).join(' · ');
     app.viewName = name;
     $('#userHi').innerHTML = `<span class="av-wrap">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
-      <div class="user-who"><div class="dash-name">${esc(name)}</div><div class="hint">${esc(sub)}</div></div>
+      <div class="user-who"><div class="dash-name">${KK.feed.profileName(name, KK.feed.isOfficial(uid) || String((u && u.name) || '').toLowerCase() === KK.feed.OFFICIAL)}</div><div class="hint">${esc(sub)}</div><div class="badges" data-uid="${esc(uid)}"></div></div>
       <span class="user-rel" id="userRel"></span>
       ${st === 'online' ? `<button class="btn primary sm" id="userChallenge">challenge</button>` : ''}`;
     app.renderUserRel();
+    KK.feed.paintBadges();
     const all = bs || {};
     const kbs = Object.keys(all).filter((id) => all[id] && all[id].build).map((id) => ({ id, name: all[id].name, build: all[id].build, w: all[id].w, l: all[id].l, main: all[id].main }));
     const main = kbs.find((k) => k.main) || kbs.find((k) => k.id !== 'default') || kbs[0];
@@ -834,6 +836,27 @@
   });
   applyKb();
 
+  // the site's colours: dark blue (default), dark green, dark grey or dark red
+  const THEME_BG = { blue: '#0f1a2e', green: '#0c1d16', grey: '#17181b', red: '#1f0d11' };
+  const applyTheme = () => {
+    const t = THEME_BG[app.settings.theme] ? app.settings.theme : 'blue';
+    if (t === 'blue') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = t;
+    document.querySelector('meta[name="theme-color"]').content = THEME_BG[t];
+    document.querySelectorAll('.theme-dot').forEach((b) => b.classList.toggle('on', b.dataset.theme === t));
+  };
+  $('#themes').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-theme]');
+    if (!b) return;
+    b.blur();
+    gesture();
+    KK.sfx.ui();
+    app.settings.theme = b.dataset.theme;
+    app.saveSettings();
+    applyTheme();
+  });
+  applyTheme();
+
   // announcer voice: DRAGON (VoiceBosch) or the classic creamy / thocky / clicky calls
   const annBtn = $('#annBtn');
   const applyAnn = () => {
@@ -973,7 +996,7 @@
   document.querySelectorAll('.nav-btn').forEach((b) =>
     b.addEventListener('click', () => {
       b.blur();
-      KK.sfx.ui();
+      KK.sfx.tab();
       app.show(b.dataset.go);
     })
   );

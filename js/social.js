@@ -26,7 +26,7 @@
   /* ------------------------------ profile pictures ------------------------------ */
   // no picture yet: the keyboard logo in a circle
   S.DEFAULT_AV = 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#223352"/>' +
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
     '<g transform="translate(12 12) scale(1.25)"><rect x="2" y="7" width="28" height="18" rx="4" fill="none" stroke="#e2b714" stroke-width="2"/>' +
     '<g fill="#e2b714"><rect x="6.5" y="11.5" width="3" height="3" rx=".8"/><rect x="11.5" y="11.5" width="3" height="3" rx=".8"/><rect x="16.5" y="11.5" width="3" height="3" rx=".8"/><rect x="21.5" y="11.5" width="3" height="3" rx=".8"/><rect x="9" y="18" width="14" height="3" rx=".8"/></g></g></svg>'
   );
@@ -490,7 +490,7 @@
     const t = e.target.closest('[data-rt]');
     if (t) {
       t.blur();
-      KK.sfx.ui();
+      KK.sfx.tab();
       reqTab = t.dataset.rt;
       return renderFriends();
     }

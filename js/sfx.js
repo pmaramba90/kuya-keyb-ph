@@ -89,6 +89,53 @@
   X.ui = () => tone(1500, 0, 0.025, { type: 'square', vol: 0.015 });
   X.select = () => (note(84, 0, 0.05, { vol: 0.03 }), note(88, 0.04, 0.06, { vol: 0.03 }));
 
+  // tabs: a clicky green switch (click jacket, like a Razer Green) — a sharp, high click on
+  // the way down doubled by the jacket's bounce, a light bottom-out, then the softer jacket
+  // snap on release. A few takes are rendered once and picked at random.
+  let greens = null;
+  function renderGreen(seed) {
+    const SR = A.SR, len = Math.round(SR * 0.13), out = new Float32Array(len);
+    let s = seed;
+    const R = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const ms = (x) => Math.round((SR * x) / 1000);
+    const v = () => 1 + (R() - 0.5) * 0.06;
+    const burst = (at, f, q, tau, amp) => {
+      const n = Math.min(len - at, Math.ceil(tau * 8 * SR)), seg = new Float32Array(n);
+      for (let i = 0; i < n; i++) seg[i] = (R() * 2 - 1) * Math.exp(-i / (tau * SR));
+      D.filter(seg, D.biquad('bandpass', f * v(), q, SR));
+      const k = amp / (D.peak(seg) || 1);
+      for (let i = 0; i < n; i++) out[at + i] += seg[i] * k;
+    };
+    const ring = (at, f, tau, amp) => {
+      for (let i = 0; at + i < len && i < tau * 8 * SR; i++) out[at + i] += amp * Math.exp(-i / (tau * SR)) * Math.sin((2 * Math.PI * f * i) / SR);
+    };
+    // down: the jacket snaps…
+    burst(0, 5600, 1.4, 0.0005, 1);
+    burst(0, 3000, 3, 0.0011, 0.45);
+    ring(0, 3500 * v(), 0.0016, 0.3);
+    burst(ms(0.9), 7400, 1.5, 0.0004, 0.6); // …and bounces
+    // the stem bottoms out
+    burst(ms(10), 1300, 1.1, 0.0035, 0.32);
+    ring(ms(10), 460 * v(), 0.005, 0.12);
+    // up: the jacket resets, quieter and a touch lower
+    const up = ms(70 + R() * 15);
+    burst(up, 4600, 1.4, 0.0005, 0.55);
+    burst(up + ms(0.7), 6600, 1.5, 0.0004, 0.3);
+    const b = A.ctx.createBuffer(1, len, SR);
+    const k = 0.5 / (D.peak(out) || 1);
+    b.getChannelData(0).set(out.map((x) => x * k));
+    return b;
+  }
+  X.tab = function () {
+    if (!A.ready) return;
+    greens = greens || [11, 23, 37].map(renderGreen);
+    const src = A.ctx.createBufferSource();
+    src.buffer = greens[Math.floor(Math.random() * greens.length)];
+    src.playbackRate.value = 0.97 + Math.random() * 0.06;
+    src.connect(A.keyBus || A.sfxBus);
+    src.start();
+  };
+
   // power-ups
   X.power = function (type) {
     if (type === 'freeze') {
