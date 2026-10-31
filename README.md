@@ -30,7 +30,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 - **home**: a feed, like X or Facebook. Top to bottom:
   - **Welcome checklist** for new players, headed "For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out": add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
   - **Online friends**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
-  - **What's on your mind?** (the composer). Click the box to write a post, or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
+  - **What's on your mind?** (the composer). Click the box and it grows into the writing box right there (with **cancel** and **post**), or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
   - **friends / everyone** tabs: your posts and your friends', or every post on the site.
   - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
   - **Activity posts** are written by the game itself, so the feed fills up even when nobody posts. Only three kinds, to keep it from getting spammy:

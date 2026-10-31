@@ -1138,7 +1138,14 @@ b.official { white-space: nowrap; color: #ffd84a !important; text-shadow: 0 0 6p
 .os-friend b { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; font-size: 12px; color: var(--main); cursor: pointer; }
 .os-friend .btn { padding: 4px 9px; font-size: 11px; }
 .os-none { font-size: 12px; }
-.whats { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; background: var(--bg2); border-radius: 12px; padding: 12px 14px 8px; margin-bottom: 14px; }
+.whats { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid transparent; border-radius: 12px; padding: 12px 14px 8px; margin-bottom: 14px; transition: border-color .15s; }
+/* opened: "what's on your mind?" grows into the writing box, right where it was */
+.whats.open { align-items: start; border-color: color-mix(in srgb, var(--main) 35%, transparent); padding-bottom: 14px; }
+.whats.open .whats-in, .whats.open .whats-btns { display: none; }
+.whats .composer { grid-column: 2; grid-row: 1; min-width: 0; margin: 0; padding: 0; border: 0; background: none; }
+.whats .composer > .comp-text:first-child { margin-top: 0; }
+.whats.open .comp-text { border-radius: 14px; animation: comp-grow .2s ease-out; }
+@keyframes comp-grow { from { max-height: 42px; } to { max-height: 220px; } }
 .whats-in { min-width: 0; padding: 11px 16px; border: 0; border-radius: 22px; background: var(--bg); color: var(--sub); font-size: 13px; text-align: left; cursor: text; transition: background .15s; }
 .whats-in:hover { background: var(--bg3); }
 .whats-btns { grid-column: 1 / -1; display: flex; justify-content: space-around; gap: 4px; border-top: 1px solid var(--bg3); padding-top: 6px; }
@@ -1267,6 +1274,8 @@ body.touch .keys-hint { display: none; }
   .bottom { position: relative; gap: 10px 16px; padding: 18px 0 20px; box-shadow: none; }
   html { scroll-padding-bottom: 0; }
   .whats-btns { flex-wrap: wrap; }
+  .whats .comp-foot { flex-wrap: wrap; }
+  .whats .comp-atts { flex: 1 1 100%; }
   .whats-btns button { flex: 1 1 40%; }
   .bell-wrap { margin-left: auto; }
   .bell-wrap + .nav-user-wrap { margin-left: 4px; }

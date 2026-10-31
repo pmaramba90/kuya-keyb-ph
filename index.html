@@ -93,9 +93,10 @@
                 <button data-new="kb"><span>⌨</span>keyboard</button>
                 <button data-new="photo"><span>📷</span>photo</button>
               </div>
+              <!-- opened, the box above grows into this in place -->
+              <form class="composer" id="composer" autocomplete="off" hidden></form>
             </div>
             <input type="file" id="photoFile" accept="image/*" hidden>
-            <form class="composer" id="composer" autocomplete="off" hidden></form>
             <div class="feed-tabs" id="feedTabs">
               <button class="chip on" data-ft="friends">friends</button>
               <button class="chip" data-ft="everyone">everyone</button>

@@ -904,16 +904,18 @@
 
   function closeComposer() {
     comp = null;
+    $('#feedWhats').classList.remove('open');
     form.hidden = true;
     form.innerHTML = '';
   }
 
   function openComposer(mode) {
     comp = { mode, kind: null, item: null, rating: 0 };
+    $('#feedWhats').classList.add('open'); // the box grows into the composer
     form.hidden = false;
     form.innerHTML = `
-      <div class="comp-h"><b>${mode === 'review' ? 'new review' : 'new post'}</b><button type="button" class="picon" data-comp="close" title="close">✕</button></div>
       ${mode === 'review' ? `
+        <div class="comp-h"><b>new review</b><button type="button" class="picon" data-comp="close" title="close">✕</button></div>
         <div class="grp-h">what are you reviewing?</div>
         <div class="chips rev-kinds">${Object.keys(KINDS).map((k) => `<button type="button" class="chip" data-kind="${k}">${KINDS[k].label}</button>`).join('')}</div>
         <div class="rev-pick" id="revPick" hidden><input class="search" id="revQ" spellcheck="false" autocomplete="off"><div class="rev-results" id="revResults"></div></div>
@@ -934,7 +936,7 @@
           <input class="search" id="gifLink" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="${GIPHY_KEY ? 'or paste' : 'paste'} a GIPHY link (giphy.com → a GIF → copy link)">
           <div class="gif-attr">powered by <b>GIPHY</b></div>
         </div>` : ''}
-      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">⌨ keyboard</button><button type="button" class="btn sm" data-comp="photo">📷 photo</button></span>' : ''}<span class="hint" id="compMsg"></span><button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
+      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">⌨ keyboard</button><button type="button" class="btn sm" data-comp="photo">📷 photo</button></span>' : ''}<span class="hint" id="compMsg"></span>${mode === 'post' ? '<button type="button" class="btn ghost sm" data-comp="close">cancel</button>' : ''}<button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
     (mode === 'review' ? form.querySelector('.rev-kinds .chip') : $('#compText')).focus();
   }
 
