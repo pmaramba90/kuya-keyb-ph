@@ -38,6 +38,12 @@
   // the admins: can delete anyone's post or reply (the database rules say the same)
   const MODS = ['akosipolnew1', 'kuyakeybph'];
   const isMod = () => !!me && MODS.includes(me.name);
+  // the official account: its posts are in everyone's feed and its name glows
+  const OFFICIAL = 'kuyakeybph';
+  let officialUid = null;
+  F.isOfficial = (uid) => !!uid && (uid === officialUid || String(nameOf(uid)).toLowerCase() === OFFICIAL);
+  // a player's name as it shows on posts, replies and notifications
+  F.nameHtml = (uid) => `<b data-user="${esc(uid)}"${F.isOfficial(uid) ? ' class="official" title="official Kuya Keyb PH account"' : ''}>${esc(nameOf(uid))}${F.isOfficial(uid) ? '<i class="official-tick">✓</i>' : ''}</b>`;
   const canDelete = (uid) => uid === ME() || isMod();
   const newId = () => N.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -63,6 +69,11 @@
       refreshHearts();
     }));
     F.sync();
+    N.ref('names/' + OFFICIAL).once().then((uid) => {
+      if (typeof uid !== 'string' || !me) return;
+      officialUid = uid;
+      F.sync(); // its posts join your feed
+    }).catch(() => {});
   };
   // friends coming online / going off: the strip on home
   KK.online.onPresence(() => KK.app.screen === 'home' && renderOnline());
@@ -106,6 +117,7 @@
     }
     if (subs['*']) unfollowAll();
     const want = new Set([me.uid, ...KK.social.friendIds()]);
+    if (officialUid) want.add(officialUid); // the official account: everyone sees its posts
     Object.keys(subs).forEach((uid) => {
       if (want.has(uid)) return;
       subs[uid]();
@@ -394,7 +406,7 @@
     const done = steps.filter((s) => s[2]).length;
     el.hidden = done === steps.length;
     if (el.hidden) return;
-    el.innerHTML = `<div class="welcome-h"><b>welcome to kuya keyb ph, ${esc(me.display)}!</b><span class="hint">${done} of ${steps.length} done</span><button class="picon" data-wel="hide" title="hide this">✕</button></div>
+    el.innerHTML = `<div class="welcome-h"><b>For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out</b><span class="hint">${done} of ${steps.length} done</span><button class="picon" data-wel="hide" title="hide this">✕</button></div>
       <div class="welcome-steps">${steps.map(([k, label, ok]) => `<button class="wstep${ok ? ' ok' : ''}" data-wel="${k}"><i>${ok ? '✓' : ''}</i>${label}</button>`).join('')}</div>`;
   }
   $('#feedWelcome').addEventListener('click', (e) => {
@@ -620,7 +632,7 @@
     const mod = isMod();
     return `<div class="replies">${list.map(([rid, r]) => `<div class="reply">
         <span class="post-av" data-user="${esc(r.uid)}">${KK.social.avatarImg(r.uid, 'xs')}</span>
-        <div class="reply-body"><b data-user="${esc(r.uid)}">${esc(nameOf(r.uid))}</b><span class="reply-text">${esc(String(r.text || '').slice(0, 500))}</span><span class="reply-at">${F.ago(r.at)}</span></div>
+        <div class="reply-body">${F.nameHtml(r.uid)}<span class="reply-text">${esc(String(r.text || '').slice(0, 500))}</span><span class="reply-at">${F.ago(r.at)}</span></div>
         ${r.uid === ME() || owner === ME() || mod ? `<button class="picon" data-rdel="${esc(rid)}" data-key="${esc(key)}" title="delete reply">✕</button>` : ''}</div>`).join('')}
       ${open ? `<form class="reply-form" data-reply-form="${esc(key)}" autocomplete="off"><input class="search" data-reply-in="${esc(key)}" maxlength="500" placeholder="write a reply…" value="${esc(drafts[key] || '')}"><button class="btn primary sm" type="submit">reply</button></form>` : ''}</div>`;
   }
@@ -640,7 +652,7 @@
     return `<article class="post">
       <div class="post-head">
         <span class="post-av" data-user="${esc(uid)}">${KK.social.avatarImg(uid, 'sm')}</span>
-        <div class="post-who"><b data-user="${esc(uid)}">${esc(nameOf(uid))}</b><span>${act ? act.head : review ? 'wrote a review' : 'posted'} · ${F.ago(p.at)}</span></div>
+        <div class="post-who">${F.nameHtml(uid)}<span>${act ? act.head : review ? 'wrote a review' : 'posted'} · ${F.ago(p.at)}</span></div>
         ${canDelete(uid) ? `<button class="picon" data-del="${esc(id)}" data-uid="${esc(uid)}" title="${uid === ME() ? 'delete' : 'delete (moderator)'}">✕</button>` : ''}
       </div>
       ${it ? `<div class="rev">

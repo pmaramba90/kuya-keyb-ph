@@ -28,7 +28,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 - Cheat detection still applies: phone typing counts as real typing, and fake input events from a script are caught.
 
 - **home**: a feed, like X or Facebook. Top to bottom:
-  - **Welcome checklist** for new players: add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
+  - **Welcome checklist** for new players, headed "For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out": add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
   - **Online friends**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
   - **What's on your mind?** (the composer). Click the box to write a post, or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
   - **friends / everyone** tabs: your posts and your friends', or every post on the site.
@@ -40,6 +40,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
     - Older posts about wins, levels and hearts aren't shown any more.
   - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
   - **Admins**: **akosipolnew1** and **kuyakeybph** start on the everyone tab and can delete any post or reply on the site. The database rules allow those two accounts and no others.
+  - **Official account**: **kuyakeybph**'s posts show in everyone's feed, friends or not, and its name glows gold with a ✓ on posts, replies and notifications.
   - **Writing a post**: text plus any of a GIF, one of your saved keyboards, or a photo.
     - **⌨ keyboard** shares one of your saved keyboards. The post shows it drawn small, with its sound tags, its ♥ and **▶ hear it**, which plays it for a few seconds before your own keyboard comes back.
     - **📷 photo**: pick a picture and it's shrunk in your browser to a JPEG under about 380 KB (at most 1024px across), then saved with the post. File storage would need Firebase's paid plan, so photos go in the database like profile pictures. Only real JPEG photos are ever shown.
@@ -216,7 +217,7 @@ The config values are public by design. The database rules are what keep each pl
      - **Freeze and erase only turn up when the field is crowded**, meaning at least 6 words on screen (more on faster levels: 45% of the level's word limit). Otherwise the glowing word is one of the others.
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
-Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer).
+Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer). The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
 
 ## Cheat detection
 

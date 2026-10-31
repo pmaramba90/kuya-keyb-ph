@@ -79,7 +79,7 @@
     menu.innerHTML = `<div class="bell-h"><b>notifications</b>${all.length ? '<button class="link-btn" data-nt="clear">clear all</button>' : ''}</div>
       ${all.length
         ? all.slice(0, 30).map((n) => `<button class="nt${+n.at > shownSeen ? ' new' : ''}" data-nt="go" data-t="${esc(n.t)}" data-from="${esc(n.from)}">
-            ${KK.social.avatarImg(n.from, 'sm')}<span class="nt-text"><b>${esc(KK.feed.nameOf(n.from))}</b> ${what(n)}<i>${KK.feed.ago(n.at)}</i></span></button>`).join('')
+            ${KK.social.avatarImg(n.from, 'sm')}<span class="nt-text">${KK.feed.nameHtml(n.from)} ${what(n)}<i>${KK.feed.ago(n.at)}</i></span></button>`).join('')
         : '<p class="hint">nothing yet. Reactions, replies, hearts and challenges show up here.</p>'}`;
   }
 
