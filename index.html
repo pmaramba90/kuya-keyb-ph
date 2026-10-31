@@ -52,6 +52,11 @@
           <button class="nav-user" id="navUser" title="your details · log out" aria-haspopup="true" aria-expanded="false"></button>
           <!-- your name's drop-down: quick profile details and log out -->
           <form class="user-menu" id="userMenu" autocomplete="off" hidden>
+            <!-- your picture: click it (or "change photo") to pick and crop a new one -->
+            <div class="um-av">
+              <button class="um-av-btn" type="button" id="umAvBtn" title="change your profile picture"><img class="av lg" id="umAv" alt=""><span>change</span></button>
+              <div class="um-av-text"><b id="umName"></b><button class="link-btn" type="button" id="umPhoto">change photo</button></div>
+            </div>
             <div class="um-top"><button class="um-edit" type="button" id="umEdit">edit</button></div>
             <div class="um-box">
               <label><span>nickname</span><input class="search" id="umNick" maxlength="30" placeholder="optional"></label>

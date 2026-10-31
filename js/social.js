@@ -161,6 +161,8 @@
     KK.notify.close();
     KK.sfx.ui();
     $('#umMsg').textContent = '';
+    S.setImg($('#umAv'), me.uid); // your current picture (it updates when you change it)
+    $('#umName').textContent = me.display;
     umFill({});
     umEditing(false);
     umenu.hidden = false;
@@ -169,7 +171,13 @@
     umSaved = (await N.ref('profiles/' + me.uid).once().catch(() => null)) || {};
     if (!umenu.classList.contains('editing')) umFill(umSaved);
   });
-  document.addEventListener('click', (e) => !umenu.hidden && !e.target.closest('.nav-user-wrap') && S.closeMenu());
+  document.addEventListener('click', (e) => !umenu.hidden && !e.target.closest('.nav-user-wrap') && e.target.id !== 'avFile' && !e.target.closest('#avOverlay') && S.closeMenu());
+  // change your picture from the menu: the same pick-and-crop as on edit profile
+  ['#umAvBtn', '#umPhoto'].forEach((id) => $(id).addEventListener('click', () => {
+    $(id).blur();
+    KK.sfx.ui();
+    $('#avFile').click();
+  }));
   document.addEventListener('keydown', (e) => e.key === 'Escape' && !umenu.hidden && S.closeMenu());
   umenu.addEventListener('submit', async (e) => {
     e.preventDefault();

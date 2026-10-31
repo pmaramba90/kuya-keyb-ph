@@ -13,7 +13,7 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 ## Sections
 
-The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
+The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. At the top is your current profile picture: click it (or **change photo**) to pick a new one and crop it, the same as on edit profile. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
 **Back button**: every screen is a step in the browser's history, so Back and Forward move between screens (home, profile, play, friends, a player's page, …) instead of leaving the site, and a refresh comes back to the screen you were on. A game isn't a step of its own: Back after a game goes to where you started it, and Back in the middle of a game pauses it (in vs players it asks before forfeiting) instead of leaving. Back on the first page you opened leaves the site, as usual.
 
