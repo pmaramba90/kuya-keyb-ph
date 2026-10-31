@@ -352,7 +352,7 @@
       .sort((a, b) => b.total - a.total || (a.uid < b.uid ? -1 : 1));
   }
   async function renderHigh() {
-    const top = (await highScores()).slice(0, 3);
+    const top = (await highScores()).slice(0, 5);
     if (KK.app.screen !== 'home') return;
     $('#feedHigh').innerHTML = top.length
       ? top.map((x, i) => `<div class="board-row${me && x.uid === me.uid ? ' me' : ''}" data-user="${esc(x.uid)}"><span class="pop-rank">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}<b>${esc(nameOf(x.uid))}</b><span class="board-n">${x.total.toLocaleString()}</span></div>`).join('') + '<p class="hint board-foot">single player · best total · everyone</p>'

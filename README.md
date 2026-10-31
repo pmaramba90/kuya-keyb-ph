@@ -55,7 +55,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
   - **On the side**, which stays in view while you scroll the feed (and scrolls by itself if it's taller than the window), after the sign-up and online counts:
     - **Popular Keyboards**: the three keyboards on the site with the most hearts, from anyone, not just friends. **show more** lists up to 10, and **show less** goes back to 3. Each is drawn whole, scaled down. Click one to open its owner's page.
     - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have.
-    - **High Scores**: the top 3 all-time single-player best totals on the site, from everyone. Each player's best is saved online (only ever going up), and older bests are filled in the next time that player signs in.
+    - **High Scores**: the top 5 all-time single-player best totals on the site, from everyone. Each player's best is saved online (only ever going up), and older bests are filled in the next time that player signs in. Badges go to the top 3.
     - **This Week**: you and your friends ranked by wins against players. It starts fresh every Monday.
   - **The bell** (top right, next to your picture) shows a red count of new notifications:
     - someone reacted to or replied to your post
