@@ -364,8 +364,8 @@
   F.badges = async function (uid) {
     const [pop, high] = await Promise.all([popTop(3), highScores()]);
     const out = [];
-    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}"><i class="medal">${MEDALS[i]}</i>#${i + 1} most popular keyboard</span>`));
-    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}"><i class="medal">${MEDALS[i]}</i>#${i + 1} single player high score</span>`));
+    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}"><i class="medal">${MEDALS[i]}</i><span class="badge-txt">#${i + 1} most popular keyboard</span></span>`));
+    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}"><i class="medal">${MEDALS[i]}</i><span class="badge-txt">#${i + 1} single player high score</span></span>`));
     return out.join('');
   };
   // fill the badge row on whichever profile is showing

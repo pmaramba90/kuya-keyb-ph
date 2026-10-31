@@ -851,6 +851,10 @@
   const volM = $('#volMusic'), volS = $('#volSfx');
   volM.value = Math.round(app.settings.music * 100);
   volS.value = Math.round(app.settings.sfx * 100);
+  // sliders fill yellow up to their value, like the sound meters
+  const fillRange = (el) => el.style.setProperty('--v', ((el.value - el.min) / (el.max - el.min)) * 100 + '%');
+  document.addEventListener('input', (e) => e.target.matches('input[type="range"]') && fillRange(e.target));
+  document.querySelectorAll('input[type="range"]').forEach(fillRange);
   volM.addEventListener('input', () => {
     app.settings.music = volM.value / 100;
     A.setMusicVolume(app.settings.music);

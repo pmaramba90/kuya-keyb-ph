@@ -78,6 +78,7 @@
       renderFriends();
       changed();
       KK.feed.sync(); // the feed follows your friends' posts
+      KK.feed.refreshWelcome(); // "add a friend" may be done now
     }));
     offs.push(N.ref('friendReqs/' + me.uid).on((v) => {
       const before = Object.keys(reqs).length;
@@ -270,6 +271,7 @@
       base = Math.max(SIZE / im.width, SIZE / im.height); // cover the circle
       zoom = 1;
       $('#avZoom').value = 1;
+      $('#avZoom').style.setProperty('--v', '0%');
       ox = (SIZE - im.width * base) / 2;
       oy = (SIZE - im.height * base) / 2;
       draw();
