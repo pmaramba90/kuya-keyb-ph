@@ -23,6 +23,9 @@
   }
 
   const startLabel = () => (B.mode === 'vs' ? `start vs AI · ${KK.app.settings.vsDiff || 'medium'} →` : `start level ${B.level} →`);
+  // phones: the summary's start button again, right under the keyboard (the one in the
+  // summary is far down the page)
+  const syncStart = () => ($('#stageStart').innerHTML = B.step === 4 ? `<button class="btn primary big" data-act="start">${startLabel()}</button>` : '');
   const startPlay = () => (B.mode === 'vs' ? KK.app.startVs(KK.app.settings.vsDiff || 'medium') : KK.app.startGame(B.level));
   const STEPS = ['base', 'switches', 'keycaps', 'mods & lube', 'summary'];
 
@@ -60,6 +63,7 @@
       }
     });
     $('#buildSig').addEventListener('click', onClick);
+    $('#stageStart').addEventListener('click', onClick);
   };
 
   B.open = function (step) {
@@ -81,6 +85,7 @@
     renderStep();
     $('#prevStep').textContent = B.step === 0 ? '← menu' : '← back';
     $('#nextStep').textContent = B.step < 4 ? 'next: ' + STEPS[B.step + 1] + ' →' : startLabel();
+    syncStart();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -401,6 +406,7 @@
         }
         renderStep();
         $('#nextStep').textContent = startLabel();
+        syncStart();
         return;
       case 'start':
         startPlay();

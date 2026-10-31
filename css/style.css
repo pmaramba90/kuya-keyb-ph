@@ -166,6 +166,8 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .feat-meters { flex: 1 1 260px; max-width: 380px; }
 .feat-meters .meter:last-child { margin-bottom: 0; }
 .feat-hear { display: flex; align-items: center; gap: 12px; }
+.feat-hear .btn { flex: none; white-space: nowrap; }
+.stage-start { display: none; }
 .feat-body { display: grid; grid-template-columns: 1fr 220px; gap: 22px; align-items: start; }
 .feat-spec { font-size: 12px; color: var(--sub); line-height: 1.7; }
 .feat-spec .gb-name, .feat-spec .gb-tags { display: none; }
@@ -1307,6 +1309,8 @@ body.touch .keys-hint { display: none; }
   .cmeter.mini .cm-main { gap: 4px; }
   .cmeter.mini .cm-tier { margin: 0; overflow: hidden; text-overflow: ellipsis; }
   .lane .powers .hint { display: none; }
+  #scr-build[data-step='4'] .stage-start { display: block; }
+  .stage-start .btn { width: 100%; }
   .badges { gap: 4px; }
   .badge { padding: 2px 5px; }
   .badge .badge-txt { display: none; }
