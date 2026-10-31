@@ -43,6 +43,11 @@
           <span>marketplace</span>
         </button>
       </nav>
+      <!-- the bell: reactions, replies, hearts, challenges, friend requests -->
+      <div class="bell-wrap" id="bellWrap" hidden>
+        <button class="bell" id="bellBtn" title="notifications" aria-label="notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><i class="nav-badge" id="bellBadge" hidden></i></button>
+        <div class="bell-menu" id="bellMenu" hidden></div>
+      </div>
       <div class="nav-user-wrap">
           <button class="nav-user" id="navUser" title="your details · log out" aria-haspopup="true" aria-expanded="false"></button>
           <!-- your name's drop-down: quick profile details and log out -->
@@ -68,23 +73,39 @@
       <section class="screen" id="scr-home">
         <div class="feed">
           <div class="feed-main">
-            <div class="feed-top">
-              <div class="feed-add">
-                <button class="fab" id="feedAdd" title="new review or post" aria-label="new review or post">+</button>
-                <div class="add-menu" id="addMenu" hidden>
-                  <button data-new="review"><span>★</span>new review</button>
-                  <button data-new="post"><span>✎</span>new post</button>
-                </div>
+            <!-- new here: a short checklist (until it's done or hidden) -->
+            <div class="welcome" id="feedWelcome" hidden></div>
+            <!-- friends online right now, one tap to challenge -->
+            <div class="online-strip" id="feedOnlineStrip"></div>
+            <!-- what's on your mind: post, review, GIF, keyboard, photo -->
+            <div class="whats" id="feedWhats">
+              <span id="whatsAv"></span>
+              <button class="whats-in" data-new="post" id="whatsIn">what's on your mind?</button>
+              <div class="whats-btns">
+                <button data-new="review"><span>★</span>review</button>
+                <button data-new="gif"><span class="gif-tag">GIF</span>GIF</button>
+                <button data-new="kb"><span>⌨</span>keyboard</button>
+                <button data-new="photo"><span>📷</span>photo</button>
               </div>
             </div>
+            <input type="file" id="photoFile" accept="image/*" hidden>
             <form class="composer" id="composer" autocomplete="off" hidden></form>
+            <div class="feed-tabs" id="feedTabs">
+              <button class="chip on" data-ft="friends">friends</button>
+              <button class="chip" data-ft="everyone">everyone</button>
+            </div>
             <div class="feed-posts" id="feedPosts"></div>
+            <button class="btn ghost feed-more" id="feedMore" hidden>load more</button>
           </div>
           <aside class="feed-side">
             <p class="feed-count" id="feedCount"></p>
             <p class="feed-count" id="feedOnline"></p>
+            <div class="pop-h">This Week</div>
+            <div class="board" id="feedBoard"></div>
             <div class="pop-h">Popular Keyboards</div>
             <div class="pop-list" id="feedPopular"></div>
+            <div class="pop-h">Top Rated</div>
+            <div class="rated" id="feedRated"></div>
           </aside>
         </div>
       </section>
@@ -168,7 +189,7 @@
               <div class="fr-h"><b>your friends</b><span class="sub" id="friendsCount"></span></div>
               <div class="friend-list" id="friendList"></div>
             </section>
-            <!-- requests: not friends yet; moves above your friends while someone's waiting on you -->
+            <!-- requests: not friends yet; shown above your friends (gold while someone's waiting on you) -->
             <section class="fr-section fr-reqs" id="frReqs">
               <div class="fr-h"><b>friend requests</b><span class="sub">not friends yet</span></div>
               <div class="req-tabs" id="reqTabs"></div>
@@ -423,6 +444,7 @@
   <script src="js/social.js"></script>
   <script src="js/giphy-config.js"></script>
   <script src="js/feed.js"></script>
+  <script src="js/notify.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -101,6 +101,11 @@
     } else if (type === 'erase') {
       noise(0, 0.6, 0.22, 6000, 80);
       tone(160, 0, 0.5, { type: 'square', to: 40, vol: 0.07, lp: 1200 });
+    } else if (type === 'explode') {
+      // a blast with a low boom under it
+      noise(0, 0.5, 0.25, 3000, 120);
+      tone(110, 0, 0.6, { type: 'sine', to: 35, vol: 0.12 });
+      tone(420, 0.02, 0.25, { type: 'square', to: 90, vol: 0.05, lp: 2000 });
     } else if (type === 'subtract') {
       // the overflow draining away
       [88, 84, 79, 76, 72, 67].forEach((n, k) => note(n, k * 0.05, 0.1, { vol: 0.04, type: 'triangle' }));

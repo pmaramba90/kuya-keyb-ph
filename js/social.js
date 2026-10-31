@@ -158,6 +158,7 @@
     $('#navUser').blur();
     if (!me) return;
     if (!umenu.hidden) return S.closeMenu();
+    KK.notify.close();
     KK.sfx.ui();
     $('#umMsg').textContent = '';
     umFill({});
@@ -366,6 +367,7 @@
   const justSent = new Set(); // sent this session, in case your copy can't be saved
   S.sendRequest = async function (uid, name) {
     await N.ref(`friendReqs/${uid}/${me.uid}`).set({ name: me.name, display: me.display, at: N.now() });
+    KK.notify.send(uid, { t: 'friend' }, 'f_' + me.uid);
     justSent.add(uid);
     let off = null;
     off = N.ref(`friendReqs/${uid}/${me.uid}`).on((v) => {
@@ -443,7 +445,7 @@
     $('#friendsCount').textContent = ids.length ? `${ids.length} · ${online.length} online` : '0';
     // requests: received (to answer) and sent (still waiting on them)
     const nIn = Object.keys(reqs).length, nOut = Object.keys(sent).length;
-    $('#frReqs').classList.toggle('waiting', nIn > 0); // someone's waiting on you: requests go first
+    $('#frReqs').classList.toggle('waiting', nIn > 0); // someone's waiting on you: the panel turns gold
     const tab = (t, label, n) => `<button class="chip${reqTab === t ? ' on' : ''}" data-rt="${t}">${label}${n ? `<b>${n}</b>` : ''}</button>`;
     $('#reqTabs').innerHTML = tab('in', 'received', nIn) + tab('out', 'sent', nOut);
     $('#friendReqs').innerHTML = reqTab === 'in'

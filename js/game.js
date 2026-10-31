@@ -25,7 +25,12 @@
     double: { label: '×2 double', secs: 10, weight: 1 },
     erase: { label: '✕ erase', secs: 0, weight: 0.7 },
     subtract: { label: '− subtract', secs: 10, weight: 0.8 }, // each word typed lowers your overflow
+    explode: { label: '✸ explode', secs: 0, weight: 0.9 }, // clears the words around it
   };
+  // freeze and erase only turn up when the field is crowded (this many words or more)
+  const CROWD_ONLY = { freeze: 1, erase: 1 };
+  const crowdAt = (p) => Math.max(6, Math.round(p.maxOn * 0.45));
+  const EXPLODE_R = 0.3; // blast radius, as a share of the field's width (at least 130px)
   const SUBTRACT = 0.05; // overflow taken off per word while subtract is on
 
   // word sizes: the smaller the word, the more it's worth (so small + long is the jackpot)
@@ -102,7 +107,10 @@
     const busy = run.kind === 'pvp' ? run.sincePower < 8 : onField >= (p.maxPowers || 1);
     run.sincePower = (run.sincePower || 0) + 1;
     if (run.elapsed > 4 && roll < (p.powerChance || 0.1) && !busy) {
-      const entries = Object.entries(POWERS);
+      // which powers can turn up depends on this field, but the draw is the same either
+      // way (vs players: both sides still get the same words, maybe different glows)
+      const crowded = run.boards.some((b) => b.words.length >= crowdAt(p));
+      const entries = Object.entries(POWERS).filter(([k]) => crowded || !CROWD_ONLY[k]);
       let r = pick * entries.reduce((s, [, x]) => s + x.weight, 0);
       for (const [k, x] of entries) if ((r -= x.weight) <= 0) { power = k; break; }
       run.sincePower = 0;
@@ -332,7 +340,7 @@
       if (!this.ai) KK.sfx.word(this.combo, this.fx.double > 0);
       renderMeter(this.meterEl, this, true);
       this.renderBar();
-      if (w.power) this.activate(w.power);
+      if (w.power) this.activate(w.power, w);
       if (this.combo % 5 === 0) this.emit('combo', KK.voice.tierFor(this.combo));
       this.refreshMatches();
       this.renderTyped();
@@ -390,10 +398,28 @@
       }
     }
 
-    activate(type) {
+    // w: the word that carried it (explode goes off where it was)
+    activate(type, w) {
       this.powersUsed++;
       if (!this.ai) KK.sfx.power(type);
-      if (type === 'erase') {
+      if (type === 'explode') {
+        const cx = w ? w.x + w.width / 2 : this.W / 2, cy = w ? w.y : this.H / 2;
+        const r = Math.max(130, this.W * EXPLODE_R);
+        let sum = 0, n = 0;
+        this.words.slice().forEach((o) => {
+          if (Math.hypot(o.x + o.width / 2 - cx, o.y - cy) > r) return;
+          const pts = this.points(o, false);
+          sum += pts;
+          n++;
+          this.popup(o.x + o.width / 2, o.y, '+' + pts, 'dbl');
+          this.removeWord(o, 'done');
+        });
+        this.score += sum;
+        this.buffer = '';
+        this.boom(cx, cy, r);
+        this.shake('flash');
+        this.toast(n ? `boom! ${n} word${n > 1 ? 's' : ''} +${sum}` : 'boom!', 'pw-explode');
+      } else if (type === 'erase') {
         let sum = 0;
         this.words.slice().forEach((o) => {
           const pts = this.points(o, false);
@@ -410,6 +436,15 @@
         this.toast(type + '!', 'pw-' + type);
       }
       this.renderPowers();
+    }
+
+    // the blast: a ring that grows to the radius and fades
+    boom(x, y, r) {
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.cssText = `left:${x}px;top:${y}px;--r:${r * 2}px`;
+      this.field.appendChild(el);
+      setTimeout(() => el.remove(), 700);
     }
 
     tickPowers(dt) {
@@ -722,7 +757,12 @@
     if (b.score > prevBest) prog.best[run.level] = b.score;
     const newTotalBest = total > (prog.bestTotal || 0);
     if (newTotalBest) prog.bestTotal = total;
+    const newLevel = survived && run.level + 1 > (prog.unlocked || 1); // cleared your highest yet
     if (survived) prog.unlocked = Math.max(prog.unlocked, run.level + 1);
+    // your friends' feeds and this week's board
+    if (newLevel) KK.feed.activity('level', { level: run.level });
+    if (!survived && newTotalBest && total > 0) KK.feed.activity('best', { total });
+    KK.feed.stat('solo', total);
     KK.app.saveProgress();
     KK.app.run.total = total;
     KK.builder.level = 1; // a new run always starts at level 1; only "next level" continues

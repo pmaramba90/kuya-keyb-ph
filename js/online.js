@@ -120,6 +120,11 @@
         score: `${count(m.wins[0])}–${count(m.wins[1])}`, how: String(m.how || '').slice(0, 40),
         build: String(pick.name).slice(0, 60), at: N.now(),
       }).catch((err) => console.warn('kkph history', err));
+      // a win: a line in your friends' feeds and one more on this week's board
+      if (won) {
+        KK.feed.activity('win', { opp: String(m.opp).slice(0, 128), oppName: String(m.oppName || 'player').slice(0, 40), score: `${count(m.wins[0])}–${count(m.wins[1])}` });
+        KK.feed.stat('win');
+      }
     }
     return `${esc(pick.name)} is now ${recText(rec)} vs players`;
   };
@@ -329,6 +334,7 @@
     const pick = myPick(), at = N.now();
     const path = `challenges/${uid}/${me.uid}`;
     N.ref(path).set({ fromName: me.display, pid: pick.pid, pname: pick.name, build: pick.build, at, status: 'pending' });
+    KK.notify.send(uid, { t: 'challenge' }); // in their bell too, in case they miss it
     outgoing = { uid, display, path };
     renderLobby();
     const done = () => {

@@ -25,19 +25,42 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 - The play area is shorter on phones and the scores are compact, so the falling words and what you've typed stay above the keyboard.
 - Cheat detection still applies: phone typing counts as real typing, and fake input events from a script are caught.
 
-- **home**: a feed, like X or Facebook.
-  - **Posts**: your posts and reviews and your friends', newest first. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
-  - **Reactions and replies**: under every post, **♥** and **😂** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
+- **home**: a feed, like X or Facebook. Top to bottom:
+  - **Welcome checklist** for new players: add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
+  - **Online now**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
+  - **What's on your mind?** (the composer). Click the box to write a post, or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
+  - **friends / everyone** tabs: your posts and your friends', or every post on the site.
+  - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
+  - **Activity posts** are written by the game itself, so the feed fills up even when nobody posts:
+    - **built a new keyboard**: a newly saved keyboard, drawn small with **▶ hear it** and its ♥
+    - **won a match**: beat kuya 2–1 in vs players
+    - **levelled up**: cleared your highest single-player level yet
+    - **set a new best**: a new personal best total, posted when that run ends
+    - **hearted paul's keyboard**: with the keyboard drawn; taking the heart back removes the post
+  - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
   - **Moderator**: **akosipolnew1** sees every post on the site, not just friends', and can delete any of them. The database rules allow that one account and no other.
-  - **+** opens **new review** or **new post**.
-    - A post is text, a GIF, or both. **GIF** opens a GIPHY picker.
+  - **Writing a post**: text plus any of a GIF, one of your saved keyboards, or a photo.
+    - **⌨ keyboard** shares one of your saved keyboards. The post shows it drawn small, with its sound tags, its ♥ and **▶ hear it**, which plays it for a few seconds before your own keyboard comes back.
+    - **📷 photo**: pick a picture and it's shrunk in your browser to a JPEG under about 380 KB (at most 1024px across), then saved with the post. File storage would need Firebase's paid plan, so photos go in the database like profile pictures. Only real JPEG photos are ever shown.
+    - **GIF** opens a GIPHY picker.
       - With a GIPHY API key in `js/giphy-config.js`, it shows trending GIFs and a search box; click one to add it.
       - Without a key, or as well as the search, paste a GIPHY link (giphy.com → a GIF → copy link). A paste is read at once; a typed link is read on Enter.
       - Only the GIF's GIPHY id is saved, and it's always shown from GIPHY's own servers, marked "via GIPHY". Anything that isn't a valid id is never shown.
       - Getting a key: developers.giphy.com → Create an App → **API** → name it → copy the API key into `js/giphy-config.js`. It's a public key meant for web pages. A new key is limited to 100 searches an hour until GIPHY approves it for production.
     - A review: pick what you're reviewing (full keyboard, base (case), plate, switches, keycaps, lube or mods), search the catalog and pick the item, rate it out of 5 stars, then write the review. Clicking the left half of a star gives half a star; the arrow keys also move the rating in half stars. Keyboard reviews show the product photo.
     - Reviews can include an optional link to where you can buy the item. Only https links to Amazon, Lazada or Shopee are accepted (their short links too); anything else is refused, and other links are never shown. The link appears as a **buy on Lazada ↗** button and opens in a new tab.
-  - **Popular keyboards** on the side: the five keyboards on the site with the most hearts, from anyone, not just friends. Each is drawn whole, scaled down to fit. Click one to open its owner's page. The sign-up and online counts are here too.
+  - Each review also shows its item's **average** once it has more than one review (for example "avg ★ 4 · 2 reviews").
+  - **On the side**, after the sign-up and online counts:
+    - **This Week**: you and your friends ranked by best single-player total and by wins against players. It starts fresh every Monday.
+    - **Popular Keyboards**: the five keyboards on the site with the most hearts, from anyone, not just friends. Each is drawn whole, scaled down to fit. Click one to open its owner's page.
+    - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have.
+  - **The bell** (top right, next to your picture) shows a red count of new notifications:
+    - someone reacted to or replied to your post
+    - hearted your keyboard
+    - challenged you
+    - sent you a friend request
+
+    Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
   - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record
   - **edit profile**, plus **build a new keyboard · full keyboards · continue last build**
@@ -46,7 +69,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
   - **Hearts**: every keyboard on a player's page has a ♥ with its count. Click it to heart someone else's keyboard, and click again to take the heart back. On your own keyboards you just see the count, since you can't heart your own.
 - **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **Anyone's profile**: you can open any player's page, friend or not. Type a username on friends and press **view profile**, or click someone in popular keyboards, the vs players list or your match history. If you're not friends, the page has an **add friend** button. Once you've sent a request it shows **request sent**; if they've asked you, it shows **accept friend request**; once you're friends it shows **✓ friends**.
-- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The page has two separate sections: **your friends** (with how many are online) and **friend requests** (not friends yet), in its own outlined panel with **received** / **sent** tabs (cancel takes back one you sent). While someone is waiting on you, the requests panel moves above your friends and turns gold, and a new request switches it to received. Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
+- **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The page has two separate sections: **your friends** (with how many are online) and **friend requests** (not friends yet), in its own outlined panel with **received** / **sent** tabs (cancel takes back one you sent). The requests panel always sits above your friends. It turns gold while someone is waiting on you, and a new request switches it to received. Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
 - **marketplace**: coming soon.
 - **edit profile** (on your profile): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 
@@ -188,6 +211,8 @@ The config values are public by design. The database rules are what keep each pl
      - ×2 **double** doubles your score for 10s.
      - ✕ **erase** clears the screen and scores every word on it.
      - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s.
+     - ✸ **explode** blows up the words near it: every word within about a third of the field's width of where you typed it is cleared and scored, with an orange blast ring.
+     - **Freeze and erase only turn up when the field is crowded**, meaning at least 6 words on screen (more on faster levels: 45% of the level's word limit). Otherwise the glowing word is one of the others.
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
 Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer).
@@ -294,7 +319,8 @@ js/sfx.js             game sound effects
 js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
-js/feed.js            home feed: posts and reviews (+), hearts, popular keyboards
+js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
+js/notify.js          the bell: notifications
 js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inhuman-speed keys
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules

@@ -96,7 +96,8 @@
   };
   app.saveProfile = function (name, asNew) {
     let p = app.currentProfile();
-    if (!p || asNew) {
+    const isNew = !p || asNew;
+    if (isNew) {
       p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), created: Date.now(), best: 0 };
       app.profiles.unshift(p);
     }
@@ -106,6 +107,8 @@
     app.profileId = p.id;
     persistProfiles();
     renderProfiles();
+    // a new keyboard: a line in your friends' feeds, with the board drawn and playable
+    if (isNew) KK.feed.activity('build', { kb: KK.feed.kbOf(p.name, p.id, p.build) }, 'b_' + p.id);
     return p;
   };
   app.loadProfile = function (id) {
@@ -673,6 +676,7 @@
       KK.online.start();
       KK.social.start();
       KK.feed.start();
+      KK.notify.start();
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
       app.show(imported ? 'title' : 'home');
@@ -688,6 +692,7 @@
     KK.online.stop();
     KK.social.stop();
     KK.feed.stop();
+    KK.notify.stop();
     KK.net.logout();
     clearUser();
     setAuthMode('login');
@@ -942,6 +947,7 @@
       KK.online.start();
       KK.social.start();
       KK.feed.start();
+      KK.notify.start();
     }
     if (app.screen === 'title') app.show(app.user ? 'home' : 'title');
   });
