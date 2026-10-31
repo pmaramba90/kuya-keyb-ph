@@ -19,6 +19,7 @@
   };
   app.saveSettings = () => KK.store.set('settings', app.settings);
   let scoresSig = ''; // your scores as last copied online (app.publishScores)
+  let cloudScores = {}; // your scores as saved online, maybe from another device
   app.saveProgress = () => {
     KK.store.uset('progress', app.progress);
     if (app.publishScores) app.publishScores();
@@ -58,6 +59,7 @@
   function setUser(user) {
     app.user = user;
     scoresSig = '';
+    cloudScores = {};
     KK.store.user = user;
     loadUserData();
   }
@@ -606,9 +608,25 @@
     const add = (a, r) => ({ w: a.w + ((r && +r.w) || 0), l: a.l + ((r && +r.l) || 0) });
     const ai = Object.values(p.vs || {}).reduce(add, { w: 0, l: 0 });
     const pvp = app.profiles.reduce(add, add({ w: 0, l: 0 }, p.pvpDefault));
-    const n = (v) => Math.max(0, Math.floor(+v || 0));
-    return { solo: n(p.bestTotal), vs: n(p.vsBest), vsW: ai.w, vsL: ai.l, pvp: n(p.pvpBest), pvpW: pvp.w, pvpL: pvp.l };
+    const n = (v) => Math.max(0, Math.floor(+v || 0)), c = cloudScores;
+    // never below what another device saved
+    const hi = (mine, k) => Math.max(n(mine), n(c[k]));
+    return { solo: hi(p.bestTotal, 'solo'), vs: hi(p.vsBest, 'vs'), vsW: hi(ai.w, 'vsW'), vsL: hi(ai.l, 'vsL'), pvp: hi(p.pvpBest, 'pvp'), pvpW: hi(pvp.w, 'pvpW'), pvpL: hi(pvp.l, 'pvpL') };
   }
+  // on sign-in: your bests saved from another device come down to this one
+  app.pullScores = async () => {
+    const me = KK.net.me;
+    if (!me) return;
+    const s = await KK.net.ref('scores/' + me.uid).once().catch(() => null);
+    if (!s || KK.net.me !== me) return;
+    cloudScores = s;
+    const p = app.progress;
+    [['bestTotal', 'solo'], ['vsBest', 'vs'], ['pvpBest', 'pvp']].forEach(([k, c]) => (p[k] = Math.max(+p[k] || 0, Math.floor(+s[c] || 0))));
+    KK.store.uset('progress', p);
+    app.publishScores();
+    if (app.screen === 'title') renderHome();
+    KK.feed.refreshWelcome();
+  };
   // the three cards: single player (best total), vs AI and vs players (best round + record)
   function scoreTiles(s) {
     s = s || {};
@@ -794,7 +812,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
-      app.publishScores();
+      app.pullScores().finally(() => app.publishScores());
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
       app.show(imported ? 'title' : 'home');
@@ -870,6 +888,15 @@
     if (app.screen === 'vs') app.vsKb.fit();
   });
   applyKb();
+
+  // phones: the footer folds into one button
+  $('#footToggle').addEventListener('click', (e) => {
+    const b = e.currentTarget, open = $('#footer').classList.toggle('open');
+    b.blur();
+    KK.sfx.ui();
+    b.setAttribute('aria-expanded', open);
+    b.querySelector('span').textContent = open ? '▴' : '▾';
+  });
 
   // the site's colours: dark blue (default), dark green, dark grey or dark red
   const THEME_BG = { blue: '#0f1a2e', green: '#0c1d16', grey: '#17181b', red: '#1f0d11' };
@@ -1092,7 +1119,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
-      app.publishScores();
+      app.pullScores().finally(() => app.publishScores());
     }
     if (app.screen === 'title') {
       // a refresh comes back to the screen you were on

@@ -65,7 +65,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
-  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
+  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Signing in on another device brings your bests down to it (and the welcome checklist sees your keyboards and games from any device); a device with less on it never lowers what's saved. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
   - **edit profile**, plus **build a new keyboard · full keyboards · continue last build**
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
@@ -195,6 +195,7 @@ The config values are public by design. The database rules are what keep each pl
    - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
    - A spec sheet of your build sits beside the in-game keyboard.
+   - **Clearing a level** adds a bonus to that level's score: **level clear** (300 × the level) plus **clean screen** (25 × the level for every word under 8 still falling when time runs out, so 200 × the level for an empty screen). Both show on the results card.
    - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.
    - **Word sizes**: words fall in four sizes, and the smaller the word, the more it's worth: tiny ×2, small ×1.5, normal ×1, large ×0.7. Longer words score more too, so small long words are the jackpot (an 8-letter word scores 160 tiny vs 56 large).
    - **Announcer** (switch in the footer: "announcer: dragon / classic"):
@@ -222,7 +223,7 @@ The config values are public by design. The database rules are what keep each pl
      - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
-Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer). Next to them, **theme** switches the site's colours: dark blue (default), dark green, dark grey or dark red. It's remembered on that browser. Clicking the tabs (top bar, feed friends / everyone, friend requests) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
+Two volume sliders in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the site's colours: dark blue (default), dark green, dark grey or dark red. It's remembered on that browser. Clicking the tabs (top bar, feed friends / everyone, friend requests) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
 
 ## Cheat detection
 

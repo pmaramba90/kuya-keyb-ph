@@ -475,6 +475,8 @@
     el.innerHTML = `<div class="welcome-h"><b>For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out</b><span class="hint">${done} of ${steps.length} done</span><button class="picon" data-wel="hide" title="hide this">✕</button></div>
       <div class="welcome-steps">${steps.map(([k, label, ok]) => `<button class="wstep${ok ? ' ok' : ''}" data-wel="${k}"><i>${ok ? '✓' : ''}</i>${label}</button>`).join('')}</div>`;
   }
+  // your builds / scores came down from another device: the checklist may be done now
+  F.refreshWelcome = () => me && KK.app.screen === 'home' && renderWelcome();
   $('#feedWelcome').addEventListener('click', (e) => {
     const b = e.target.closest('[data-wel]');
     if (!b) return;

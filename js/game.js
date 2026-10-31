@@ -756,6 +756,7 @@
     return b;
   };
   G._activate = (type) => G.human().activate(type);
+  G._setTime = (s) => run && (run.time = s); // tests: jump to the end of a level
   // n spawns for a level without playing (vs: the vs word mix): [{ len, power }]
   G._spawns = (level, n, lang, vs, bar) => {
     const boards = bar == null ? [] : [{ words: [], bar }]; // bar: your overflow so far
@@ -786,7 +787,7 @@
     };
     $('#hudLevel').textContent = 'level ' + level;
     soloHud(true);
-    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 1:00 · smaller words score more");
+    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 1:00 for a clear bonus · fewer words left on screen = more bonus");
   };
 
   function soloHud(force) {
@@ -798,10 +799,18 @@
     $('#hudTime').classList.toggle('warn', run.time <= 10);
   }
 
+  // clearing a level: a bonus that grows with the level, and a clean-screen bonus for
+  // every word under CLEAN_FROM still falling when the clock runs out
+  const CLEAR_BONUS = 300, CLEAN_FROM = 8, CLEAN_PER = 25;
+  G.clearBonus = (level, left) => ({ clear: CLEAR_BONUS * level, clean: Math.max(0, CLEAN_FROM - left) * CLEAN_PER * level });
+
   function soloEnd(survived) {
     if (!run || run.kind !== 'solo' || !run.running) return;
     run.running = false;
     const b = run.board;
+    const left = b.words.length;
+    const bonus = survived ? G.clearBonus(run.level, left) : null;
+    if (bonus) b.score += bonus.clear + bonus.clean; // part of the level's score
     b.words.slice().forEach((w) => b.removeWord(w, survived ? 'done' : 'dead'));
     const total = run.startTotal + b.score;
     const stars = !survived ? 0 : b.bar < 0.25 ? 3 : b.bar < 0.6 ? 2 : 1;
@@ -839,6 +848,7 @@
          <div><span class="hud-lbl">max combo</span><b>${b.maxCombo}x</b></div>
          <div><span class="hud-lbl">acc</span><b>${b.acc()}%</b></div>
        </div>
+       ${bonus ? `<div class="res-bonus"><span>level clear <b>+${bonus.clear.toLocaleString()}</b></span><span>clean screen <b>+${bonus.clean.toLocaleString()}</b> <i>${left === 0 ? 'no words left!' : left + ' word' + (left > 1 ? 's' : '') + ' left'}</i></span></div>` : ''}
        <div class="res-small">words <b>${b.done}</b> · missed <b>${b.missed}</b> · power-ups <b>${b.powersUsed}</b></div>
        <div class="ov-btns">
          ${survived ? `<button class="btn primary" data-ov="next" data-primary>level ${level + 1} →</button><button class="btn" data-ov="retry">retry level ${level}</button>` : `<button class="btn primary" data-ov="restart" data-primary>play again from level 1</button>`}

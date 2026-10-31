@@ -98,6 +98,7 @@
     if (changed) app.storeProfiles();
     O.pushBuilds();
     if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
+    KK.feed.refreshWelcome();
   }
 
   // after a match against a person: +1 win or loss on the build you played, and a line
