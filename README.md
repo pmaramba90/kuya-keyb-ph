@@ -15,6 +15,8 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 The top bar has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
+**Back button**: every screen is a step in the browser's history, so Back and Forward move between screens (home, profile, play, friends, a player's page, …) instead of leaving the site, and a refresh comes back to the screen you were on. A game isn't a step of its own: Back after a game goes to where you started it, and Back in the middle of a game pauses it (in vs players it asks before forfeiting) instead of leaving. Back on the first page you opened leaves the site, as usual.
+
 On a phone the tabs move to a bar along the bottom (icons with small names), your name shrinks to just your picture at the top right, and every page fits the screen's width. The bar hides while you're playing. On a tablet the tabs show as icons only.
 
 **Playing on a phone.** Phones don't send key presses to a web page, so during a game a hidden text box holds the phone's own keyboard open. Whatever you type into it goes to the game: letters type, ⌫ deletes, and space clears the word. It reads keyboards that compose or autocorrect whole words (like Gboard) by comparing what's in the box before and after each change.
@@ -27,7 +29,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
 
 - **home**: a feed, like X or Facebook. Top to bottom:
   - **Welcome checklist** for new players: add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
-  - **Online now**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
+  - **Online friends**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
   - **What's on your mind?** (the composer). Click the box to write a post, or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
   - **friends / everyone** tabs: your posts and your friends', or every post on the site.
   - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
@@ -37,7 +39,7 @@ On a phone the tabs move to a bar along the bottom (icons with small names), you
     - **made the popular keyboards**: one of your keyboards reached the top 3 of Popular Keyboards, posted once per keyboard
     - Older posts about wins, levels and hearts aren't shown any more.
   - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
-  - **Moderator**: **akosipolnew1** sees every post on the site, not just friends', and can delete any of them. The database rules allow that one account and no other.
+  - **Admins**: **akosipolnew1** and **kuyakeybph** start on the everyone tab and can delete any post or reply on the site. The database rules allow those two accounts and no others.
   - **Writing a post**: text plus any of a GIF, one of your saved keyboards, or a photo.
     - **⌨ keyboard** shares one of your saved keyboards. The post shows it drawn small, with its sound tags, its ♥ and **▶ hear it**, which plays it for a few seconds before your own keyboard comes back.
     - **📷 photo**: pick a picture and it's shrunk in your browser to a JPEG under about 380 KB (at most 1024px across), then saved with the post. File storage would need Firebase's paid plan, so photos go in the database like profile pictures. Only real JPEG photos are ever shown.

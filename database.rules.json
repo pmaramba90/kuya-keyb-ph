@@ -102,7 +102,7 @@
       ".read": "auth != null",
       "$uid": {
         "$id": {
-          ".write": "auth != null && (auth.uid === $uid || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' && !newData.exists()))",
+          ".write": "auth != null && (auth.uid === $uid || ((auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com') && !newData.exists()))",
           ".validate": "newData.hasChildren(['type', 'at']) && (newData.child('type').val() === 'post' || (newData.child('type').val() === 'review' && newData.hasChildren(['kind', 'item', 'rating'])) || (newData.child('type').val() === 'activity' && newData.hasChildren(['act'])))",
           "link": { ".validate": "newData.isString() && newData.val().length <= 500 && newData.val().beginsWith('https://')" },
           "gif": { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9]{4,64}$/)" },
@@ -137,7 +137,7 @@
       ".read": "auth != null",
       "$owner": {
         "$pid": {
-          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com')",
+          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com'))",
           "$kind": {
             "$uid": {
               ".write": "auth != null && auth.uid === $uid && ($kind === 'heart' || $kind === 'laugh' || $kind === 'fire' || $kind === 'cream') && (!newData.exists() || root.child('posts').child($owner).child($pid).exists())",
@@ -151,9 +151,9 @@
       ".read": "auth != null",
       "$owner": {
         "$pid": {
-          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com')",
+          ".write": "auth != null && !newData.exists() && (auth.uid === $owner || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com'))",
           "$rid": {
-            ".write": "auth != null && (newData.exists() ? !data.exists() && newData.child('uid').val() === auth.uid && root.child('posts').child($owner).child($pid).exists() : (data.child('uid').val() === auth.uid || auth.uid === $owner || auth.token.email === 'akosipolnew1@players.kuyakeybph.com'))",
+            ".write": "auth != null && (newData.exists() ? !data.exists() && newData.child('uid').val() === auth.uid && root.child('posts').child($owner).child($pid).exists() : (data.child('uid').val() === auth.uid || auth.uid === $owner || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com')))",
             ".validate": "newData.hasChildren(['uid', 'text', 'at'])",
             "uid": { ".validate": "newData.isString()" },
             "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },

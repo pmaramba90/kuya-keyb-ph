@@ -1074,7 +1074,6 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
 .wstep.ok { color: var(--sub); text-decoration: line-through; }
 .wstep.ok i { background: var(--main); border-color: var(--main); color: var(--bg); }
 .online-strip { display: flex; align-items: center; gap: 14px; overflow-x: auto; background: var(--bg2); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-.online-strip > .hud-lbl { flex: none; writing-mode: vertical-rl; transform: rotate(180deg); }
 .os-friend { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 86px; }
 .os-friend .av-wrap { cursor: pointer; }
 .os-friend b { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; font-size: 12px; color: var(--main); cursor: pointer; }
@@ -1205,7 +1204,6 @@ body.touch .keys-hint { display: none; }
   .bottom { gap: 10px 16px; padding: 18px 0 20px; }
   .whats-btns { flex-wrap: wrap; }
   .whats-btns button { flex: 1 1 40%; }
-  .online-strip > .hud-lbl { writing-mode: horizontal-tb; transform: none; }
   .bell-wrap { margin-left: auto; }
   .bell-wrap + .nav-user-wrap { margin-left: 4px; }
   /* the invite card */

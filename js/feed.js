@@ -35,9 +35,10 @@
   let buildsCache = {}; // owner uid → promise of their builds (fresh each time home opens)
 
   const ME = () => me && me.uid;
-  // the one moderator: can delete anyone's post (the database rules say the same)
-  const MOD = 'akosipolnew1';
-  const canDelete = (uid) => uid === ME() || (me && me.name === MOD);
+  // the admins: can delete anyone's post or reply (the database rules say the same)
+  const MODS = ['akosipolnew1', 'kuyakeybph'];
+  const isMod = () => !!me && MODS.includes(me.name);
+  const canDelete = (uid) => uid === ME() || isMod();
   const newId = () => N.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   F.ago = function (at) {
@@ -54,8 +55,8 @@
     F.stop();
     me = N.me;
     if (!me) return;
-    // the moderator starts on everyone's posts
-    mode = me.name === MOD ? 'everyone' : 'friends';
+    // admins start on everyone's posts
+    mode = isMod() ? 'everyone' : 'friends';
     limit = PAGE;
     offs.push(N.ref('hearts').on((v) => {
       hearts = v || {};
@@ -416,7 +417,7 @@
     if (!me) return;
     const players = KK.online.players();
     const on = KK.social.friendIds().filter((uid) => KK.online.isOnline(players[uid]));
-    el.innerHTML = `<span class="hud-lbl">online now</span>${on.length
+    el.innerHTML = `${on.length
       ? on.map((uid) => {
           const busy = players[uid].state === 'match';
           return `<div class="os-friend"><span class="av-wrap" data-user="${esc(uid)}" title="${esc(nameOf(uid))}">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${busy ? 'busy' : ''}"></i></span>
@@ -616,7 +617,7 @@
   function repliesHtml(key, owner, list) {
     const open = openReplies.has(key);
     if (!list.length && !open) return '';
-    const mod = me && me.name === MOD;
+    const mod = isMod();
     return `<div class="replies">${list.map(([rid, r]) => `<div class="reply">
         <span class="post-av" data-user="${esc(r.uid)}">${KK.social.avatarImg(r.uid, 'xs')}</span>
         <div class="reply-body"><b data-user="${esc(r.uid)}">${esc(nameOf(r.uid))}</b><span class="reply-text">${esc(String(r.text || '').slice(0, 500))}</span><span class="reply-at">${F.ago(r.at)}</span></div>

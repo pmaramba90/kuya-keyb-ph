@@ -311,6 +311,7 @@
     app.screen = name;
     document.body.dataset.screen = name;
     document.body.classList.toggle('signed-out', !app.user);
+    remember(name);
     syncMusic();
     if (app.typing) {
       if (!PLAY_SCREENS[name]) app.typing.hide();
@@ -340,6 +341,58 @@
     }
     requestAnimationFrame(() => views.concat(KK.builder.kb || [], app.oppKb).forEach((v) => v.fit()));
   };
+
+  /* --------------------------------- back button --------------------------------- */
+  // Every screen is a step in the browser's history, so Back (and Forward) moves between
+  // them instead of leaving the site, and a refresh comes back to the same screen.
+  // Signed out there's just the one step: the sign-in page. A game isn't a step of its
+  // own: Back after a game goes to where you started it, and Back mid-game pauses.
+  const HASH = { title: 'profile', profile: 'edit-profile' }; // the address bar's #name
+  let restoring = false; // going back: don't add a step
+  function remember(name) {
+    if (restoring || PLAY_SCREENS[name]) return;
+    if (!app.user && !app.netReady) return; // starting up: keep the saved screen for later
+    const st = { screen: name };
+    if (name === 'user') Object.assign(st, { uid: app.viewUid, from: app.userFrom });
+    const url = location.pathname + location.search + (app.user ? '#' + (HASH[name] || name) : '');
+    const cur = history.state;
+    if (!app.user) return history.replaceState({ screen: 'title', out: true }, '', url);
+    if (cur && cur.screen === st.screen && cur.uid === st.uid) return;
+    if (!cur || cur.out) history.replaceState(st, '', url); // signing in replaces the sign-in page
+    else history.pushState(st, '', url);
+  }
+  // back (or forward) to a screen, opened the way it normally is
+  function revisit(st) {
+    restoring = true;
+    try {
+      if (ui.isOpen()) ui.close();
+      KK.notify.close();
+      const s = st.screen;
+      if (s === 'user' && st.uid) app.showUser(st.uid, st.from);
+      else if (s === 'lobby') KK.online.openLobby();
+      else if (s === 'kbs') KK.kbs.open();
+      else if (s === 'build') KK.builder.open(KK.builder.step || 0);
+      else if (PLAY_SCREENS[s]) app.show('play'); // a game that's over: back to play
+      else app.show(s);
+    } finally {
+      restoring = false;
+    }
+  }
+  let undoingBack = false;
+  window.addEventListener('popstate', (e) => {
+    if (undoingBack) return void (undoingBack = false);
+    const st = e.state;
+    if (!st || !st.screen) return;
+    // mid-game, Back doesn't leave: it's undone, and the game pauses (against a person
+    // it asks before forfeiting)
+    if (PLAY_SCREENS[app.screen] && (KK.game.isRunning() || KK.online.inMatch)) {
+      undoingBack = true;
+      history.go(1);
+      KK.game.pause(true);
+      return;
+    }
+    revisit(st);
+  });
 
   // compact spec sheet shown beside the keyboard while playing (yours, or with b and
   // title given, your opponent's)
@@ -949,6 +1002,11 @@
       KK.feed.start();
       KK.notify.start();
     }
-    if (app.screen === 'title') app.show(app.user ? 'home' : 'title');
+    if (app.screen === 'title') {
+      // a refresh comes back to the screen you were on
+      const st = history.state;
+      if (app.user && st && st.screen && !st.out) revisit(st);
+      else app.show(app.user ? 'home' : 'title');
+    }
   });
 })();
