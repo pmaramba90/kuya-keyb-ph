@@ -203,6 +203,7 @@
   });
 
   S.friendIds = () => Object.keys(friends);
+  S.handleOf = (uid) => String((info[uid] && info[uid].name) || '').toLowerCase(); // their username
   // a name we already know: a friend, someone you've sent a request to, or anyone online
   S.nameOf = (uid) => {
     const f = info[uid], p = KK.online.players()[uid];

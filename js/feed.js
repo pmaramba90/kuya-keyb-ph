@@ -40,6 +40,7 @@
   // the admins: can delete anyone's post or reply (the database rules say the same)
   const MODS = ['akosipolnew1', 'kuyakeybph'];
   const isMod = () => !!me && MODS.includes(me.name);
+  F.isMod = isMod;
   // the official account: its posts are in everyone's feed and its name glows
   const OFFICIAL = 'kuyakeybph';
   let officialUid = null;
@@ -51,6 +52,8 @@
   F.profileName = (name, official) => (official ? `<b class="official">${esc(name)}<i class="official-tick">✓</i>${F.ADMIN_BADGE}</b>` : esc(name));
   F.OFFICIAL = OFFICIAL;
   const canDelete = (uid) => uid === ME() || isMod();
+  // an admin wrote it (their @everyone counts)
+  const byAdmin = (uid) => F.isOfficial(uid) || MODS.includes(String(nameOf(uid)).toLowerCase());
   const newId = () => N.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   F.ago = function (at) {
@@ -701,9 +704,9 @@
     const mod = isMod();
     return `<div class="replies">${list.map(([rid, r]) => `<div class="reply">
         <span class="post-av" data-user="${esc(r.uid)}">${KK.social.avatarImg(r.uid, 'xs')}</span>
-        <div class="reply-body">${F.nameHtml(r.uid)}<span class="reply-text">${esc(String(r.text || '').slice(0, 500))}</span><span class="reply-at">${F.ago(r.at)}</span></div>
+        <div class="reply-body">${F.nameHtml(r.uid)}<span class="reply-text">${KK.mention.html(String(r.text || '').slice(0, 500), byAdmin(r.uid))}</span><span class="reply-at">${F.ago(r.at)}</span></div>
         ${r.uid === ME() || owner === ME() || mod ? `<button class="picon" data-rdel="${esc(rid)}" data-key="${esc(key)}" title="delete reply">✕</button>` : ''}</div>`).join('')}
-      ${open ? `<form class="reply-form" data-reply-form="${esc(key)}" autocomplete="off"><input class="search" data-reply-in="${esc(key)}" maxlength="500" placeholder="write a reply…" value="${esc(drafts[key] || '')}"><button class="btn primary sm" type="submit">reply</button></form>` : ''}</div>`;
+      ${open ? `<form class="reply-form" data-reply-form="${esc(key)}" autocomplete="off"><input class="search" data-reply-in="${esc(key)}" maxlength="500" placeholder="write a reply… (@ to tag)" value="${esc(drafts[key] || '')}"><button class="btn primary sm" type="submit">reply</button></form>` : ''}</div>`;
   }
 
   function postHtml({ uid, id, p }, src) {
@@ -730,7 +733,7 @@
         <div class="rev-what"><span class="rev-kind">${KINDS[p.kind].label}</span><b>${esc(it.name)}</b><span class="hint">${esc(it.sub || '')}</span>
         <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span>${avg && avg.n > 1 ? `<span class="rev-avg">avg ★ ${avg.avg} · ${avg.n} reviews</span>` : ''}</div></div>
         ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>` : ''}
-      ${p.text ? `<p class="post-text">${esc(String(p.text).slice(0, 1000))}</p>` : ''}
+      ${p.text ? `<p class="post-text">${KK.mention.html(String(p.text).slice(0, 1000), byAdmin(uid))}</p>` : ''}
       ${!review && isGif(p.gif) ? `<div class="post-gif"><img src="${gifSrc(p.gif)}" alt="GIF" loading="lazy" onerror="this.parentNode.remove()"><span>via GIPHY</span></div>` : ''}
       ${!review && isPhoto(p.photo) ? `<div class="post-photo"><img src="${p.photo}" alt="photo" loading="lazy"></div>` : ''}
       ${act ? act.body : ''}
@@ -870,8 +873,10 @@
     const btn = f.querySelector('button');
     btn.disabled = true;
     try {
-      await N.ref(`replies/${owner}/${id}/${newId()}`).set({ uid: me.uid, text, at: N.now() });
+      const rid = newId();
+      await N.ref(`replies/${owner}/${id}/${rid}`).set({ uid: me.uid, text, at: N.now() });
       KK.notify.send(owner, { t: 'reply', post: id, text: text.slice(0, 80) });
+      KK.mention.notify(text, { owner, post: id, reply: rid }); // anyone @tagged
       delete drafts[key];
       KK.sfx.select();
       const again = e.currentTarget.querySelector(`[data-reply-in="${CSS.escape(key)}"]`);
@@ -927,7 +932,7 @@
         <div class="grp-h">where to buy it <span class="sub">optional · Amazon, Lazada or Shopee link</span></div>
         <input class="search rev-link" id="revLink" type="text" inputmode="url" autocomplete="off" maxlength="500" spellcheck="false" placeholder="https://www.lazada.com.ph/products/…">
         <div class="grp-h">your review</div>` : ''}
-      <textarea class="search comp-text" id="compText" maxlength="1000" rows="${mode === 'review' ? 4 : 3}" placeholder="${mode === 'review' ? 'how does it sound, feel, look? worth the price?' : "what's on your mind? a build, a switch, a match…"}"></textarea>
+      <textarea class="search comp-text" id="compText" maxlength="1000" rows="${mode === 'review' ? 4 : 3}" placeholder="${mode === 'review' ? 'how does it sound, feel, look? worth the price?' : `what's on your mind? a build, a switch, a match… · @ to tag ${isMod() ? 'anyone' : 'a friend'}`}"></textarea>
       ${mode === 'post' ? `
         <div class="kb-pick" id="kbPick" hidden></div>
         <div class="att-chosen" id="kbChosen" hidden></div>
@@ -1226,7 +1231,9 @@
     const btn = form.querySelector('[type="submit"]');
     btn.disabled = true;
     try {
-      await N.ref(`posts/${me.uid}/${newId()}`).set(data);
+      const id = newId();
+      await N.ref(`posts/${me.uid}/${id}`).set(data);
+      KK.mention.notify(text, { owner: me.uid, post: id }); // anyone @tagged
       KK.sfx.select();
       closeComposer();
       if (data.type === 'review') {

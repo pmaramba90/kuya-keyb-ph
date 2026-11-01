@@ -32,6 +32,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 - **home**: a feed, like X or Facebook. Top to bottom:
   - **Welcome checklist** for new players, headed "For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out": add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
   - **Online friends**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
+  - **@ tags**: type @ in a post, review or reply and pick a friend from the list (↑ ↓ and Enter, or tap). The tag shows as a link to their profile and their bell says "tagged you in a post" / "mentioned you in a reply"; tapping it opens the post's page. Players can tag their friends; the admins can tag anyone, plus **@everyone**, which notifies every player and shows in red. The database rules only accept a tag notification from a friend or an admin.
   - **What's on your mind?** (the composer). Click the box and it grows into the writing box right there (with **cancel** and **post**), or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
   - **friends / everyone** tabs: your posts and your friends', or every post on the site.
   - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
@@ -331,6 +332,7 @@ js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
 js/notify.js          the bell: notifications
+js/mention.js         @ tags: the picker, tag links, tag notifications
 js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inhuman-speed keys
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules

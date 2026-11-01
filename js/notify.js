@@ -66,6 +66,7 @@
       case 'heart': return `hearted your keyboard${n.name ? ` <b>${esc(String(n.name).slice(0, 60))}</b>` : ''}`;
       case 'challenge': return 'challenged you to a match';
       case 'friend': return 'sent you a friend request';
+      case 'tag': return n.kind === 'all' ? 'tagged <b class="mention all">@everyone</b> in a post' : n.kind === 'reply' ? 'mentioned you in a reply' : 'tagged you in a post';
       default: return 'did something';
     }
   }
@@ -78,9 +79,9 @@
     if (menu.hidden) return;
     menu.innerHTML = `<div class="bell-h"><b>notifications</b>${all.length ? '<button class="link-btn" data-nt="clear">clear all</button>' : ''}</div>
       ${all.length
-        ? all.slice(0, 30).map((n) => `<button class="nt${+n.at > shownSeen ? ' new' : ''}" data-nt="go" data-t="${esc(n.t)}" data-from="${esc(n.from)}">
+        ? all.slice(0, 30).map((n) => `<button class="nt${+n.at > shownSeen ? ' new' : ''}" data-nt="go" data-t="${esc(n.t)}" data-from="${esc(n.from)}" data-pid="${esc(n.pid || '')}">
             ${KK.social.avatarImg(n.from, 'sm')}<span class="nt-text">${KK.feed.nameHtml(n.from)} ${what(n)}<i>${KK.feed.ago(n.at)}</i></span></button>`).join('')
-        : '<p class="hint">nothing yet. Reactions, replies, hearts and challenges show up here.</p>'}`;
+        : '<p class="hint">nothing yet. Reactions, replies, tags, hearts and challenges show up here.</p>'}`;
   }
 
   NT.close = function () {
@@ -113,6 +114,8 @@
     heart: () => KK.app.show('title'),
     challenge: () => KK.online.openLobby(),
     friend: () => KK.app.show('friends'),
+    // the post is on its writer's page (pid: whose post it is)
+    tag: (from, pid) => KK.app.showUser(pid || from, 'home'),
   };
   menu.addEventListener('click', (e) => {
     const b = e.target.closest('[data-nt]');
@@ -125,6 +128,6 @@
       return;
     }
     NT.close();
-    (GO[b.dataset.t] || GO.react)();
+    (GO[b.dataset.t] || GO.react)(b.dataset.from, b.dataset.pid);
   });
 })();
