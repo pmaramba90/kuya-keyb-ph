@@ -240,6 +240,18 @@
     if (app.typing) app.typing.update();
   };
   ui.isOpen = () => !$('#overlay').hidden;
+  // a short note near the bottom of the screen ("review posted ✓")
+  let toastT = null;
+  ui.toast = function (msg) {
+    const t = $('#appToast');
+    t.textContent = msg;
+    t.hidden = false;
+    t.classList.remove('show');
+    void t.offsetWidth; // restart its pop-in
+    t.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => (t.hidden = true), 2600);
+  };
   ui.key = function (e) {
     if (!actions) return true;
     if (e.key === 'Escape' && actions.esc) actions.esc();

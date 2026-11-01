@@ -98,7 +98,7 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 
 ## Full keyboards
 
-There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 1,462 prebuilt boards from 81 brands. Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with **▶ hear it** and **★ review** right under its name; review takes you to home with a review of that keyboard started, ready for your stars. The boards come from three sources:
+There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 1,462 prebuilt boards from 81 brands. Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with **▶ hear it** and **★ review** right under its name. Review opens a panel right there (stars with halves, a few words, an optional Amazon / Lazada / Shopee link): post it and you stay on full keyboards, with a "review posted ✓" note. It shows in the feed and counts toward Top Rated like any review. The boards come from three sources:
 
 | source | boards | how |
 |---|---|---|

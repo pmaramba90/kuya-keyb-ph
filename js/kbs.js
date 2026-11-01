@@ -54,6 +54,22 @@
       if (matchMedia('(max-width: 700px)').matches) $('#kbDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     $('#kbDetail').addEventListener('click', onDetail);
+    // the review panel's stars: hover to preview, click (above) to set, arrows to adjust
+    $('#kbDetail').addEventListener('pointermove', (e) => {
+      const st = e.target.closest('#kbrStars');
+      if (st) showStars(starAt(st, e.clientX));
+    });
+    $('#kbDetail').addEventListener('pointerout', (e) => {
+      const to = e.relatedTarget;
+      if (rev && e.target.closest('#kbrStars') && !(to && to.closest && to.closest('#kbrStars'))) showStars(rev.rating);
+    });
+    $('#kbDetail').addEventListener('keydown', (e) => {
+      if (e.target.id !== 'kbrStars' || !rev) return;
+      const d = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      setStars((rev.rating || 0) + d);
+    });
   };
 
   K.open = function () {
@@ -105,6 +121,7 @@
   function renderDetail() {
     const kb = K.sel;
     if (!kb) return;
+    rev = null;
     const b = (K.build = C.prebuiltBuild(kb, K.look, K.sw));
     KK.keysound.setBuild(b); // typing here previews this board
     K.view.update(b);
@@ -117,7 +134,8 @@
     $('#kbInfo').innerHTML = `
       <div class="kbd-title">${esc(kb.title)}</div>
       <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · from ${C.money(kb.price, cur)} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>
-      <div class="kbd-acts"><button class="btn primary kbd-hear" data-act="demo">▶ hear it</button><button class="btn kbd-review" data-act="review">★ review</button></div>
+      <div class="kbd-acts"><button class="btn primary kbd-hear" data-act="demo">▶ hear it</button><button class="btn kbd-review" data-act="review" aria-expanded="false">★ review</button></div>
+      <div class="kb-review" id="kbReview" hidden></div>
       ${look.img ? `<img class="kbd-photo" alt="${esc(kb.title)}" src="${esc(thumb(look.img, 720))}" onerror="this.remove()">` : ''}
       ${kb.looks.length > 1 ? `<div class="grp-h">color</div><div class="chips">${kb.looks.map((l, i) => `<button class="chip${i === K.look ? ' on' : ''}" data-act="look" data-v="${i}"><i class="dotc" style="background:${l.caseColor}"></i>${esc(l.name)}</button>`).join('')}</div>` : ''}
       <div class="grp-h">switch</div>
@@ -154,6 +172,56 @@
       </div>`;
   }
 
+  /* ------------------- review this keyboard right here ------------------- */
+  // a panel under the button: stars (the left half of a star is a half point), a few
+  // words, an optional shop link; posting keeps you on this page
+  let rev = null; // { rating } while it's open
+  function reviewPanel(show) {
+    const el = $('#kbReview'), btn = $('#kbInfo .kbd-review');
+    rev = show ? { rating: 0 } : null;
+    if (btn) {
+      btn.classList.toggle('on', !!show);
+      btn.setAttribute('aria-expanded', !!show);
+    }
+    if (!el) return;
+    el.hidden = !show;
+    if (!show) return void (el.innerHTML = '');
+    el.innerHTML = `
+      <div class="kbr-h">your review of <b>${esc(K.sel.title)}</b></div>
+      <div class="rev-rating"><span class="rstars stars-in" id="kbrStars" tabindex="0" role="slider" aria-label="rating out of 5" aria-valuemin="0.5" aria-valuemax="5" aria-valuenow="0"><span class="st-bg">★★★★★</span><span class="st-fg" style="width:0">★★★★★</span></span><b id="kbrNum">tap the stars · halves count</b></div>
+      <textarea class="search comp-text" id="kbrText" maxlength="1000" rows="3" placeholder="how does it sound, feel, look? worth the price? (@ to tag)"></textarea>
+      <input class="search rev-link" id="kbrLink" type="text" inputmode="url" autocomplete="off" maxlength="500" spellcheck="false" placeholder="where to buy it (optional) · Amazon, Lazada or Shopee link">
+      <div class="kbr-foot"><span class="hint kbr-msg" id="kbrMsg"></span><button class="btn ghost sm" data-act="revCancel">cancel</button><button class="btn primary sm" data-act="revPost">post review</button></div>`;
+    $('#kbrStars').focus({ preventScroll: true });
+  }
+  const starAt = (el, x) => {
+    const r = el.getBoundingClientRect();
+    return U.clamp(Math.ceil(((x - r.left) / r.width) * 10) / 2, 0.5, 5);
+  };
+  function showStars(v) {
+    $('#kbrStars .st-fg').style.width = v * 20 + '%';
+    $('#kbrNum').textContent = v ? `${v} / 5` : 'tap the stars · halves count';
+  }
+  function setStars(v) {
+    rev.rating = U.clamp(v, 0.5, 5);
+    $('#kbrStars').setAttribute('aria-valuenow', rev.rating);
+    showStars(rev.rating);
+    $('#kbrMsg').textContent = '';
+  }
+  async function postReview(btn) {
+    if (!rev || !K.sel) return;
+    btn.disabled = true;
+    const err = await KK.feed.postReview({ kind: 'keyboard', item: K.sel.id, rating: rev.rating, text: $('#kbrText').value, link: $('#kbrLink').value });
+    if (err) {
+      btn.disabled = false;
+      $('#kbrMsg').textContent = err;
+      return;
+    }
+    reviewPanel(false);
+    KK.sfx.select();
+    KK.ui.toast('review posted ✓');
+  }
+
   function useThis() {
     KK.app.build = Object.assign({}, K.build, { mods: K.build.mods.slice() });
     KK.app.profileId = null;
@@ -161,6 +229,8 @@
   }
 
   function onDetail(e) {
+    const st = e.target.closest('#kbrStars');
+    if (st && rev) return KK.sfx.ui(), setStars(starAt(st, e.clientX));
     const el = e.target.closest('[data-act]');
     if (!el) return;
     el.blur();
@@ -170,7 +240,9 @@
       case 'look': K.look = +v; renderDetail(); KK.keysound.demo(); break;
       case 'kbsw': K.sw = +v; renderDetail(); KK.keysound.demo(); break;
       case 'demo': KK.keysound.demo(); break;
-      case 'review': KK.feed.reviewItem('keyboard', K.sel.id); break;
+      case 'review': reviewPanel(!rev); break;
+      case 'revCancel': reviewPanel(false); break;
+      case 'revPost': postReview(el); break;
       case 'mode': KK.builder.mode = v; renderActions(); break;
       case 'diff': KK.app.settings.vsDiff = v; KK.app.saveSettings(); renderActions(); break;
       case 'play':

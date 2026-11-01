@@ -1114,14 +1114,29 @@
     compMsg('');
   }
 
-  // a review of one item, ready for its stars (full keyboards' "review" button)
-  F.reviewItem = function (kind, id) {
-    if (!me || !itemById(kind, id)) return;
-    KK.app.show('home');
-    openComposer('review');
-    pickKind(kind);
-    pickItem(id);
-    $('#feedWhats').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  // post a review from anywhere (full keyboards reviews in place); '' when it's posted,
+  // otherwise what's missing
+  F.postReview = async function ({ kind, item, rating: r, text, link }) {
+    if (!me) return 'sign in to review';
+    if (!itemById(kind, item)) return 'pick what you are reviewing';
+    r = rating(r);
+    if (!r) return 'give it a rating';
+    text = String(text || '').trim().slice(0, 1000);
+    link = String(link || '').trim();
+    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+    if (link && !shopOf(link)) return 'the link has to be an https Amazon, Lazada or Shopee page';
+    const data = { type: 'review', kind, item, rating: r, text, at: N.now() };
+    if (link) data.link = link;
+    try {
+      const id = newId();
+      await N.ref(`posts/${me.uid}/${id}`).set(data);
+      KK.mention.notify(text, { owner: me.uid, post: id }); // anyone @tagged
+      ratedAt = 0; // Top Rated counts it next time
+      return '';
+    } catch (err) {
+      console.warn('kkph posts', err);
+      return "couldn't post. Try again in a minute.";
+    }
   };
 
   function pickKind(kind) {
