@@ -133,7 +133,8 @@
     const meter = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar" style="--v:${Math.round(v * 100)}%"><i></i></div><span>${r}</span></div>`;
     $('#kbInfo').innerHTML = `
       <div class="kbd-title">${esc(kb.title)}</div>
-      <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · from ${C.money(kb.price, cur)} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>
+      <div class="kbd-title kbd-price">${C.money(kb.price, cur)}</div>
+      <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>
       <div class="kbd-acts"><button class="btn primary kbd-hear" data-act="demo">▶ hear it</button><button class="btn kbd-review" data-act="review" aria-expanded="false">★ review</button></div>
       <div class="kb-review" id="kbReview" hidden></div>
       ${look.img ? `<img class="kbd-photo" alt="${esc(kb.title)}" src="${esc(thumb(look.img, 720))}" onerror="this.remove()">` : ''}
