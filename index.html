@@ -89,7 +89,7 @@
             <!-- friends online right now, one tap to challenge -->
             <div class="online-strip" id="feedOnlineStrip"></div>
             <!-- build a keyboard or pick a full one (the first glows until you've saved one) -->
-            <div class="home-acts" id="homeActs"><button class="btn primary" data-home="build" id="homeBuild">build a new keyboard</button><button class="btn primary" data-home="kbs">full keyboards</button></div>
+            <div class="home-acts" id="homeActs"><button class="btn primary" data-home="build" id="homeBuild">build a new keyboard</button><button class="btn primary" data-home="kbs">full keyboards</button><button class="btn primary" data-home="guide">keyboard sound guide</button></div>
             <!-- what's on your mind: post, review, GIF, keyboard, photo -->
             <div class="whats" id="feedWhats">
               <span id="whatsAv"></span>
@@ -104,12 +104,14 @@
               <form class="composer" id="composer" autocomplete="off" hidden></form>
             </div>
             <input type="file" id="photoFile" accept="image/*" hidden>
-            <div class="feed-tabs" id="feedTabs">
-              <button class="chip on" data-ft="friends">friends</button>
-              <button class="chip" data-ft="everyone">everyone</button>
+            <!-- feed: every post you can see · conference: threads (js/conference.js) -->
+            <div class="feed-tabs" id="feedTabs" role="tablist">
+              <button class="chip ft-tab on" data-ft="feed" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 12.5h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>feed</button>
+              <button class="chip ft-tab" data-ft="conf" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H8.5l-3.5 3v-3H3.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M18.5 9h2a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H19.5v2.5l-3-2.5h-5a1 1 0 0 1-1-1v-.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>conference</button>
             </div>
             <div class="feed-posts" id="feedPosts"></div>
             <button class="btn ghost feed-more" id="feedMore" hidden>load more</button>
+            <div class="conf" id="confWrap" hidden></div>
           </div>
           <aside class="feed-side">
             <p class="feed-count" id="feedCount"></p>
@@ -156,7 +158,7 @@
             <div class="title-actions dash-actions" id="dashActions">
               <button class="btn primary" data-home="build">build a new keyboard</button>
               <button class="btn primary" data-home="kbs">full keyboards</button>
-              <button class="btn primary" data-home="quick" id="homeQuick" hidden>continue last build</button>
+              <button class="btn primary" data-home="guide">keyboard sound guide</button>
             </div>
             <div class="feat" id="dashFeat" hidden>
               <div class="feat-head"><div class="feat-titles"><span class="grp-h">featured keyboard</span><b class="feat-name" id="featName"></b><span class="feat-tags" id="featTags"></span></div><span class="feat-heart" id="featHeart"></span><span class="feat-open">open summary →</span></div>
@@ -167,6 +169,23 @@
             <div class="dash-kbs" id="dashKbs"></div>
             <div class="grp-h dash-posts-h">your posts</div>
             <div class="feed-posts dash-posts" id="dashPosts"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- keyboard sound guide (js/soundguide.js): the ten sound profiles, ‹ › / ← → / swipe -->
+      <section class="screen" id="scr-guide">
+        <div class="sg">
+          <div class="sg-head">
+            <button class="link-btn back-link" id="sgBack">← back</button>
+            <div class="grp-h">keyboard sound guide <span class="sub">MECHANICAL KEYBOARD SOUND PROFILES: THE COMPLETE GUIDE</span></div>
+            <p class="hint sg-howto"><span class="sg-desk">browse with ‹ › or the <span class="kbd">←</span> <span class="kbd">→</span> keys</span><span class="sg-mob">swipe left or right to browse</span> · ▶ hear it plays a board built that way</p>
+          </div>
+          <div class="sg-tabs" id="sgTabs"></div>
+          <div class="sg-stage">
+            <button class="sg-arrow" id="sgPrev" aria-label="previous sound profile">‹</button>
+            <div class="sg-cardwrap" id="sgCard"></div>
+            <button class="sg-arrow" id="sgNext" aria-label="next sound profile">›</button>
           </div>
         </div>
       </section>
@@ -321,7 +340,7 @@
           <div id="ltParties" hidden>
             <div class="pt-room" id="partyRoom" hidden></div>
             <div id="partyListWrap">
-              <div class="pt-new"><button class="btn primary" data-pt="create">create lobby</button><span class="hint">up to 4 players</span></div>
+              <div class="pt-new" id="ptNew"><button class="btn primary" data-pt="create">create lobby</button><span class="hint">up to 4 players</span></div>
               <div class="grp-h">open lobbies</div>
               <div class="pt-list" id="partyList"></div>
             </div>
@@ -495,6 +514,8 @@
   <script src="js/mention.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/party.js"></script>
+  <script src="js/soundguide.js"></script>
+  <script src="js/conference.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

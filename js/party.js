@@ -6,23 +6,32 @@
   const esc = U.esc;
 
   /*
-   * Lobbies (vs players → lobbies): anyone creates one for up to 4 players, others ask
-   * to join, and the host accepts or rejects each. With 2 or more in, the host starts
-   * the match (KK.game.startParty); afterwards the lobby opens again for a rematch.
+   * Lobbies (vs players → lobbies): anyone creates one (a name, 2, 3 or 4 players, and
+   * optionally a password), others ask to join, and the host accepts or rejects each. With
+   * 2 or more in, the host starts the match (KK.game.startParty); afterwards the lobby
+   * opens again for a rematch.
    *
-   *   parties/{id}   { host, hostName, at, status: open|playing|closed, seed, level, lang,
+   *   parties/{id}   { host, hostName, name, max: 2–4, locked, at, status: open|playing|closed, seed, level, lang,
    *                    members:  { uid: { display, pid, pname, build, at } },
    *                    requests: { uid: { display, pid, pname, build, at } },
    *                    denied:   { uid: true } }   + live / hits / ready / res / left in a match
+   *   partyLocks/{id}        the password's hash (written by the host; nobody can read it)
+   *   partyKeys/{id}/{uid}   the hash of what a player typed (theirs to write; nobody can read it):
+   *                          the database only takes a join request when the two match
    */
   const P = (KK.party = {});
-  const MAX = 4; // players in a lobby
+  const MAX = 4; // players in a lobby, at most
+  // the host's limit: 2, 3 or 4
+  const maxOf = (pt) => Math.max(2, Math.min(MAX, Math.round(+(pt && pt.max)) || MAX));
   const FRESH = 3 * 60 * 60 * 1000; // older open lobbies aren't listed
   let me = null, off = null, all = {};
   let joining = null; // the lobby you've asked to join
   let inId = null; // the lobby you're in
   const started = new Set();
   let reqSeen = ''; // the join requests you've heard about (host)
+  let creating = false; // the create form is open
+  const cdraft = { name: '', pw: '', max: MAX };
+  let askPw = null, pwDraft = ''; // the locked lobby you're typing its password for
 
   P.start = function () {
     P.stop();
@@ -92,31 +101,64 @@
   }
 
   /* ---------------------------------- actions ---------------------------------- */
-  function create() {
+  // a password, hashed together with the lobby's id
+  async function lockOf(id, pw) {
+    const s = id + '\u0000' + pw;
+    if (!(window.crypto && crypto.subtle)) return 'p:' + s.slice(0, 90);
+    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  async function create() {
     if (!me || inId) return;
+    const name = cdraft.name.trim().replace(/\s+/g, ' ').slice(0, 30) || `${me.display}'s lobby`.slice(0, 30);
+    const max = [2, 3, 4].includes(+cdraft.max) ? +cdraft.max : MAX;
+    const pw = cdraft.pw.trim();
     const id = N.ref('parties').push({
-      host: me.uid, hostName: me.display, at: N.now(), status: 'open', level: 4, lang: 'en',
+      host: me.uid, hostName: me.display, name, max, locked: !!pw, at: N.now(), status: 'open', level: 4, lang: 'en',
       members: { [me.uid]: entry() },
     });
     N.ref(`parties/${id}/status`).onDisconnect('closed');
+    if (pw) N.ref('partyLocks/' + id).set(await lockOf(id, pw)).catch((err) => console.warn('kkph lobby lock', err));
     reqSeen = '';
+    creating = false;
+    cdraft.name = cdraft.pw = '';
+    cdraft.max = MAX;
+    renderNew();
   }
-  function join(id) {
+  async function join(id, pw) {
     const pt = all[id];
-    if (!me || inId || !pt || pt.status !== 'open' || members(pt).length >= MAX) return;
+    if (!me || inId || !pt || pt.status !== 'open' || members(pt).length >= maxOf(pt)) return;
+    // a locked lobby: its password first
+    if (pt.locked && pw === undefined) {
+      askPw = id;
+      pwDraft = '';
+      render();
+      const inp = document.querySelector('#partyList [data-pt-pw]');
+      if (inp) inp.focus();
+      return;
+    }
     joining = id;
-    // (a no from before is cleared: this is a new ask)
-    N.ref(`parties/${id}`).update({ [`requests/${me.uid}`]: entry(), [`denied/${me.uid}`]: null }).catch((err) => {
+    askPw = null;
+    render();
+    try {
+      if (pt.locked) await N.ref(`partyKeys/${id}/${me.uid}`).set(await lockOf(id, pw));
+      // (a no from before is cleared: this is a new ask)
+      await N.ref(`parties/${id}`).update({ [`requests/${me.uid}`]: entry(), [`denied/${me.uid}`]: null });
+      KK.notify.send(pt.host, { t: 'challenge' }); // in their bell too
+    } catch (err) {
       console.warn('kkph lobby', err);
       joining = null;
+      if (pt.locked) {
+        KK.ui.toast('wrong password');
+        askPw = id;
+      }
       render();
-    });
-    KK.notify.send(pt.host, { t: 'challenge' }); // in their bell too
-    render();
+    }
   }
   function cancelJoin() {
     if (!joining) return;
     N.ref(`parties/${joining}/requests/${me.uid}`).remove().catch(() => {});
+    N.ref(`partyKeys/${joining}/${me.uid}`).remove().catch(() => {});
     joining = null;
     render();
   }
@@ -125,7 +167,7 @@
     if (!pt || pt.host !== me.uid) return;
     const req = pt.requests && pt.requests[uid];
     if (!req) return;
-    if (members(pt).length >= MAX) return KK.ui.toast(`the lobby is full (${MAX} players)`);
+    if (members(pt).length >= maxOf(pt)) return KK.ui.toast(`the lobby is full (${maxOf(pt)} players)`);
     N.ref(`parties/${inId}`).update({ [`members/${uid}`]: req, [`requests/${uid}`]: null, [`denied/${uid}`]: null });
   }
   function reject(uid) {
@@ -180,6 +222,25 @@
 
   /* ---------------------------------- the page ---------------------------------- */
   const isTab = () => KK.app.screen === 'lobby' && !$('#ltParties').hidden;
+  const lobbyName = (pt) => esc(String(pt.name || `${pt.hostName || 'player'}'s lobby`).slice(0, 30));
+  const LOCK = '<svg class="pt-lock" viewBox="0 0 24 24" aria-label="password protected"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+
+  // "create lobby", or the form it opens: a name, a password, how many players
+  function renderNew() {
+    const box = $('#ptNew');
+    if (!creating) {
+      box.className = 'pt-new';
+      box.innerHTML = '<button class="btn primary" data-pt="create">create lobby</button><span class="hint">2–4 players · name it, lock it with a password</span>';
+      return;
+    }
+    box.className = 'pt-new pt-form';
+    box.innerHTML = `<form class="pt-create" id="ptCreate" autocomplete="off">
+        <label><span>lobby name</span><input class="search" id="ptName" maxlength="30" placeholder="${esc(`${me.display}'s lobby`.slice(0, 30))}" value="${esc(cdraft.name)}"></label>
+        <label><span>password <em>optional</em></span><input class="search" id="ptPw" type="password" maxlength="30" placeholder="leave empty for an open lobby" value="${esc(cdraft.pw)}" autocomplete="new-password"></label>
+        <div class="pt-max"><span>max players</span><div class="chips" role="radiogroup" aria-label="max players">${[2, 3, 4].map((n) => `<button type="button" class="chip${+cdraft.max === n ? ' on' : ''}" data-pt-max="${n}" role="radio" aria-checked="${+cdraft.max === n}">${n}</button>`).join('')}</div></div>
+        <div class="pt-create-btns"><button type="button" class="btn ghost sm" data-pt="nocreate">cancel</button><button class="btn primary sm" type="submit">create lobby</button></div>
+      </form>`;
+  }
   function render() {
     if (!me || !isTab()) return;
     const pt = inId && all[inId];
@@ -191,32 +252,33 @@
       .sort((a, b) => (+b[1].at || 0) - (+a[1].at || 0));
     $('#partyList').innerHTML = open.length
       ? open.map(([id, x]) => {
-          const ms = members(x), full = ms.length >= MAX, asked = joining === id;
+          const max = maxOf(x), ms = members(x), full = ms.length >= max, asked = joining === id;
           return `<div class="pt-card">
-            <div class="pt-head">${KK.social.avatarImg(x.host, 'sm')}<span class="pt-title"><b>${esc(x.hostName || 'player')}'s lobby</b><span class="sub">${ms.length} / ${MAX} players</span></span>
-              ${asked ? '<button class="btn sm" data-pt="cancel">requested · cancel</button>' : `<button class="btn primary sm" data-pt="join" data-id="${esc(id)}"${full || joining ? ' disabled' : ''}>${full ? 'full' : 'join'}</button>`}</div>
+            <div class="pt-head">${KK.social.avatarImg(x.host, 'sm')}<span class="pt-title"><b>${lobbyName(x)}${x.locked ? LOCK : ''}</b><span class="sub">host ${esc(x.hostName || 'player')} · ${ms.length} / ${max} players</span></span>
+              ${asked ? '<button class="btn sm" data-pt="cancel">requested · cancel</button>' : `<button class="btn primary sm pt-join" data-pt="join" data-id="${esc(id)}"${full || joining ? ' disabled' : ''}>${full ? 'full' : x.locked ? 'join' + LOCK : 'join'}</button>`}</div>
+            ${askPw === id && !asked && !full ? `<form class="pt-pw" data-pt-join="${esc(id)}" autocomplete="off"><input class="search" type="password" data-pt-pw maxlength="30" placeholder="this lobby's password" value="${esc(pwDraft)}" autocomplete="off"><button class="btn primary sm" type="submit">ask to join</button><button type="button" class="btn ghost sm" data-pt="nopw">cancel</button></form>` : ''}
             <div class="pt-ms">${ms.map(([uid, m]) => `<span class="pt-m">${KK.social.avatarImg(uid, 'xs')}<span>${esc(m.display || 'player')}</span></span>`).join('')}</div></div>`;
         }).join('')
       : '<p class="hint">no open lobbies right now. Create one and your friends can join.</p>';
   }
 
   function renderRoom(pt) {
-    const host = pt.host === me.uid, ms = members(pt), reqs = requests(pt);
+    const host = pt.host === me.uid, ms = members(pt), reqs = requests(pt), max = maxOf(pt);
     const d = (b) => KK.keysound.writeup(C.sanitizeBuild(b)).headline;
     $('#partyRoom').innerHTML = `
-      <div class="pt-room-h"><b>${host ? 'your lobby' : `${esc(pt.hostName || 'player')}'s lobby`}</b><span class="sub">${ms.length} / ${MAX} players${pt.status === 'playing' ? ' · in a match' : ''}</span></div>
+      <div class="pt-room-h"><b>${lobbyName(pt)}${pt.locked ? LOCK : ''}</b><span class="sub">${host ? 'your lobby' : `host ${esc(pt.hostName || 'player')}`} · ${ms.length} / ${max} players${pt.locked ? ' · password protected' : ''}${pt.status === 'playing' ? ' · in a match' : ''}</span></div>
       <div class="pt-members">${ms.map(([uid, m]) => `<div class="pt-mem${uid === me.uid ? ' me' : ''}">${KK.social.avatarImg(uid, 'sm')}
           <span class="pt-who"><b>${esc(m.display || 'player')}${uid === pt.host ? ' <i class="pt-crown" title="host">👑</i>' : ''}${uid === me.uid ? ' <em>(you)</em>' : ''}</b><span>${esc(m.pname || 'keyboard')} · ${esc(d(m.build))}</span></span></div>`).join('')}
-        ${Array.from({ length: MAX - ms.length }, () => '<div class="pt-mem empty"><span class="pt-slot">open slot</span></div>').join('')}</div>
+        ${Array.from({ length: Math.max(0, max - ms.length) }, () => '<div class="pt-mem empty"><span class="pt-slot">open slot</span></div>').join('')}</div>
       ${host && reqs.length ? `<div class="grp-h">want to join</div><div class="pt-reqs">${reqs.map(([uid, r]) => `<div class="pt-req">${KK.social.avatarImg(uid, 'sm')}
           <span class="pt-who"><b>${esc(r.display || 'player')}</b><span>${esc(r.pname || 'keyboard')} · ${esc(d(r.build))}</span></span>
-          <button class="btn primary sm" data-pt="accept" data-uid="${esc(uid)}"${ms.length >= MAX ? ' disabled' : ''}>accept</button><button class="btn ghost sm" data-pt="reject" data-uid="${esc(uid)}">reject</button></div>`).join('')}</div>` : ''}
+          <button class="btn primary sm" data-pt="accept" data-uid="${esc(uid)}"${ms.length >= max ? ' disabled' : ''}>accept</button><button class="btn ghost sm" data-pt="reject" data-uid="${esc(uid)}">reject</button></div>`).join('')}</div>` : ''}
       <div class="pt-acts">
         ${host ? `<button class="btn primary" data-pt="start"${ms.length < 2 || pt.status !== 'open' ? ' disabled' : ''}>start match</button><button class="btn ghost" data-pt="leave">close lobby</button>`
           : `<button class="btn ghost" data-pt="leave">leave lobby</button>`}
         <span class="hint">${pt.status === 'playing' ? 'a match is on' : host ? (ms.length < 2 ? 'waiting for players to join' : 'start when everyone is in') : `waiting for ${esc(pt.hostName || 'the host')} to start`}</span>
       </div>
-      <p class="hint pt-rules">2–4 players · one screen each · your combos raise every opponent's knockout bar · fill a bar and they're out · last one standing wins, or the highest score when the 2:00 runs out</p>`;
+      <p class="hint pt-rules">${max === 2 ? '2 players' : `2–${max} players`} · one screen each · your combos raise every opponent's knockout bar · fill a bar and they're out · last one standing wins, or the highest score when the 2:00 runs out</p>`;
   }
 
   // the two tabs: 1v1 match (online now) and lobbies
@@ -225,6 +287,7 @@
     document.querySelectorAll('#lobbyTabs [data-lt]').forEach((b) => b.classList.toggle('on', (b.dataset.lt === 'parties') === parties));
     $('#lt1v1').hidden = parties;
     $('#ltParties').hidden = !parties;
+    renderNew();
     render();
   };
   $('#lobbyTabs').addEventListener('click', (e) => {
@@ -240,13 +303,58 @@
     b.blur();
     KK.sfx.ui();
     const act = b.dataset.pt;
-    if (act === 'create') create();
-    else if (act === 'join') join(b.dataset.id);
+    if (act === 'create') {
+      creating = true;
+      renderNew();
+      $('#ptName').focus();
+    } else if (act === 'nocreate') {
+      creating = false;
+      renderNew();
+    } else if (act === 'nopw') {
+      askPw = null;
+      render();
+    } else if (act === 'join') join(b.dataset.id);
     else if (act === 'cancel') cancelJoin();
     else if (act === 'accept') accept(b.dataset.uid);
     else if (act === 'reject') reject(b.dataset.uid);
     else if (act === 'leave') leave();
     else if (act === 'start') startMatch();
   });
-  setInterval(() => isTab() && render(), 5000); // hosts who went quiet drop off the list
+  // the create form: max players, what's typed, create
+  $('#ltParties').addEventListener('click', (e) => {
+    const m = e.target.closest('[data-pt-max]');
+    if (!m) return;
+    m.blur();
+    KK.sfx.tab();
+    cdraft.max = +m.dataset.ptMax;
+    document.querySelectorAll('#ptCreate [data-pt-max]').forEach((b) => {
+      b.classList.toggle('on', b === m);
+      b.setAttribute('aria-checked', b === m);
+    });
+  });
+  $('#ltParties').addEventListener('input', (e) => {
+    if (e.target.id === 'ptName') cdraft.name = e.target.value;
+    if (e.target.id === 'ptPw') cdraft.pw = e.target.value;
+    if (e.target.dataset && 'ptPw' in e.target.dataset) pwDraft = e.target.value;
+  });
+  $('#ltParties').addEventListener('submit', (e) => {
+    e.preventDefault();
+    KK.sfx.ui();
+    if (e.target.id === 'ptCreate') return create();
+    const id = e.target.dataset.ptJoin;
+    if (!id) return;
+    if (!pwDraft) return void KK.ui.toast('type the lobby\'s password');
+    join(id, pwDraft);
+  });
+  // the list redraws every few seconds (hosts who went quiet drop off): a password being
+  // typed keeps its focus
+  setInterval(() => {
+    if (!isTab()) return;
+    const typing = document.activeElement && document.activeElement.dataset && 'ptPw' in document.activeElement.dataset;
+    render();
+    if (typing) {
+      const inp = document.querySelector('#partyList [data-pt-pw]');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    }
+  }, 5000);
 })();

@@ -20,16 +20,16 @@
    *   stats/{uid}                 { week, solo, wins } — this week's best single-player
    *                               total and vs-player wins (the "This Week" board)
    *
-   * The feed: your friends' posts (or everyone's), newest first, a page at a time; above
+   * The feed: every post you can see, newest first, a page at a time; above
    * it a welcome checklist for new players, friends online now and the composer; beside
    * it this week's leaderboard, the most-hearted keyboards and the top-rated parts.
    */
   const F = (KK.feed = {});
   let me = null, offs = [], hearts = {}, subs = {};
-  let mode = 'friends'; // feed tab: 'friends' | 'everyone'
+  let tab = 'feed'; // home tab: 'feed' (posts) | 'conf' (conference threads, js/conference.js)
   const PAGE = 15;
   let limit = PAGE; // posts shown ("load more" adds a page)
-  let switching = false; // a tab was just switched: keep showing the old posts until the new arrive
+  let switching = false; // posts are being (re)followed: keep showing the old ones until the new arrive
   let myPosts = 0; // how many posts you've made (the welcome checklist), whatever the tab
   // what the feed follows, per post owner: their posts, the reactions and the replies
   const T = { posts: {}, reacts: {}, replies: {} };
@@ -70,8 +70,6 @@
     F.stop();
     me = N.me;
     if (!me) return;
-    // admins start on everyone's posts
-    mode = isMod() ? 'everyone' : 'friends';
     limit = PAGE;
     offs.push(N.ref('hearts').on((v) => {
       hearts = v || {};
@@ -119,30 +117,11 @@
     subs = {};
     Object.keys(T).forEach((t) => (T[t] = {}));
   };
-  // follow your posts and your friends' (called again whenever your friends change), or
-  // everyone's on the "everyone" tab
+  // one feed: every post the database lets you read (everyone's, for a signed-in player)
   F.sync = function () {
-    if (!me) return;
-    if (mode === 'everyone') {
-      if (!subs['*']) {
-        unfollowAll();
-        subs['*'] = follow('*');
-      }
-      return;
-    }
-    if (subs['*']) unfollowAll();
-    const want = new Set([me.uid, ...KK.social.friendIds()]);
-    if (officialUid) want.add(officialUid); // the official account: everyone sees its posts
-    Object.keys(subs).forEach((uid) => {
-      if (want.has(uid)) return;
-      subs[uid]();
-      delete subs[uid];
-      Object.keys(T).forEach((t) => delete T[t][uid]);
-    });
-    want.forEach((uid) => {
-      if (!subs[uid]) subs[uid] = follow(uid);
-    });
-    if (KK.app.screen === 'home') renderPosts();
+    if (!me || subs['*']) return;
+    unfollowAll();
+    subs['*'] = follow('*');
   };
 
   F.render = function () {
@@ -478,20 +457,29 @@
   });
 
   /* --------------------------- tabs, composer, welcome --------------------------- */
+  // feed (posts) or conference (threads): the composer and posts give way to the threads
   function renderTabs() {
-    document.querySelectorAll('#feedTabs [data-ft]').forEach((b) => b.classList.toggle('on', b.dataset.ft === mode));
+    document.querySelectorAll('#feedTabs [data-ft]').forEach((b) => {
+      b.classList.toggle('on', b.dataset.ft === tab);
+      b.setAttribute('aria-selected', b.dataset.ft === tab);
+    });
+    const conf = tab === 'conf';
+    $('#feedWhats').hidden = $('#feedPosts').hidden = conf;
+    if (conf) $('#feedMore').hidden = true;
+    $('#confWrap').hidden = !conf;
+    if (conf) KK.conf.render();
   }
+  F.showTab = function (t) {
+    tab = t === 'conf' ? 'conf' : 'feed';
+    renderTabs();
+    if (tab === 'feed') renderPosts();
+  };
   $('#feedTabs').addEventListener('click', (e) => {
     const b = e.target.closest('[data-ft]');
-    if (!b || !me || b.dataset.ft === mode) return;
+    if (!b || !me || b.dataset.ft === tab) return;
     b.blur();
     KK.sfx.tab();
-    mode = b.dataset.ft;
-    switching = true;
-    limit = PAGE;
-    renderTabs();
-    F.sync();
-    renderPosts();
+    F.showTab(b.dataset.ft);
   });
 
   // "build a new keyboard" on home glows until you've saved a keyboard
@@ -647,8 +635,8 @@
     const shown = all.slice(0, limit);
     box.innerHTML = all.length
       ? shown.map((x) => postHtml(x)).join('')
-      : `<p class="hint feed-empty">${mode === 'everyone' ? 'nobody has posted yet. Be the first!' : 'nothing here yet. Share something above, and add friends to see their posts.'}</p>`;
-    $('#feedMore').hidden = all.length <= limit;
+      : `<p class="hint feed-empty">nobody has posted yet. Be the first!</p>`;
+    $('#feedMore').hidden = tab === 'conf' || all.length <= limit;
     placeKeyboards(box, shown);
     const back = typing && box.querySelector(`[data-reply-in="${CSS.escape(typing)}"]`);
     if (back) {

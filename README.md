@@ -33,9 +33,10 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
   - **Welcome checklist** for new players, headed "For Mechanical Keyboard enthusiasts. Click. Clack. Thock Around and Find Out": add a friend, build a keyboard, play a game, post something. Each step is ticked off as it happens and is clickable. ✕ hides the checklist, and it goes away by itself once all four are done.
   - **Online friends**: your friends who are online right now. Tap a face for their profile, or **⚔ challenge** to challenge them (it shows "in a match" when they're busy).
   - **@ tags**: type @ in a post, review or reply and pick a friend from the list (↑ ↓ and Enter, or tap). The tag shows as a link to their profile and their bell says "tagged you in a post" / "mentioned you in a reply"; tapping it opens the post's page. Players can tag their friends; the admins can tag anyone, plus **@everyone**, which notifies every player and shows in red. The database rules only accept a tag notification from a friend or an admin.
-  - **build a new keyboard** and **full keyboards** buttons, right above the composer. Until you've saved a keyboard, "build a new keyboard" glows and pulses (like the save button on an unsaved build).
+  - **build a new keyboard**, **full keyboards** and **keyboard sound guide** buttons, right above the composer. Until you've saved a keyboard, "build a new keyboard" glows and pulses (like the save button on an unsaved build).
   - **What's on your mind?** (the composer). Click the box and it grows into the writing box right there (with **cancel** and **post**), or jump straight to **★ review**, **GIF**, **⌨ keyboard** or **📷 photo**.
-  - **friends / everyone** tabs: your posts and your friends', or every post on the site.
+  - **feed** and **conference** tabs (each with its icon). **feed** is every post you can see: everyone's, friends or not. **conference** is the forum (below).
+  - **Conference**: threads, like Reddit. **+ new thread** takes a title, a topic (general, builds, switches, keycaps, help, showcase, off-topic) and some text. Threads are listed **hot** (votes, with newer threads rising), **new** or **top**, and can be filtered by topic; each row shows its score, topic, starter, age and comment count. Vote a thread ▲ / ▼ (tap again to take it back). Open one to read it and comment; **reply** answers a comment (one level deep, starting with their @name). The thread's starter is marked **OP**. Starters get a bell notification for each comment ("commented on your thread"), and a comment's writer for each reply; tapping it opens the thread. The writer, the thread's starter or an admin can delete a comment; the starter or an admin can delete the thread (✕, click twice), which removes its votes and comments too.
   - **Posts**, newest first, 15 at a time, with **load more** at the bottom. Click a name or picture to open that player's page. ✕ deletes your own (click twice).
   - **Activity posts** are written by the game itself, so the feed fills up even when nobody posts. Only three kinds, to keep it from getting spammy:
     - **built a new keyboard**: a newly saved keyboard, drawn small with **▶ hear it** and its ♥
@@ -43,7 +44,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
     - **made the popular keyboards**: one of your keyboards reached the top 3 of Popular Keyboards, posted once per keyboard
     - Older posts about wins, levels and hearts aren't shown any more.
   - **Reactions and replies**: under every post, **♥ 😂 🔥 (thocky) 🍦 (creamy)** toggle your reaction and show how many people reacted (hover to see who). **reply** opens a reply box under the post; replies show oldest first, with names and pictures that open profiles. You can delete your own replies, the post's owner can delete any reply on their post, and the moderator can delete any reply. Deleting a post deletes its reactions and replies too.
-  - **Admins**: **akosipolnew1** and **kuyakeybph** start on the everyone tab and can delete any post or reply on the site. The database rules allow those two accounts and no others.
+  - **Admins**: **akosipolnew1** and **kuyakeybph** can delete any post, reply, thread or comment on the site. The database rules allow those two accounts and no others.
   - **Official account**: **kuyakeybph**'s posts show in everyone's feed, friends or not, in a card with a gold border, and its name glows gold with a ✓ and a red **ADMIN** badge on posts, replies, notifications and its profile page.
   - **Writing a post**: text plus one extra: a GIF, one of your saved keyboards, or a photo. Choosing one replaces whichever you chose before, and opening the GIF or keyboard picker closes the other.
     - **⌨ keyboard** shares one of your saved keyboards. The post shows it drawn small, with its sound tags, its ♥ and **▶ hear it**, which plays it for a few seconds before your own keyboard comes back.
@@ -71,7 +72,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
   - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Signing in on another device brings your bests down to it (and the welcome checklist sees your keyboards and games from any device); a device with less on it never lowers what's saved. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
-  - **edit profile**, plus **build a new keyboard · full keyboards · continue last build**
+  - **edit profile**, plus **build a new keyboard · full keyboards · keyboard sound guide**
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
   - **your posts**: everything you've posted (posts, reviews, new-keyboard and personal-best posts), newest first and 10 at a time, exactly as in the feed. You can react, reply and delete here too. Other players' pages show their posts the same way.
@@ -96,9 +97,16 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 - Builds made before accounts existed are given to the first account created on that browser.
 - Each browser tab keeps its own sign-in, so two tabs can be two players.
 
+## Keyboard sound guide
+
+**keyboard sound guide** (on home and on your profile) explains the ten mechanical keyboard sound profiles, one card at a time, in the guide's own words: thocky, creamy, clacky, clicky, silent / muted, marbly, poppy, scratchy / chalky, "raindrops" / electrostatic thock and glassy / crisp. Each card has its own icon, the sound, how it's achieved, and the popular switches and keyboards as chips.
+
+- **Browse**: ‹ / › beside the card or the ← → keys on a computer; swipe left or right on a phone. The row of icons above jumps straight to any profile.
+- **▶ hear it** plays a board built the way that profile describes, drawn above the text: its switch (e.g. Gateron Oil King for thocky, Kailh BOX Jade for clicky, Topre 45g for raindrops, HMX Cheese for glassy), plate, mount, foam and keycaps, listed under "this demo" with how the sound model describes it. After a few seconds your own keyboard's sound comes back.
+
 ## Full keyboards
 
-There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 2,087 prebuilt boards from 122 brands (complete keyboards only: no kits, barebones, PCB modules or macropads). Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with **▶ hear it** and **★ review** right under its name. Review opens a panel right there (stars with halves, a few words, an optional Amazon / Lazada / Shopee link): post it and you stay on full keyboards, with a "review posted ✓" note. It shows in the feed and counts toward Top Rated like any review. The boards come from three sources:
+There's a third option next to "build a new keyboard": **full keyboards**. It lists 2,087 prebuilt boards from 122 brands (complete keyboards only: no kits, barebones, PCB modules or macropads). Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with **▶ hear it** and **★ review** right under its name. Review opens a panel right there (stars with halves, a few words, an optional Amazon / Lazada / Shopee link): post it and you stay on full keyboards, with a "review posted ✓" note. It shows in the feed and counts toward Top Rated like any review. The boards come from three sources:
 
 | source | boards | how |
 |---|---|---|
@@ -168,7 +176,8 @@ vs players has two tabs: **1v1 match** (the list and challenges above) and **lob
 
 ### Lobbies
 
-- **create lobby** opens a room for up to 4 players (you're the host, marked with a crown). Other players see it in the lobbies tab and press **join**.
+- **create lobby** opens a short form: a **lobby name** (empty = "yourname's lobby"), an optional **password**, and **max players** (2, 3 or 4). You're the host, marked with a crown; the room shows that many slots. Other players see it in the lobbies tab with its name, host and player count, and press **join**.
+- A password-protected lobby shows a lock. **join** asks for the password first. The password is never stored as typed: the host's browser saves a SHA-256 hash of it (with the lobby's id), and a joining player's browser saves the hash of what they typed, both in places nobody can read. The database rules only take the join request when the two match ("wrong password" otherwise), and the host still accepts or rejects.
 - Joining sends a request: the host hears a ping and sees each player's name and keyboard with **accept** / **reject**. A rejected player is told the host said no. While waiting you can **cancel**.
 - The host presses **start match** once 2 or more players are in. Members can **leave**; if the host leaves or disconnects, the lobby closes.
 - A lobby match is one screen per player, not split lanes. Your field is full size; your opponents sit **lower left**, each with their username, keyboard and current score, and a bar showing how close they are to being knocked out.
@@ -243,7 +252,7 @@ The config values are public by design. The database rules are what keep each pl
      - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
-Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the site's colours: dark blue (default), dark green, dark grey or dark red. It's remembered on that browser. Clicking the tabs (top bar, feed friends / everyone, friend requests) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
+Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the site's colours: dark blue (default), dark green, dark grey or dark red. It's remembered on that browser. Clicking the tabs (top bar, feed / conference, friend requests, the sound guide) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
 
 ## Cheat detection
 
@@ -349,6 +358,8 @@ js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
+js/conference.js      home → conference: threads, votes, comments and replies
+js/soundguide.js      keyboard sound guide: the ten sound profiles, their demo boards
 js/notify.js          the bell: notifications
 js/mention.js         @ tags: the picker, tag links, tag notifications
 js/chat.js            messages: the envelope list, the chat box, emoji, the new-message clicks

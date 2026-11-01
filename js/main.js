@@ -316,7 +316,7 @@
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
   // the nav tab each screen belongs to (a player's page: the tab you opened it from)
-  const NAV_TAB = { title: 'title', profile: 'title', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
+  const NAV_TAB = { title: 'title', profile: 'title', guide: 'home', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
   const HINT_SOLO = $('#keysHint').innerHTML;
   const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
@@ -328,6 +328,7 @@
     // the keyboards screen and a friend's page preview other boards' sound; leaving
     // them restores yours
     if ((app.screen === 'kbs' || app.screen === 'user') && name !== app.screen) KK.keysound.setBuild(app.build);
+    if (app.screen === 'guide' && name !== 'guide') KK.soundguide.left();
     app.screen = name;
     document.body.dataset.screen = name;
     document.body.classList.toggle('signed-out', !app.user);
@@ -346,6 +347,7 @@
     if (name === 'play') renderPlay();
     if (name === 'friends') KK.social.renderFriends();
     if (name === 'profile') KK.social.renderProfile();
+    if (name === 'guide') KK.soundguide.render();
     if (name === 'game') {
       app.gameKb.update(app.build);
       renderGameBuild($('#gameBuild'));
@@ -586,7 +588,6 @@
     $('#dashBest').innerHTML = scoreTiles(myScores());
     const kbs = app.profiles.map((x) => ({ id: x.id, name: x.name, build: x.build, w: x.w || 0, l: x.l || 0 }));
     if (!kbs.length && p.pvpDefault) kbs.push({ name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: p.pvpDefault.w, l: p.pvpDefault.l });
-    $('#homeQuick').hidden = !app.hasSaved;
     const main = kbs.find((k) => k.id && k.id === app.mainBuildId()) || kbs[0];
     renderFeatured(FEAT_HOME, main, me.uid);
     const rest = kbs.filter((k) => k !== main);
@@ -849,6 +850,7 @@
       KK.party.start();
       KK.social.start();
       KK.feed.start();
+      KK.conf.start();
       KK.notify.start();
       KK.chat.start();
       app.pullScores().finally(() => app.publishScores());
@@ -868,6 +870,7 @@
     KK.party.stop();
     KK.social.stop();
     KK.feed.stop();
+    KK.conf.stop();
     KK.notify.stop();
     KK.chat.stop();
     KK.net.logout();
@@ -1128,7 +1131,7 @@
       KK.builder.open(0);
     },
     kbs: () => KK.kbs.open(),
-    quick: () => KK.builder.open(4),
+    guide: () => KK.soundguide.open(),
   };
   ['#dashActions', '#homeActs'].forEach((id) => $(id).addEventListener('click', (e) => {
     const b = e.target.closest('[data-home]');
@@ -1172,6 +1175,7 @@
       KK.party.start();
       KK.social.start();
       KK.feed.start();
+      KK.conf.start();
       KK.notify.start();
       KK.chat.start();
       app.pullScores().finally(() => app.publishScores());
