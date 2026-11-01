@@ -102,11 +102,11 @@ There's a third option next to "build a new keyboard" and "continue last build":
 
 | source | boards | how |
 |---|---|---|
-| mechanicalkeyboards.com | 1,097 | the store's product feed |
+| mechanicalkeyboards.com | 1,018 | the store's product feed (kits, barebones, PCB modules and macropads removed) |
 | the makers' own stores: Keychron, Lemokey, YUNZII, EPOMAKER, Royal Kludge, Ajazz, Attack Shark, HyperX, Glorious, GravaStar | 271 | each store's product feed, minus boards already listed above, accessories, kits, numpads, membrane boards and regional-layout duplicates |
 | gaming brands without a public feed: Razer, Logitech G, Corsair, SteelSeries, ASUS ROG, NuPhy, Redragon, Akko, Cherry, HyperX, Turtle Beach, Cooler Master, Drop, Mountain, DrunkDeer, Aula, MSI | 94 | entered by hand from the makers' spec pages and reviews |
 
-The link on each board goes to the store it came from. Hand-entered boards use MSRP in USD. Where a maker's page has no photo the card shows the board's colors instead.
+The link on each board goes to the store it came from, except where the same board is on Amazon: 113 mechanicalkeyboards.com boards link straight to their amazon.com product page instead. A board only got an Amazon link when an Amazon search turned up a listing with the same brand, model, size, colorway and layout (no Pro vs non-Pro, TKL vs full, ISO/Japanese layouts, keycap sets or bundles), and its product page showed the right brand and was in stock; everything else keeps its mechanicalkeyboards.com link. Hand-entered boards use MSRP in USD. Where a maker's page has no photo the card shows the board's colors instead.
 
 - **Pick a board, its color and its switch, then play it as sold.** There are no mods. You can also save it to your builds.
 - **The look:** each color option shows the store's real photo. The rendered board takes its case, alpha, mod and accent colors from that photo, and its legend style from the maker. Individually colored keys are found in the photo too: a WASD or arrow cluster (located by its inverted-T shape, so it works on angled shots), and a lone colored Esc, Enter or spacebar on straight-on shots. The Esc/Enter accent is only kept when a cap of that color actually shows in the photo.
