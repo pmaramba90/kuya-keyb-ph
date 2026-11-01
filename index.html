@@ -432,13 +432,8 @@
   <input id="mobileType" class="mobile-type" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="type here" tabindex="-1">
   <button class="btn primary type-btn" id="typeBtn" hidden>⌨ tap here to type</button>
   <button class="pad-pause" id="padPause" hidden aria-label="pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
-  <!-- a conversation (js/chat.js): text and emoji -->
-  <div class="chatbox" id="chatBox" hidden>
-    <div class="cb-head"><button class="cb-who" id="cbWho" type="button"></button><button class="picon" id="cbMin" type="button" title="minimise" aria-label="minimise">–</button><button class="picon" id="cbClose" type="button" title="close" aria-label="close">✕</button></div>
-    <div class="cb-body" id="cbBody"></div>
-    <div class="cb-emoji" id="cbEmoji" hidden></div>
-    <form class="cb-form" id="cbForm" autocomplete="off"><button type="button" class="cb-emo-btn" id="cbEmoBtn" title="emoji" aria-label="emoji">😊</button><input class="search" id="cbInput" maxlength="500" placeholder="write a message…" aria-label="message"><button class="btn primary sm" type="submit">send</button></form>
-  </div>
+  <!-- conversations (js/chat.js): a chat box each, side by side along the bottom right -->
+  <div class="chat-dock" id="chatDock"></div>
   <div class="overlay ch-overlay" id="chOverlay" hidden><div class="ov-card ch-card" id="chCard"></div></div>
   <!-- profile picture: drag to position, zoom, save (Facebook-style) -->
   <div class="overlay av-overlay" id="avOverlay" hidden>

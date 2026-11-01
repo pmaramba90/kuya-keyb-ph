@@ -1111,6 +1111,16 @@
     compMsg('');
   }
 
+  // a review of one item, ready for its stars (full keyboards' "review" button)
+  F.reviewItem = function (kind, id) {
+    if (!me || !itemById(kind, id)) return;
+    KK.app.show('home');
+    openComposer('review');
+    pickKind(kind);
+    pickItem(id);
+    $('#feedWhats').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+
   function pickKind(kind) {
     comp.kind = kind;
     comp.item = null;
