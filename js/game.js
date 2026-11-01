@@ -416,7 +416,7 @@
       if (this.dead) return;
       this.bar = Math.min(1, this.bar + amount);
       if (this.wallEl) {
-        this.popup(this.W / 2, Math.max(24, this.H - 64 - this.wallPx()), `+${Math.round(amount * 100)}% wall · ${label}`, 'neg hitpop');
+        this.popup(this.W / 2, Math.max(24, this.H - 64 - this.wallPx()), `+${Math.max(1, Math.round(amount / this.wallLine()))} brick line${Math.round(amount / this.wallLine()) > 1 ? 's' : ''} · ${label}`, 'neg hitpop');
         this.wallEl.classList.remove('rise');
         void this.wallEl.offsetWidth;
         this.wallEl.classList.add('rise');
@@ -431,7 +431,7 @@
     // lobbies: a combo of yours knocks n brick lines (12px each) off your own wall, like subtract
     clearLines(n) {
       if (!this.wallEl || this.dead || this.bar <= 0) return;
-      const line = 12 / Math.max(1, this.H - 34), before = this.wallPx();
+      const line = this.wallLine(), before = this.wallPx();
       const cut = Math.min(this.bar, n * line), lines = Math.max(1, Math.round(cut / line));
       this.bar = Math.max(0, this.bar - cut);
       this.popup(this.W / 2, Math.max(24, this.H - 64 - before), `−${lines} brick line${lines > 1 ? 's' : ''}`, 'relief');
@@ -452,6 +452,11 @@
       }
       this.renderBar();
       this.emit('change');
+    }
+
+    // one row of bricks (12px), as a share of the wall's full height
+    wallLine() {
+      return 12 / Math.max(1, this.H - 34);
     }
 
     // a hit on the wall: bricks drop in from the top and land on it, with a puff of dust
@@ -1632,9 +1637,10 @@
 
   /* --------------------------- lobbies: 2–4 players --------------------------- */
   // One screen: your field. Everyone gets the same words (the lobby's seed). Misses
-  // don't fill anything; every combo you land stacks bricks on each opponent still in: a
-  // brick wall rises from the bottom of their field, the words land on its top, so they
-  // have less and less room (and time) to type. A wall that reaches the top walls them in
+  // don't fill anything; every combo you land stacks one row of bricks on each opponent
+  // still in (and knocks one off your own wall): the wall rises from the bottom of their
+  // field, the words land on its top, so they have less and less room (and time) to
+  // type. A wall that reaches the top walls them in
   // (knocked out). The last one in wins; when the clock runs out, the highest score among
   // those still in. Opponents (name, keyboard, score, wall) sit lower left (phones: a
   // strip under the scores).
@@ -1643,8 +1649,7 @@
   //   parties/{id}/hits/{uid}/{k}  { n, dmg, label, from }   a combo landing on you
   //   parties/{id}/ready/{uid} · res/{uid} · left/{uid}
   const PARTY_SECS = 120, PARTY_LIVE_MS = 250, PARTY_STALE_MS = 15000;
-  // each combo hits every opponent, so it's scaled down with more of them: about 8
-  // combos knock someone out one-on-one, about 20 between three opponents
+  // how hard the combo flying across looks (the row it lands as is the same for everyone)
   const partyScale = (foes) => Math.min(1, 1.2 / Math.max(1, foes));
 
   // m: { id, me, players: [{ uid, display, pname, build }], seed, level, lang }
@@ -1688,11 +1693,10 @@
     r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
       KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
       if (r !== run || !h || !run.running || run.you.dead) return;
-      // never trust the numbers: at most what a WOW combo can do
+      // every combo, whatever its size, is one row of bricks on your wall
       const n = U.clamp(Math.round(+h.n) || 1, 1, 5);
-      const dmg = U.clamp(+h.dmg || 0, 0, run.p.missDamage * (0.9 + 0.3 * 5) * partyScale(1));
       const f = run.foes[h.from];
-      takeHit(dmg, `${f ? f.display : 'a'} ${n === 5 ? 'WOW' : n + '×'}`);
+      takeHit(run.you.wallLine(), `${f ? f.display : 'a'} ${n === 5 ? 'WOW' : n + '×'}`);
     }));
     KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
     $('#vsNameL').textContent = KK.app.userName();
@@ -1735,7 +1739,7 @@
   // your combo: every opponent still in takes it
   function partyHit(tier) {
     if (!run.running || run.you.dead) return;
-    run.you.clearLines(attackOf(run.you, tier).n + 1); // your combo also knocks lines off your own wall
+    run.you.clearLines(1); // your combo also knocks a row off your own wall
     const alive = Object.values(run.foes).filter((f) => !f.dead);
     if (!alive.length) return;
     const a = attackOf(run.you, tier), dmg = +(a.dmg * partyScale(Object.keys(run.foes).length)).toFixed(4);
@@ -1862,6 +1866,7 @@
     const rec = KK.online.record(won, { opp: others[0] ? others[0].uid : '', oppName: `${n}-player lobby`, wins: [place, n], how: `#${place} of ${n}`, score: `#${place} of ${n}` });
     const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
     const again = KK.party.canAgain(); // the host: ask everyone to play again
+    if (KK.party.asking()) return; // the host already asked to play again: that card stays up
     KK.ui.open(
       `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
        <div class="ov-sub">${all[0].dead ? 'everyone was walled in' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>

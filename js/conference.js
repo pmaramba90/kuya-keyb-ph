@@ -17,6 +17,8 @@
   const CF = (KK.conf = {});
   const TAGS = { general: 'general', builds: 'builds', switches: 'switches', keycaps: 'keycaps', help: 'help', showcase: 'showcase', offtopic: 'off-topic' };
   const SORTS = { hot: 'hot', new: 'new', top: 'top' };
+  const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  let ddOpen = null; // the filter dropdown that's open: 'tag' | 'sort'
   let me = null, offs = [];
   let threads = {}, votes = {}, comments = {};
   let sort = 'hot', tagF = 'all', openId = null, composing = false, replyTo = null;
@@ -84,6 +86,14 @@
       <b class="${s > 0 ? 'pos' : s < 0 ? 'neg' : ''}">${s}</b>
       <button class="cf-down${v === -1 ? ' on' : ''}" data-cf="down" data-id="${esc(tid)}" title="vote down" aria-label="vote down" aria-pressed="${v === -1}">▼</button></div>`;
   }
+  // a small dropdown: what's picked and a chevron; the options open under it
+  function dd(key, label, opts, cur) {
+    const open = ddOpen === key, name = (opts.find(([k]) => k === cur) || opts[0])[1];
+    return `<div class="cf-dd${open ? ' open' : ''}">
+      <button class="cf-dd-btn" data-cf="dd" data-v="${key}" aria-haspopup="listbox" aria-expanded="${open}" aria-label="${esc(label)}: ${esc(name)}"><span>${esc(name)}</span>${CHEV}</button>
+      ${open ? `<div class="cf-dd-menu" role="listbox" aria-label="${esc(label)}">${opts.map(([k, n]) => `<button class="cf-dd-opt${k === cur ? ' on' : ''}" role="option" aria-selected="${k === cur}" data-cf="${key}" data-v="${k}">${esc(n)}</button>`).join('')}</div>` : ''}
+    </div>`;
+  }
   const tagHtml = (t) => `<span class="cf-tag cf-tag-${esc(TAGS[t] ? t : 'general')}">${esc(TAGS[t] || 'general')}</span>`;
   const delBtn = (attrs, mine) => `<button class="picon cf-del" ${attrs} title="${mine ? 'delete' : 'delete (moderator)'}">✕</button>`;
 
@@ -95,10 +105,12 @@
         : (a, b) => hot(b[0], b[1]) - hot(a[0], a[1]));
     return `
       <div class="cf-bar">
+        <div class="cf-filters">
+          ${dd('tag', 'topic', [['all', 'all topics']].concat(Object.entries(TAGS)), tagF)}
+          ${dd('sort', 'sort threads', Object.entries(SORTS), sort)}
+        </div>
         <button class="btn primary sm cf-newbtn" data-cf="compose"${composing ? ' hidden' : ''}>+ new thread</button>
-        <div class="chips cf-sort" role="group" aria-label="sort threads">${Object.entries(SORTS).map(([k, n]) => `<button class="chip${sort === k ? ' on' : ''}" data-cf="sort" data-v="${k}">${n}</button>`).join('')}</div>
       </div>
-      <div class="chips cf-tags" role="group" aria-label="topic">${[['all', 'all topics']].concat(Object.entries(TAGS)).map(([k, n]) => `<button class="chip${tagF === k ? ' on' : ''}" data-cf="tag" data-v="${k}">${esc(n)}</button>`).join('')}</div>
       ${composing ? composeHtml() : ''}
       <div class="cf-list">${list.length ? list.map(([tid, t]) => {
         const n = cmts(tid).length;
@@ -251,8 +263,15 @@
       case 'back': KK.sfx.ui(); openId = replyTo = null; return CF.render();
       case 'compose': KK.sfx.ui(); composing = true; CF.render(); return void (wrap.querySelector('[data-cf-in="title"]') || {}).focus();
       case 'cancel': KK.sfx.ui(); composing = false; return CF.render();
-      case 'sort': KK.sfx.tab(); sort = SORTS[b.dataset.v] ? b.dataset.v : 'hot'; return CF.render();
-      case 'tag': KK.sfx.tab(); tagF = b.dataset.v === 'all' || TAGS[b.dataset.v] ? b.dataset.v : 'all'; if (tagF !== 'all') draft.tag = tagF; return CF.render();
+      case 'dd': {
+        KK.sfx.ui();
+        ddOpen = ddOpen === b.dataset.v ? null : b.dataset.v;
+        CF.render();
+        const on = wrap.querySelector('.cf-dd.open .cf-dd-opt.on');
+        return void (on && on.focus());
+      }
+      case 'sort': KK.sfx.tab(); ddOpen = null; sort = SORTS[b.dataset.v] ? b.dataset.v : 'hot'; return ddDone('sort');
+      case 'tag': KK.sfx.tab(); ddOpen = null; tagF = b.dataset.v === 'all' || TAGS[b.dataset.v] ? b.dataset.v : 'all'; if (tagF !== 'all') draft.tag = tagF; return ddDone('tag');
       case 'reply': {
         KK.sfx.ui();
         replyTo = b.dataset.id;
@@ -268,6 +287,34 @@
       case 'delt': return delThread(b);
       case 'delc': return delComment(b);
     }
+  });
+  // picked: closed again, focus back on its button
+  function ddDone(key) {
+    CF.render();
+    const btn = wrap.querySelector(`.cf-dd-btn[data-v="${key}"]`);
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  // a click anywhere else, or esc, closes the dropdown; ↑ ↓ move through its options
+  document.addEventListener('click', (e) => {
+    if (ddOpen && !(e.target.closest && e.target.closest('.cf-dd'))) {
+      ddOpen = null;
+      CF.render();
+    }
+  });
+  wrap.addEventListener('keydown', (e) => {
+    if (!ddOpen) return;
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      const key = ddOpen;
+      ddOpen = null;
+      return ddDone(key);
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    const opts = [...wrap.querySelectorAll('.cf-dd.open .cf-dd-opt')];
+    if (!opts.length) return;
+    e.preventDefault();
+    const i = opts.indexOf(document.activeElement);
+    opts[(i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length].focus();
   });
   // Enter opens a thread row (it's focusable)
   wrap.addEventListener('keydown', (e) => {

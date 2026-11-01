@@ -241,6 +241,8 @@
   /* ------------------------------- play again ------------------------------- */
   // everyone still in the lobby (and not gone from the last match)
   const still = (pt) => members(pt).filter(([uid]) => !(pt.left && pt.left[uid] && uid !== pt.host));
+  // a "play again?" card is up (or you said yes and wait): nothing else takes its place
+  P.asking = () => !!againAt;
   // the host, on the standings: anyone to play with?
   P.canAgain = function () {
     const pt = inId && all[inId];
