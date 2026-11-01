@@ -494,8 +494,11 @@
     renderPosts();
   });
 
+  // "build a new keyboard" on home glows until you've saved a keyboard
+  const buildNudge = () => $('#homeBuild').classList.toggle('nudge', !KK.app.profiles.length);
   function renderWhats() {
     if (!me) return;
+    buildNudge();
     $('#whatsAv').innerHTML = KK.social.avatarImg(me.uid, 'sm');
     $('#whatsIn').textContent = `what's on your mind, ${me.display}?`;
   }
@@ -518,7 +521,7 @@
       <div class="welcome-steps">${steps.map(([k, label, ok]) => `<button class="wstep${ok ? ' ok' : ''}" data-wel="${k}"><i>${ok ? '✓' : ''}</i>${label}</button>`).join('')}</div>`;
   }
   // your builds / scores came down from another device: the checklist may be done now
-  F.refreshWelcome = () => me && KK.app.screen === 'home' && renderWelcome();
+  F.refreshWelcome = () => me && KK.app.screen === 'home' && (renderWelcome(), buildNudge());
   $('#feedWelcome').addEventListener('click', (e) => {
     const b = e.target.closest('[data-wel]');
     if (!b) return;

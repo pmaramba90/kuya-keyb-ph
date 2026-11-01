@@ -1087,12 +1087,12 @@
     kbs: () => KK.kbs.open(),
     quick: () => KK.builder.open(4),
   };
-  $('#dashActions').addEventListener('click', (e) => {
+  ['#dashActions', '#homeActs'].forEach((id) => $(id).addEventListener('click', (e) => {
     const b = e.target.closest('[data-home]');
     if (!b) return;
     b.blur();
     HOME_BTN[b.dataset.home]();
-  });
+  }));
   // single player / vs AI: you play your main keyboard (its summary opens, ready to
   // start); with no saved keyboards yet, whatever's in the builder
   const playMain = (mode) => {

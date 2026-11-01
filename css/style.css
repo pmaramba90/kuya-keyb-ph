@@ -1134,6 +1134,9 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
 b.official { white-space: nowrap; color: #ffd84a !important; text-shadow: 0 0 6px rgba(255, 216, 74, .85), 0 0 14px rgba(255, 170, 30, .55); animation: official-glow 2.4s ease-in-out infinite; }
 @keyframes official-glow { 50% { text-shadow: 0 0 10px rgba(255, 216, 74, 1), 0 0 22px rgba(255, 170, 30, .8); } }
 .official-tick { display: inline-grid; place-items: center; width: 13px; height: 13px; margin-left: 5px; border-radius: 50%; background: #ffd84a; color: var(--bg); font-size: 9px; font-style: normal; font-weight: 700; vertical-align: 1px; text-shadow: none; }
+/* home: build a keyboard / full keyboards, above "what's on your mind" */
+.home-acts { display: flex; gap: 10px; margin-bottom: 14px; }
+.home-acts .btn { flex: 1 1 0; min-width: 0; }
 /* @tags: a tagged player links to their profile; @everyone (admins) stands out */
 .mention.ok { color: var(--main); font-weight: 500; cursor: pointer; }
 .mention.ok:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -1410,6 +1413,8 @@ body.touch .keys-hint { display: none; }
   .dash-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .dash-actions .btn { flex: 1 1 40%; min-width: 0; padding: 11px 8px; font-size: 12.5px; }
   .dash-actions .btn[hidden] { display: none; }
+  .home-acts { gap: 8px; }
+  .home-acts .btn { padding: 11px 8px; font-size: 12.5px; }
   .dash-best .rec, .feat-stats .rec { display: block; }
   .dash-best .rec i { display: none; }
   .dash-best .rec em { display: inline; }
