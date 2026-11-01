@@ -177,7 +177,7 @@
   ['#umAvBtn', '#umPhoto'].forEach((id) => $(id).addEventListener('click', () => {
     $(id).blur();
     KK.sfx.ui();
-    $('#avFile').click();
+    S.openPicture();
   }));
   document.addEventListener('keydown', (e) => e.key === 'Escape' && !umenu.hidden && S.closeMenu());
   umenu.addEventListener('submit', async (e) => {
@@ -255,7 +255,48 @@
   const cv = $('#avCanvas'), cx = cv.getContext('2d'), SIZE = cv.width, OUT = 192;
   let img = null, base = 1, zoom = 1, ox = 0, oy = 0;
 
-  $('#avEdit').addEventListener('click', () => $('#avFile').click());
+  $('#avEdit').addEventListener('click', () => S.openPicture());
+
+  // ready-made pictures (img/avatars, square 256px): tap one, then save
+  const CATS = ['polite', 'smug', 'cute', 'choi', 'tito', 'muhehe', 'black', 'laugh', 'yapapa', 'german', 'skooba'];
+  $('#avCats').innerHTML = CATS.map((c) => `<button class="av-cat" data-cat="${c}" title="${c}" aria-label="${c} cat"><img src="img/avatars/cat-${c}.jpg" alt="" loading="lazy"></button>`).join('');
+  $('#avCats').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cat]');
+    if (!b) return;
+    b.blur();
+    KK.sfx.ui();
+    document.querySelectorAll('.av-cat').forEach((x) => x.classList.toggle('on', x === b));
+    load(`img/avatars/cat-${b.dataset.cat}.jpg`, true);
+  });
+  $('#avUpload').addEventListener('click', () => {
+    $('#avUpload').blur();
+    $('#avFile').click();
+  });
+  // the window, showing your current picture until you pick another
+  S.openPicture = function () {
+    if (!me) return;
+    document.querySelectorAll('.av-cat').forEach((x) => x.classList.remove('on'));
+    load(S.avatarSrc(me.uid), false);
+    $('#avOverlay').hidden = false;
+  };
+  // a picture into the circle, covering it; changed: something new to save
+  function load(src, changed, done) {
+    const im = new Image();
+    im.onload = () => {
+      img = im;
+      const w = im.width || SIZE, h = im.height || SIZE;
+      base = Math.max(SIZE / w, SIZE / h); // cover the circle
+      zoom = 1;
+      $('#avZoom').value = 1;
+      $('#avZoom').style.setProperty('--v', '0%');
+      ox = (SIZE - w * base) / 2;
+      oy = (SIZE - h * base) / 2;
+      draw();
+      $('#avSave').disabled = !changed;
+      if (done) done();
+    };
+    im.src = src;
+  }
   $('#avRemove').addEventListener('click', async () => {
     if (!me) return;
     await N.ref('avatars/' + me.uid).remove();
@@ -266,32 +307,23 @@
     e.target.value = '';
     if (!f || !/^image\//.test(f.type)) return;
     const url = URL.createObjectURL(f);
-    const im = new Image();
-    im.onload = () => {
-      img = im;
-      base = Math.max(SIZE / im.width, SIZE / im.height); // cover the circle
-      zoom = 1;
-      $('#avZoom').value = 1;
-      $('#avZoom').style.setProperty('--v', '0%');
-      ox = (SIZE - im.width * base) / 2;
-      oy = (SIZE - im.height * base) / 2;
-      draw();
+    document.querySelectorAll('.av-cat').forEach((x) => x.classList.remove('on'));
+    load(url, true, () => {
       $('#avOverlay').hidden = false;
       URL.revokeObjectURL(url);
-    };
-    im.src = url;
+    });
   });
 
   // keep the picture covering the whole circle
   function clamp() {
-    const w = img.width * base * zoom, h = img.height * base * zoom;
+    const w = (img.width || SIZE) * base * zoom, h = (img.height || SIZE) * base * zoom;
     ox = U.clamp(ox, SIZE - w, 0);
     oy = U.clamp(oy, SIZE - h, 0);
   }
   function draw() {
     clamp();
     cx.clearRect(0, 0, SIZE, SIZE);
-    cx.drawImage(img, ox, oy, img.width * base * zoom, img.height * base * zoom);
+    cx.drawImage(img, ox, oy, (img.width || SIZE) * base * zoom, (img.height || SIZE) * base * zoom);
   }
   $('#avZoom').addEventListener('input', (e) => {
     const z = +e.target.value, k = z / zoom, c = SIZE / 2;
@@ -307,8 +339,9 @@
   });
   cv.addEventListener('pointermove', (e) => {
     if (!drag) return;
-    ox = drag.ox + e.clientX - drag.x;
-    oy = drag.oy + e.clientY - drag.y;
+    const k = SIZE / (cv.getBoundingClientRect().width || SIZE);
+    ox = drag.ox + (e.clientX - drag.x) * k;
+    oy = drag.oy + (e.clientY - drag.y) * k;
     draw();
   });
   cv.addEventListener('pointerup', () => (drag = null));
@@ -321,7 +354,7 @@
 
   $('#avCancel').addEventListener('click', () => ($('#avOverlay').hidden = true));
   $('#avSave').addEventListener('click', async () => {
-    if (!me || !img) return;
+    if (!me || !img || $('#avSave').disabled) return;
     const out = document.createElement('canvas');
     out.width = out.height = OUT;
     const k = OUT / SIZE;

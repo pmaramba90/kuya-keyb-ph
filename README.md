@@ -81,7 +81,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 - **marketplace**: coming soon.
 - **edit profile** (on your profile): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 
-**Profile pictures** work like Facebook's: pick a photo, then drag to position it in the circle and zoom with the slider (or the mouse wheel). It's cropped in the browser to a 192 px square JPEG (a few KB) and saved in the database, because file storage would need Firebase's paid plan. Without a picture you get the keyboard logo. Pictures show in the nav, on home, on friends, in the vs players list, on challenges, on the VS card and beside both names at the top of the match.
+**Profile pictures**: "change photo" (in your drop-down or on edit profile) opens the picture window with your current picture, a grid of **11 cat pictures** (img/avatars, square 256 px, each cropped around the face) and **upload your own photo**. Tap a cat or upload a photo, adjust it like Facebook's, then **save** (it stays off until you pick something new). Drag to position it in the circle and zoom with the slider (or the mouse wheel). It's cropped in the browser to a 192 px square JPEG (a few KB) and saved in the database, because file storage would need Firebase's paid plan. Without a picture you get the keyboard logo. Pictures show in the nav, on home, on friends, in the vs players list, on challenges, on the VS card and beside both names at the top of the match.
 
 ## Accounts
 
