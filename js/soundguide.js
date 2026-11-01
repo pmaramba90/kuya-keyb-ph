@@ -47,7 +47,7 @@
       how: 'Internal switch mechanisms—either a traditional click jacket or a modern click bar (which snaps on both the downstroke and upstroke for a crisper sound).',
       switches: 'Kailh Box Jade, Kailh Box Navy, Zeal Clickiez, Cherry MX Blue.',
       boards: 'IBM Model M (buckling spring), 8BitDo Retro Mechanical Keyboard.',
-      demo: { sw: 'Kailh BOX Jade', caps: [['oem', 'cherry'], ['abs']], case: 'plastic', color: '#d9d4c7', plate: 'steel', mount: 'tray', mods: [], lube: 'stock' },
+      demo: { sw: 'Cherry MX Blue', caps: [['oem', 'cherry'], ['abs']], case: 'plastic', color: '#d9d4c7', plate: 'steel', mount: 'tray', mods: [], lube: 'stock' },
     },
     {
       id: 'silent', like: /grey|gray|dark|black/i, name: 'SILENT / MUTED', tag: '(Quiet & Dampened)',

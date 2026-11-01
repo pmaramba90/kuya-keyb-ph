@@ -535,27 +535,63 @@
   });
 
   // friends online right now: tap a face for their profile, ⚔ to challenge
+  // a friend tapped: message, challenge, profile (icons only)
+  const OS_ICONS = {
+    msg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>',
+    duel: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>',
+    prof: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>',
+  };
+  let osOpen = null; // the friend whose actions are showing
   function renderOnline() {
     const el = $('#feedOnlineStrip');
     if (!me) return;
     const players = KK.online.players();
     const on = KK.social.friendIds().filter((uid) => KK.online.isOnline(players[uid]));
+    if (osOpen && !on.includes(osOpen)) osOpen = null;
     el.innerHTML = `${on.length
       ? on.map((uid) => {
-          const busy = players[uid].state === 'match';
-          return `<div class="os-friend"><span class="av-wrap" data-user="${esc(uid)}" title="${esc(nameOf(uid))}">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${busy ? 'busy' : ''}"></i></span>
-            <b data-user="${esc(uid)}">${esc(nameOf(uid))}</b>
-            ${busy ? '<span class="hint">in a match</span>' : `<button class="btn primary sm" data-os="${esc(uid)}">⚔ challenge</button>`}</div>`;
+          const busy = players[uid].state === 'match', open = osOpen === uid, n = esc(nameOf(uid));
+          return `<div class="os-friend${open ? ' open' : ''}">
+            <button class="os-who" data-osf="${esc(uid)}" aria-expanded="${open}" title="${n}${busy ? ' · in a match' : ''}"><span class="av-wrap">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${busy ? 'busy' : ''}"></i></span><b>${n}</b></button>
+            ${open ? `<div class="os-acts">
+              <button class="os-act" data-osa="msg" data-uid="${esc(uid)}" title="message ${n}" aria-label="message ${n}">${OS_ICONS.msg}</button>
+              <button class="os-act" data-osa="duel" data-uid="${esc(uid)}" title="${busy ? `${n} is in a match` : `challenge ${n}`}" aria-label="challenge ${n}"${busy ? ' disabled' : ''}>${OS_ICONS.duel}</button>
+              <button class="os-act" data-osa="prof" data-uid="${esc(uid)}" title="view ${n}'s profile" aria-label="view ${n}'s profile">${OS_ICONS.prof}</button></div>`
+              : busy ? '<span class="hint">in a match</span>' : ''}</div>`;
         }).join('')
       : '<span class="hint os-none">none of your friends are online right now</span>'}`;
   }
   $('#feedOnlineStrip').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-os]');
-    if (!b) return;
+    const f = e.target.closest('[data-osf]'), a = e.target.closest('[data-osa]');
+    if (!f && !a) return;
     e.stopPropagation();
-    b.blur();
+    (f || a).blur();
+    if (f) {
+      KK.sfx.ui();
+      osOpen = osOpen === f.dataset.osf ? null : f.dataset.osf;
+      return renderOnline();
+    }
+    if (a.disabled) return;
+    const uid = a.dataset.uid;
     KK.sfx.ui();
-    KK.online.challenge(b.dataset.os, nameOf(b.dataset.os));
+    osOpen = null;
+    renderOnline();
+    if (a.dataset.osa === 'msg') KK.chat.open(uid);
+    else if (a.dataset.osa === 'duel') KK.online.challenge(uid, nameOf(uid));
+    else KK.app.showUser(uid, 'home');
+  });
+  // a click anywhere else, or esc, puts the actions away
+  document.addEventListener('click', (e) => {
+    if (osOpen && !e.target.closest('#feedOnlineStrip .os-friend.open')) {
+      osOpen = null;
+      renderOnline();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && osOpen) {
+      osOpen = null;
+      renderOnline();
+    }
   });
 
   /* --------------------------------- reviews --------------------------------- */
@@ -1013,14 +1049,20 @@
   const form = $('#composer');
   let comp = null; // { mode: 'post' | 'review', kind, item, rating, gif, kb, photo }
 
-  // "what's on your mind": a post, or straight to a review, a GIF, a keyboard or a photo
+  // "what's on your mind": opens a post; inside it, ★ review turns it into a review
   $('#feedWhats').addEventListener('click', (e) => {
     const b = e.target.closest('[data-new]');
     if (!b || !me) return;
     b.blur();
     KK.sfx.select();
     const what = b.dataset.new;
-    if (what === 'review') return openComposer('review');
+    if (what === 'review') {
+      // what was typed comes along
+      const kept = comp && $('#compText') ? $('#compText').value : '';
+      openComposer('review');
+      if (kept) $('#compText').value = kept;
+      return;
+    }
     if (!comp || comp.mode !== 'post') openComposer('post');
     if (what === 'gif' && $('#gifPick').hidden) toggleGifs();
     if (what === 'kb') showKbPick();
@@ -1061,7 +1103,7 @@
           <input class="search" id="gifLink" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="${GIPHY_KEY ? 'or paste' : 'paste'} a GIPHY link (giphy.com → a GIF → copy link)">
           <div class="gif-attr">powered by <b>GIPHY</b></div>
         </div>` : ''}
-      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">⌨ keyboard</button><button type="button" class="btn sm" data-comp="photo">📷 photo</button></span>' : ''}<span class="hint" id="compMsg"></span>${mode === 'post' ? '<button type="button" class="btn ghost sm" data-comp="close">cancel</button>' : ''}<button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
+      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm" data-new="review">★ review</button><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">⌨ keyboard</button><button type="button" class="btn sm" data-comp="photo">📷 photo</button></span>' : ''}<span class="hint" id="compMsg"></span>${mode === 'post' ? '<button type="button" class="btn ghost sm" data-comp="close">cancel</button>' : ''}<button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
     (mode === 'review' ? form.querySelector('.rev-kinds .chip') : $('#compText')).focus();
   }
 
