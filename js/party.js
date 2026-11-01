@@ -8,13 +8,17 @@
   /*
    * Lobbies (vs players → lobbies): anyone creates one (a name, 2, 3 or 4 players, and
    * optionally a password), others ask to join, and the host accepts or rejects each. With
-   * 2 or more in, the host starts the match (KK.game.startParty); afterwards the lobby
-   * opens again for a rematch.
+   * 2 or more in, the host starts the match (KK.game.startParty). The moment it ends the
+   * lobby is open again, so the host can start another; or, from the standings, the host
+   * asks everyone to play again: 30 seconds to say yes, and if all do the next match starts
+   * (a no or the time running out puts everyone back in the lobby).
    *
    *   parties/{id}   { host, hostName, name, max: 2–4, locked, at, status: open|playing|closed, seed, level, lang,
    *                    members:  { uid: { display, pid, pname, build, at } },
    *                    requests: { uid: { display, pid, pname, build, at } },
-   *                    denied:   { uid: true } }   + live / hits / ready / res / left in a match
+   *                    denied:   { uid: true },
+   *                    again:    { at, ans: { uid: true | false }, done: { why, who } } }   the host asking to play again
+   *                  + live / hits / ready / res / left in a match
    *   partyLocks/{id}        the password's hash (written by the host; nobody can read it)
    *   partyKeys/{id}/{uid}   the hash of what a player typed (theirs to write; nobody can read it):
    *                          the database only takes a join request when the two match
@@ -32,6 +36,9 @@
   let creating = false; // the create form is open
   const cdraft = { name: '', pw: '', max: MAX };
   let askPw = null, pwDraft = ''; // the locked lobby you're typing its password for
+  let playing = null; // the match you're in: { id, seed }
+  const AGAIN_SECS = 30;
+  let againAt = 0, againTick = null; // the "play again?" card you're looking at (its ask's at)
 
   P.start = function () {
     P.stop();
@@ -92,6 +99,7 @@
     // the host started: everyone in it plays
     const pt = inId && all[inId];
     if (pt && pt.status === 'playing' && pt.seed && !started.has(inId + ':' + pt.seed)) play(inId, pt);
+    syncAgain(pt);
     // a request just came in (you're the host)
     if (pt && pt.host === me.uid && pt.status === 'open') {
       const ids = requests(pt).map(([uid]) => uid).join(',');
@@ -185,7 +193,7 @@
     if (!pt || pt.host !== me.uid || members(pt).length < 2) return;
     N.ref(`parties/${inId}`).update({
       status: 'playing', seed: Math.random().toString(36).slice(2) + N.now().toString(36), startAt: N.now(),
-      live: null, hits: null, ready: null, res: null, left: null, requests: null,
+      live: null, hits: null, ready: null, res: null, left: null, requests: null, again: null,
     });
   }
   // the keyboard picked on this page changes: your entry in the lobby too
@@ -196,6 +204,9 @@
 
   function play(id, pt) {
     started.add(id + ':' + pt.seed);
+    // still on the last match's standings: done with it first
+    if (KK.game.mode() === 'party') KK.game.quit();
+    playing = { id, seed: pt.seed };
     const list = members(pt).slice(0, MAX).map(([uid, x]) => ({ uid, display: String(x.display || 'player').slice(0, 30), pname: String(x.pname || 'keyboard').slice(0, 60), build: C.sanitizeBuild(x.build) }));
     const mine = pt.members[me.uid];
     KK.online.beginParty({ pid: String(mine.pid || 'default'), name: String(mine.pname || 'keyboard') });
@@ -204,21 +215,136 @@
       { build: C.sanitizeBuild(mine.build), pid: String(mine.pid || 'default'), name: String(mine.pname || 'keyboard') }
     );
   }
-  // your match ended: the host opens the lobby again (after the others have had time to
-  // see the standings), without those who left
-  P.matchEnded = function () {
-    const id = inId, pt = all[id];
-    if (!me || !pt || pt.host !== me.uid || pt.status !== 'playing') return;
-    const seed = pt.seed;
-    setTimeout(() => {
-      const now = all[id];
-      if (!now || now.status !== 'playing' || now.seed !== seed) return;
-      const gone = Object.keys(now.left || {}).filter((uid) => uid !== me.uid);
-      const up = { status: 'open', seed: null, live: null, hits: null, ready: null, res: null, left: null };
-      gone.forEach((uid) => (up[`members/${uid}`] = null));
-      N.ref(`parties/${id}`).update(up);
-    }, 8000);
+  // the match is over (KK.game): the host opens the lobby again right away, without those
+  // who left. The results stay until the next start, for the standings still loading; the
+  // rest goes, so the next start doesn't find last match's "ready"s.
+  P.matchOver = function () {
+    if (playing) reopen(playing.id, playing.seed);
   };
+  function reopen(id, seed) {
+    const pt = all[id];
+    if (!me || !pt || pt.host !== me.uid || pt.status !== 'playing' || pt.seed !== seed) return;
+    const up = { status: 'open', again: null, left: null, ready: null, live: null, hits: null };
+    Object.keys(pt.left || {}).filter((uid) => uid !== me.uid).forEach((uid) => (up[`members/${uid}`] = null));
+    N.ref(`parties/${id}`).update(up).catch((err) => console.warn('kkph lobby', err));
+  }
+  // you're out of the match (back to lobbies, menu, forfeit): a host who left while the
+  // others still play opens the lobby again once their match is over
+  P.matchEnded = function () {
+    const p = playing;
+    playing = null;
+    const pt = p && all[p.id];
+    if (!me || !pt || pt.host !== me.uid || pt.status !== 'playing' || pt.seed !== p.seed) return;
+    setTimeout(() => reopen(p.id, p.seed), Math.max(0, (+pt.startAt || N.now()) + 150000 - N.now()));
+  };
+
+  /* ------------------------------- play again ------------------------------- */
+  // everyone still in the lobby (and not gone from the last match)
+  const still = (pt) => members(pt).filter(([uid]) => !(pt.left && pt.left[uid] && uid !== pt.host));
+  // the host, on the standings: anyone to play with?
+  P.canAgain = function () {
+    const pt = inId && all[inId];
+    return !!(me && pt && pt.host === me.uid && still(pt).length >= 2);
+  };
+  P.askAgain = function () {
+    const pt = inId && all[inId];
+    if (!P.canAgain() || (pt.again && !pt.again.done && N.now() - (+pt.again.at || 0) < AGAIN_SECS * 1000)) return;
+    KK.sfx.select();
+    N.ref(`parties/${inId}/again`).set({ at: N.now(), ans: { [me.uid]: true } }).catch((err) => console.warn('kkph lobby', err));
+  };
+  // the ask, as everyone in the lobby sees it. The host settles it: all in → the match
+  // starts; a no, the time running out or calling it off → done, saying why and who
+  function syncAgain(pt) {
+    const ag = pt && pt.status === 'open' && pt.again && typeof pt.again === 'object' ? pt.again : null;
+    const at = ag ? +ag.at || 0 : 0;
+    if (!ag || ag.done) {
+      // settled without a match (a start clears it too: then the match takes over)
+      if (againAt && (!ag || againAt === at) && !(pt && pt.status === 'playing')) againOff(ag && ag.done, pt);
+      againAt = 0;
+      return;
+    }
+    const ans = ag.ans || {}, ms = still(pt);
+    if (pt.host === me.uid) {
+      const no = ms.filter(([uid]) => ans[uid] === false), quiet = ms.filter(([uid]) => typeof ans[uid] !== 'boolean');
+      if (ms.length < 2) return againDone('few');
+      if (no.length) return againDone('no', no);
+      if (!quiet.length) return startMatch();
+      if (N.now() - at > AGAIN_SECS * 1000) return againDone('time', quiet);
+    }
+    if (N.now() - at > AGAIN_SECS * 1000 || ans[me.uid] === false) return;
+    if (againAt !== at) {
+      againAt = at;
+      if (pt.host !== me.uid) KK.sfx.challenge(true);
+      againCard(pt, ag, true);
+    } else againCard(pt, ag, false);
+  }
+  // the host: settled, no match (why: no | time | off | few; who: their names)
+  function againDone(why, list) {
+    if (!inId || !all[inId] || all[inId].host !== me.uid) return;
+    const who = (list || []).map(([, m]) => String(m.display || 'player')).join(', ').slice(0, 100);
+    N.ref(`parties/${inId}/again/done`).set({ why, who }).catch((err) => console.warn('kkph lobby', err));
+  }
+  const againCancel = () => againDone('off');
+  // the card: who's in, who's thinking, the seconds left; the host can call it off
+  function againCard(pt, ag, fresh) {
+    const ans = ag.ans || {}, host = pt.host === me.uid, mine = ans[me.uid];
+    const left = () => Math.max(0, Math.ceil((AGAIN_SECS * 1000 - (N.now() - (+ag.at || 0))) / 1000));
+    const rows = still(pt).map(([uid, m]) => `<div class="pr${uid === me.uid ? ' me' : ''}">${KK.social.avatarImg(uid, 'xs')}<span class="pr-who"><b>${esc(m.display || 'player')}${uid === me.uid ? ' (you)' : ''}</b><span>${esc(m.pname || 'keyboard')}</span></span>
+        <span class="pr-how ag-${ans[uid] === true ? 'yes' : ans[uid] === false ? 'no' : 'wait'}">${uid === pt.host ? 'asked' : ans[uid] === true ? 'in ✓' : ans[uid] === false ? 'no' : 'thinking…'}</span></div>`).join('');
+    const btns = host ? '<button class="btn ghost" data-ov="cancel">call it off</button>'
+      : mine === true ? '<span class="hint">you\'re in · waiting for the others</span>'
+      : '<button class="btn primary" data-ov="yes" data-primary>I\'m in</button><button class="btn ghost" data-ov="no">no thanks</button>';
+    const html = `<div class="ov-h">play again?</div>
+      <div class="ov-sub">${host ? 'asking everyone to play again with the same players' : `${esc(pt.hostName || 'the host')} wants to play again with the same players`} · <b class="ag-secs" id="agSecs">${left()}</b>s</div>
+      <div class="party-res ag-list">${rows}</div><div class="ov-btns">${btns}</div>`;
+    if (!fresh && document.getElementById('agSecs')) {
+      document.querySelector('#ovCard .ag-list').innerHTML = rows;
+      document.querySelector('#ovCard .ov-btns').innerHTML = btns;
+      return;
+    }
+    const answer = (yes) => {
+      if (!inId) return;
+      N.ref(`parties/${inId}/again/ans/${me.uid}`).set(yes).catch((err) => console.warn('kkph lobby', err));
+      if (!yes) toLobby();
+    };
+    KK.ui.open(html, host
+      ? { cancel: againCancel, esc: againCancel }
+      : { yes: () => { KK.sfx.select(); answer(true); }, no: () => { KK.sfx.ui(); answer(false); }, esc: () => mine !== true && answer(false) });
+    clearInterval(againTick);
+    againTick = setInterval(() => {
+      const el = document.getElementById('agSecs');
+      if (!el) return clearInterval(againTick);
+      const n = left();
+      el.textContent = n;
+      el.classList.toggle('warn', n <= 5);
+      if (n > 0) return;
+      clearInterval(againTick);
+      // time's up: the host settles it; nobody else waits for that longer than a moment
+      if (host) syncAgain(all[inId]);
+      else setTimeout(() => againAt === +ag.at && againOff(null, pt), 3000);
+    }, 250);
+  }
+  // settled without a match: say why, and everyone's back in the lobby
+  function againOff(done, pt) {
+    againAt = 0;
+    clearInterval(againTick);
+    // "you" for yourself
+    const who = String((done && done.who) || '').split(', ').filter(Boolean).map((n) => (n.toLowerCase() === String(me.display).toLowerCase() ? 'you' : n)).join(', ');
+    const host = (pt && pt.hostName) || 'the host';
+    const why = done && done.why;
+    KK.ui.toast(why === 'no' && who ? `${who} said no · back in the lobby`
+      : why === 'time' && who ? (who === 'you' ? 'you didn\'t answer in time · back in the lobby' : `no answer from ${who} · back in the lobby`)
+      : why === 'off' ? `${pt && pt.host === me.uid ? 'you' : host} called it off · back in the lobby`
+      : why === 'few' ? 'not enough players left · back in the lobby'
+      : 'back in the lobby');
+    toLobby();
+  }
+  function toLobby() {
+    clearInterval(againTick);
+    KK.ui.close();
+    if (KK.game.mode() === 'party') KK.game.quit();
+    if (inId) KK.online.openLobby('parties');
+  }
 
   /* ---------------------------------- the page ---------------------------------- */
   const isTab = () => KK.app.screen === 'lobby' && !$('#ltParties').hidden;

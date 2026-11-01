@@ -301,6 +301,10 @@
         "ready": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
         "res": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
         "left": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "again": { "ans": { "$uid": {
+          ".write": "auth != null && auth.uid === $uid && root.child('parties').child($p).child('members').child($uid).exists()",
+          ".validate": "newData.isBoolean()"
+        } } },
         "hits": { "$to": { "$k": { ".write": "auth != null && (auth.uid === $to || root.child('parties').child($p).child('members').child(auth.uid).exists())" } } }
       }
     },

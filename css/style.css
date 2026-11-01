@@ -381,8 +381,8 @@ button.heart:active svg { transform: scale(1.3); }
 .r-laugh.on { color: var(--main); }
 /* sound reactions: the keyboard sound guide's icons */
 .r-sound svg, .r-kb svg { fill: none; }
-.r-sound.on, .r-kb.on { color: var(--main); }
-.r-sound.on svg, .r-kb.on svg { animation: beat .35s ease; }
+.r-sound.on { color: var(--main); }
+.r-sound.on svg { animation: beat .35s ease; }
 .r-kb.open { background: var(--bg3); color: var(--text); }
 .sx-pick { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; max-width: 420px; padding: 6px; background: var(--bg2); border: 1px solid var(--bg3); border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,.35); animation: sxIn .14s ease; }
 @keyframes sxIn { from { opacity: 0; transform: translateY(-4px); } }
@@ -1827,3 +1827,11 @@ body.touch .keys-hint { display: none; }
 .party-foes .pf-bar i, #partyFoes .pf-bar i { background: var(--main); }
 @media (prefers-reduced-motion: reduce) { .brick-pop { display: none; } }
 @media (prefers-reduced-motion: reduce) { .brick-fall, .brick-dust { display: none; } .brickwall, .deadline { transition: none; } }
+/* lobbies: the host asks everyone to play again */
+.ag-list .pr, body .ag-list .pr { grid-template-columns: 22px minmax(0, 1fr) auto; }
+.ag-list .pr-how, body .ag-list .pr-how { display: inline; white-space: nowrap; }
+.ag-list .ag-yes { color: var(--ok, #4fd18b); }
+.ag-list .ag-no { color: var(--err); }
+.ag-list .ag-wait { color: var(--sub); }
+.ag-secs { color: var(--main); font-variant-numeric: tabular-nums; }
+.ag-secs.warn { color: var(--err); }

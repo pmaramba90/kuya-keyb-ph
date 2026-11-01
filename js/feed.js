@@ -763,7 +763,7 @@
     const open = pickOpen === key;
     const picker = open ? `<div class="sx-pick" role="menu" aria-label="react with a sound">${SOUNDS().map((k) => `<button class="sx-opt${mine && mine[0] === k ? ' on' : ''}" data-sound="${k}" data-key="${esc(key)}" role="menuitem" title="${esc(sg.SHORT[k])}">${sg.ICONS[k]}<span>${esc(sg.SHORT[k])}</span></button>`).join('')}</div>` : '';
     return `<div class="post-acts">${Object.keys(REACTS).map(react).join('')}${chips}
-      <span class="sx-wrap"><button class="react r-kb${open ? ' open' : ''}${mine ? ' on' : ''}" data-sxpick="${esc(key)}" title="react with a sound" aria-haspopup="true" aria-expanded="${open}">${mine ? sg.ICONS[mine[0]] : KB_ICON}</button>${picker}</span>
+      <span class="sx-wrap"><button class="react r-kb${open ? ' open' : ''}" data-sxpick="${esc(key)}" title="${mine ? `you reacted ${esc(sg.SHORT[mine[0]])} · change it` : 'react with a sound'}" aria-haspopup="true" aria-expanded="${open}">${KB_ICON}</button>${picker}</span>
       <button class="react r-reply${openReplies.has(key) ? ' on' : ''}" data-reply="${esc(key)}">${REPLY_ICON}<b>${nReplies || ''}</b><span>${nReplies > 1 ? 'replies' : 'reply'}</span></button></div>`;
   }
 

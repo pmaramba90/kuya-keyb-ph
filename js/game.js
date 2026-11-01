@@ -1279,9 +1279,10 @@
   }
 
   // the first value at path that passes test → cb, once
+  // (cb can run straight away, when the value is already there)
   function waitFor(path, test, cb) {
-    let done = false;
-    const off = KK.net.ref(path).on((v) => {
+    let done = false, off = null;
+    off = KK.net.ref(path).on((v) => {
       if (done || !test(v)) return;
       done = true;
       setTimeout(() => off && off(), 0);
@@ -1289,7 +1290,7 @@
     });
     return () => {
       done = true;
-      off();
+      if (off) off();
     };
   }
 
@@ -1792,7 +1793,7 @@
       if (n) n.textContent = Math.ceil(left / 1000);
       if (bar) bar.style.width = (left / (READY_SECS * 10)) + '%';
     }, 250);
-    let started = false;
+    let started = false, giveUp = null;
     const go = (ready) => {
       if (started || r !== run || run.over) return;
       started = true;
@@ -1807,7 +1808,7 @@
       }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos stack bricks on everyone else's screen and knock lines off your own wall · wall them in to knock them out · last one standing wins`, () => KK.voice.call('fight'));
     };
     const stop = waitFor(`${run.base}/ready`, (v) => v && run.m.players.every((x) => v[x.uid]), go);
-    const giveUp = setTimeout(() => {
+    giveUp = started ? null : setTimeout(() => {
       stop();
       KK.net.ref(`${run.base}/ready`).once().then(go).catch(() => go(null));
     }, READY_SECS * 1000);
@@ -1819,6 +1820,7 @@
     if (!run.running) return;
     run.running = false;
     partyPublish();
+    KK.party.matchOver();
     const r = run, me = run.you;
     const mine = { sc: me.score, dead: me.dead ? 1 : 0, koAt: run.koAt || 0, mc: me.maxCombo, bar: +me.bar.toFixed(3) };
     KK.net.ref(`${run.base}/res/${run.m.me}`).set(mine);
@@ -1859,14 +1861,17 @@
     const others = all.filter((x) => !x.you);
     const rec = KK.online.record(won, { opp: others[0] ? others[0].uid : '', oppName: `${n}-player lobby`, wins: [place, n], how: `#${place} of ${n}`, score: `#${place} of ${n}` });
     const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
+    const again = KK.party.canAgain(); // the host: ask everyone to play again
     KK.ui.open(
       `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
        <div class="ov-sub">${all[0].dead ? 'everyone was walled in' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
        <div class="party-res">${all.map((x, i) => `<div class="pr${x.you ? ' me' : ''}"><span class="pr-place">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}
          <span class="pr-who"><b>${esc(x.display)}${x.you ? ' (you)' : ''}</b><span>${esc(x.pname || '')}</span></span>
          <span class="pr-how">${x.left ? 'left' : x.dead ? 'walled in' : 'still in'}</span><b class="pr-sc">${(x.sc || 0).toLocaleString()}</b></div>`).join('')}</div>
-       <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to lobbies</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
+       <div class="ov-btns">${again ? '<button class="btn primary" data-ov="again" data-primary>play again</button><button class="btn" data-ov="lobby">back to lobby</button>' : '<button class="btn primary" data-ov="lobby" data-primary>back to lobbies</button>'}<button class="btn ghost" data-ov="menu">menu</button></div>
+       ${again ? '<p class="hint" style="margin-top:14px">play again asks everyone for a rematch with the same players · 30 seconds to say yes</p>' : ''}`,
       {
+        again: () => KK.party.askAgain(),
         lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); },
         menu: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
         esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); },
@@ -1878,6 +1883,7 @@
   function endPartyEarly() {
     run.over = true;
     run.running = false;
+    KK.party.matchOver();
     KK.music.duck(true);
     KK.ui.open(
       `<div class="ov-h">nobody else made it</div><div class="ov-sub">the other players didn't get ready in time · this doesn't count</div>
