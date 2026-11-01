@@ -140,7 +140,7 @@
           ".write": "auth != null && !newData.exists() && (auth.uid === $owner || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com'))",
           "$kind": {
             "$uid": {
-              ".write": "auth != null && auth.uid === $uid && ($kind === 'heart' || $kind === 'laugh' || $kind === 'fire' || $kind === 'cream') && (!newData.exists() || root.child('posts').child($owner).child($pid).exists())",
+              ".write": "auth != null && auth.uid === $uid && ($kind === 'heart' || $kind === 'laugh' || $kind === 'thocky' || $kind === 'creamy' || $kind === 'clacky' || $kind === 'clicky' || $kind === 'silent' || $kind === 'marbly' || $kind === 'poppy' || $kind === 'scratchy' || $kind === 'raindrops' || $kind === 'glassy' || (($kind === 'fire' || $kind === 'cream') && !newData.exists())) && (!newData.exists() || root.child('posts').child($owner).child($pid).exists())",
               ".validate": "newData.val() === true"
             }
           }

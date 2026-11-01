@@ -367,7 +367,7 @@ button.heart:active svg { transform: scale(1.3); }
 .gif-chosen img { max-width: 220px; max-height: 180px; border-radius: 8px; display: block; }
 .gif-chosen .picon { position: absolute; top: 4px; right: 4px; background: color-mix(in srgb, var(--bg) 80%, transparent); }
 /* reactions and replies under a post */
-.post-acts { display: flex; align-items: center; gap: 4px; margin: 10px -6px 0; }
+.post-acts { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 10px -6px 0; }
 .react { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 5px 9px; border-radius: 14px; color: var(--sub); font-size: 12px; cursor: pointer; transition: color .15s, background .15s; }
 .react:hover { background: var(--bg3); color: var(--text); }
 .react svg { width: 16px; height: 16px; }
@@ -378,7 +378,21 @@ button.heart:active svg { transform: scale(1.3); }
 .r-heart.on svg { fill: var(--err); stroke: var(--err); animation: beat .35s ease; }
 .react .emo { font-size: 15px; line-height: 1; filter: grayscale(1); opacity: .65; transition: filter .15s, opacity .15s; }
 .react:hover .emo, .react.on .emo { filter: none; opacity: 1; }
-.r-laugh.on, .r-fire.on, .r-cream.on { color: var(--main); }
+.r-laugh.on { color: var(--main); }
+/* sound reactions: the keyboard sound guide's icons */
+.r-sound svg, .r-kb svg { fill: none; }
+.r-sound.on, .r-kb.on { color: var(--main); }
+.r-sound.on svg, .r-kb.on svg { animation: beat .35s ease; }
+.r-kb.open { background: var(--bg3); color: var(--text); }
+.sx-pick { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; max-width: 420px; padding: 6px; background: var(--bg2); border: 1px solid var(--bg3); border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,.35); animation: sxIn .14s ease; }
+@keyframes sxIn { from { opacity: 0; transform: translateY(-4px); } }
+.sx-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 8px 2px 6px; background: none; border: 0; border-radius: 9px; color: var(--sub); font: inherit; cursor: pointer; transition: color .15s, background .15s, transform .15s; }
+.sx-opt svg { width: 22px; height: 22px; fill: none; }
+.sx-opt span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 10px; letter-spacing: .04em; }
+.sx-opt:hover { background: var(--bg3); color: var(--main); transform: translateY(-2px); }
+.sx-opt.on { color: var(--main); background: color-mix(in srgb, var(--main) 14%, transparent); }
+.nt-snd { display: inline-flex; vertical-align: -3px; color: var(--main); }
+.nt-snd svg { width: 15px; height: 15px; fill: none; }
 .react.on .emo { animation: beat .35s ease; }
 .r-reply span { font-size: 12px; }
 .r-reply.on { color: var(--text); }
@@ -1789,24 +1803,27 @@ body.touch .keys-hint { display: none; }
    land on its top, the deadline rides up with it; reaching the top walls you in */
 .field { --wall: 0px; }
 .deadline { bottom: var(--wall); transition: bottom .45s cubic-bezier(.3, 1.45, .5, 1); }
-.brickwall {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none;
-  background-color: #2a1c22;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Crect width='48' height='24' fill='%2324181d'/%3E%3Crect x='1' y='1' width='22' height='10' rx='1.5' fill='%23944634'/%3E%3Crect x='25' y='1' width='22' height='10' rx='1.5' fill='%23a5513b'/%3E%3Crect x='-11' y='13' width='22' height='10' rx='1.5' fill='%238a3f30'/%3E%3Crect x='13' y='13' width='22' height='10' rx='1.5' fill='%239c4a36'/%3E%3Crect x='37' y='13' width='22' height='10' rx='1.5' fill='%238a3f30'/%3E%3Cg fill='%23ffffff' fill-opacity='.09'%3E%3Crect x='2' y='2' width='20' height='2' rx='1'/%3E%3Crect x='26' y='2' width='20' height='2' rx='1'/%3E%3Crect x='-10' y='14' width='20' height='2' rx='1'/%3E%3Crect x='14' y='14' width='20' height='2' rx='1'/%3E%3Crect x='38' y='14' width='20' height='2' rx='1'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 48px 24px; background-position: left bottom;
-  border-top: 2px solid #c8735a;
-  box-shadow: 0 -10px 22px -10px color-mix(in srgb, var(--err) 70%, transparent), inset 0 10px 14px -10px rgba(255, 255, 255, .18);
-  transition: height .45s cubic-bezier(.3, 1.45, .5, 1);
+.brickwall { position: absolute; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none; transition: height .45s cubic-bezier(.3, 1.45, .5, 1); }
+/* flat bricks in the theme's yellow; the mortar is the field showing through */
+.brickwall::before {
+  content: ""; position: absolute; inset: 0; background: var(--main);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23000'%3E%3Crect x='1' y='1' width='22' height='10' rx='2'/%3E%3Crect x='25' y='1' width='22' height='10' rx='2'/%3E%3Crect x='-11' y='13' width='22' height='10' rx='2'/%3E%3Crect x='13' y='13' width='22' height='10' rx='2'/%3E%3Crect x='37' y='13' width='22' height='10' rx='2'/%3E%3C/g%3E%3C/svg%3E") left bottom / 48px 24px repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23000'%3E%3Crect x='1' y='1' width='22' height='10' rx='2'/%3E%3Crect x='25' y='1' width='22' height='10' rx='2'/%3E%3Crect x='-11' y='13' width='22' height='10' rx='2'/%3E%3Crect x='13' y='13' width='22' height='10' rx='2'/%3E%3Crect x='37' y='13' width='22' height='10' rx='2'/%3E%3C/g%3E%3C/svg%3E") left bottom / 48px 24px repeat;
 }
-.brickwall::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, .38)); }
-.bw-pct { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); z-index: 1; font-size: 11px; font-weight: 700; color: #ffd9cc; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); letter-spacing: .06em; }
+.bw-pct { position: absolute; left: 50%; top: 3px; transform: translateX(-50%); z-index: 1; padding: 0 6px; border-radius: 4px; background: var(--main); color: var(--bg); font-size: 11px; font-weight: 700; line-height: 16px; letter-spacing: .06em; }
+.bw-pct:empty { display: none; }
 .brickwall.rise { animation: wall-thud .5s ease-out; }
-@keyframes wall-thud { 0% { filter: brightness(1.7) saturate(1.3); } 40% { filter: brightness(1.15); } 100% { filter: none; } }
-.brick-fall { position: absolute; top: -14px; width: 22px; height: 10px; border-radius: 2px; background: #a5513b; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .18), 0 2px 4px rgba(0, 0, 0, .5); pointer-events: none; animation: brick-drop .5s cubic-bezier(.55, 0, 1, .45) both; }
+@keyframes wall-thud { 0% { filter: brightness(1.45); } 100% { filter: none; } }
+.brickwall.clear { animation: wall-clear .5s ease-out; }
+@keyframes wall-clear { 0% { filter: brightness(1.6) saturate(.6); } 100% { filter: none; } }
+.brick-fall { position: absolute; top: -14px; width: 22px; height: 10px; border-radius: 2px; background: var(--main); pointer-events: none; animation: brick-drop .5s cubic-bezier(.55, 0, 1, .45) both; }
 @keyframes brick-drop { from { transform: translateY(0) rotate(-12deg); opacity: 1; } 85% { opacity: 1; } to { transform: translateY(var(--land)) rotate(6deg); opacity: 0; } }
-.brick-dust { position: absolute; left: 0; right: 0; height: 22px; pointer-events: none; background: radial-gradient(ellipse at center, rgba(214, 160, 130, .55), transparent 70%); animation: brick-dust .8s ease-out .35s both; }
+/* your combo knocks lines off your own wall: those bricks pop up and fade */
+.brick-pop { position: absolute; width: 22px; height: 10px; border-radius: 2px; background: var(--main); pointer-events: none; animation: brick-pop .6s cubic-bezier(.2, .7, .4, 1) both; }
+@keyframes brick-pop { from { transform: translate(0, 0) rotate(0); opacity: 1; } to { transform: translate(var(--dx), -46px) rotate(var(--rot)); opacity: 0; } }
+.brick-dust { position: absolute; left: 0; right: 0; height: 22px; pointer-events: none; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--main) 40%, transparent), transparent 70%); animation: brick-dust .8s ease-out .35s both; }
 @keyframes brick-dust { from { opacity: 0; transform: scaleY(.4); } 30% { opacity: 1; } to { opacity: 0; transform: scaleY(1.6) translateY(-8px); } }
-.lane.walled .ofill { background: linear-gradient(90deg, #8a3f30, #c8735a); }
+.lane.walled .ofill { background: var(--main); }
 .pf-bar i { transition: width .3s; }
-.party-foes .pf-bar i, #partyFoes .pf-bar i { background: linear-gradient(90deg, #8a3f30, #c8735a); }
+.party-foes .pf-bar i, #partyFoes .pf-bar i { background: var(--main); }
+@media (prefers-reduced-motion: reduce) { .brick-pop { display: none; } }
 @media (prefers-reduced-motion: reduce) { .brick-fall, .brick-dust { display: none; } .brickwall, .deadline { transition: none; } }

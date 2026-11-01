@@ -553,7 +553,7 @@
     $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
     $('#vsSubR').textContent = '';
     $('#vsAvR').hidden = true;
-    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; your combos stack bricks on everyone else\'s screen';
+    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; your combos stack bricks on everyone else\'s screen and clear your own';
     renderGameBuild($('#vsBuild'));
     requestAnimationFrame(() => app.vsKb.fit());
     KK.music.setMode('game', m.level);

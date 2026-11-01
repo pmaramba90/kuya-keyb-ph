@@ -428,6 +428,32 @@
       this.checkDead();
     }
 
+    // lobbies: a combo of yours knocks n brick lines (12px each) off your own wall, like subtract
+    clearLines(n) {
+      if (!this.wallEl || this.dead || this.bar <= 0) return;
+      const line = 12 / Math.max(1, this.H - 34), before = this.wallPx();
+      const cut = Math.min(this.bar, n * line), lines = Math.max(1, Math.round(cut / line));
+      this.bar = Math.max(0, this.bar - cut);
+      this.popup(this.W / 2, Math.max(24, this.H - 64 - before), `−${lines} brick line${lines > 1 ? 's' : ''}`, 'relief');
+      this.wallEl.classList.remove('rise', 'clear');
+      void this.wallEl.offsetWidth;
+      this.wallEl.classList.add('clear');
+      // the knocked-off bricks pop up from where the wall's top was
+      for (let i = 0, k = U.clamp(lines * 2, 3, 10); i < k; i++) {
+        const b = document.createElement('i');
+        b.className = 'brick-pop';
+        b.style.left = (6 + Math.random() * (this.W - 40)) + 'px';
+        b.style.top = Math.max(0, this.H - before) + 'px';
+        b.style.setProperty('--dx', Math.round(Math.random() * 60 - 30) + 'px');
+        b.style.setProperty('--rot', Math.round(Math.random() * 80 - 40) + 'deg');
+        b.style.animationDelay = (i * 0.03) + 's';
+        this.field.appendChild(b);
+        setTimeout(() => b.remove(), 700 + i * 30);
+      }
+      this.renderBar();
+      this.emit('change');
+    }
+
     // a hit on the wall: bricks drop in from the top and land on it, with a puff of dust
     bricks(amount) {
       const n = U.clamp(Math.round(amount * 40), 3, 9), top = this.H - Math.round(U.clamp(this.bar, 0, 1) * Math.max(0, this.H - 34));
@@ -1708,6 +1734,7 @@
   // your combo: every opponent still in takes it
   function partyHit(tier) {
     if (!run.running || run.you.dead) return;
+    run.you.clearLines(attackOf(run.you, tier).n + 1); // your combo also knocks lines off your own wall
     const alive = Object.values(run.foes).filter((f) => !f.dead);
     if (!alive.length) return;
     const a = attackOf(run.you, tier), dmg = +(a.dmg * partyScale(Object.keys(run.foes).length)).toFixed(4);
@@ -1777,7 +1804,7 @@
       KK.ui.countdown(() => {
         run.startAt = KK.net.now();
         begin();
-      }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos stack bricks on everyone else's screen · their wall rises and their room shrinks · wall them in to knock them out · last one standing wins`, () => KK.voice.call('fight'));
+      }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos stack bricks on everyone else's screen and knock lines off your own wall · wall them in to knock them out · last one standing wins`, () => KK.voice.call('fight'));
     };
     const stop = waitFor(`${run.base}/ready`, (v) => v && run.m.players.every((x) => v[x.uid]), go);
     const giveUp = setTimeout(() => {
@@ -1883,7 +1910,7 @@
     run.offs = [];
     $('#laneL .meter-row .hud-lbl').textContent = 'overflow';
     $('#laneL').classList.remove('walled');
-    run.you.field.querySelectorAll('.brickwall, .brick-fall, .brick-dust').forEach((n) => n.remove());
+    run.you.field.querySelectorAll('.brickwall, .brick-fall, .brick-pop, .brick-dust').forEach((n) => n.remove());
     run.you.field.style.removeProperty('--wall');
     run.you.wallEl = null;
     $('#partyFoes').innerHTML = '';

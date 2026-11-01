@@ -15,7 +15,10 @@
    *                               or kb { name, pid, build } (a keyboard, drawn + playable);
    *                               type 'activity' { act: build|win|level|best|heart, … } is
    *                               written by the game itself when something happens
-   *   reacts/{uid}/{id}/{heart|laugh|fire|cream}/{who}  true — reactions on a post
+   *   reacts/{uid}/{id}/{kind}/{who}  true — reactions on a post: heart, laugh, or one sound
+   *                               profile from the keyboard sound guide (thocky, creamy, clacky,
+   *                               clicky, silent, marbly, poppy, scratchy, raindrops, glassy);
+   *                               the old fire / cream count as thocky / creamy
    *   replies/{uid}/{id}/{rid}    { uid, text, at } — replies under a post, oldest first
    *   stats/{uid}                 { week, solo, wins } — this week's best single-player
    *                               total and vs-player wins (the "This Week" board)
@@ -724,18 +727,43 @@
   const REACTS = {
     heart: { icon: HEART, label: 'heart' },
     laugh: { icon: '<span class="emo">😂</span>', label: 'haha' },
-    fire: { icon: '<span class="emo">🔥</span>', label: 'thocky' },
-    cream: { icon: '<span class="emo">🍦</span>', label: 'creamy' },
   };
+  // sound reactions: the keyboard sound guide's ten profiles, one per player per post
+  const SOUNDS = () => Object.keys(KK.soundguide.SHORT);
+  const LEGACY = { fire: 'thocky', cream: 'creamy' }; // the old 🔥 / 🍦 reactions
+  const KB_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 10h1M10 10h1M13.5 10h1M17 10h1M8 13.8h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  let pickOpen = null; // the post whose sound picker is open
+  // who reacted with each sound (old fire / cream folded into thocky / creamy)
+  function soundWho(rx) {
+    const out = {};
+    SOUNDS().forEach((k) => (out[k] = new Set(Object.keys((rx && rx[k]) || {}))));
+    Object.entries(LEGACY).forEach(([old, k]) => Object.keys((rx && rx[old]) || {}).forEach((u) => out[k].add(u)));
+    return out;
+  }
+  // your sound reaction on a post: [what it shows as, the key it's stored under]
+  function mySound(rx) {
+    if (!me || !rx) return null;
+    for (const k of SOUNDS()) if (rx[k] && rx[k][me.uid]) return [k, k];
+    for (const [old, k] of Object.entries(LEGACY)) if (rx[old] && rx[old][me.uid]) return [k, old];
+    return null;
+  }
 
-  // ♥ 😂 🔥 🍦 (with who reacted on hover), then reply
+  // ♥ 😂 and the sound reactions people picked (with who on hover), the ⌨ picker, then reply
   function actsHtml(key, rx, nReplies) {
     const react = (kind) => {
       const who = Object.keys((rx && rx[kind]) || {}), on = !!(me && who.includes(me.uid));
       const tip = who.length ? who.map(nameOf).join(', ') : REACTS[kind].label;
       return `<button class="react r-${kind}${on ? ' on' : ''}" data-react="${kind}" data-key="${esc(key)}" title="${esc(tip)}">${REACTS[kind].icon}<b>${who.length || ''}</b></button>`;
     };
-    return `<div class="post-acts">${Object.keys(REACTS).map(react).join('')}
+    const sg = KK.soundguide, who = soundWho(rx), mine = mySound(rx);
+    const chips = SOUNDS().filter((k) => who[k].size).map((k) => {
+      const on = !!(mine && mine[0] === k);
+      return `<button class="react r-sound${on ? ' on' : ''}" data-sound="${k}" data-key="${esc(key)}" title="${esc(sg.SHORT[k] + ': ' + [...who[k]].map(nameOf).join(', '))}">${sg.ICONS[k]}<b>${who[k].size}</b></button>`;
+    }).join('');
+    const open = pickOpen === key;
+    const picker = open ? `<div class="sx-pick" role="menu" aria-label="react with a sound">${SOUNDS().map((k) => `<button class="sx-opt${mine && mine[0] === k ? ' on' : ''}" data-sound="${k}" data-key="${esc(key)}" role="menuitem" title="${esc(sg.SHORT[k])}">${sg.ICONS[k]}<span>${esc(sg.SHORT[k])}</span></button>`).join('')}</div>` : '';
+    return `<div class="post-acts">${Object.keys(REACTS).map(react).join('')}${chips}
+      <span class="sx-wrap"><button class="react r-kb${open ? ' open' : ''}${mine ? ' on' : ''}" data-sxpick="${esc(key)}" title="react with a sound" aria-haspopup="true" aria-expanded="${open}">${mine ? sg.ICONS[mine[0]] : KB_ICON}</button>${picker}</span>
       <button class="react r-reply${openReplies.has(key) ? ' on' : ''}" data-reply="${esc(key)}">${REPLY_ICON}<b>${nReplies || ''}</b><span>${nReplies > 1 ? 'replies' : 'reply'}</span></button></div>`;
   }
 
@@ -835,6 +863,23 @@
     }
     onPostsClick(e);
   }));
+  // the picker opened or closed: redraw where posts are shown
+  function redrawActs() {
+    if (KK.app.screen === 'home') renderPosts();
+    if (PT.el && PT.el.isConnected) renderPostsOf();
+  }
+  document.addEventListener('click', (e) => {
+    if (pickOpen && !e.target.closest('.sx-wrap')) {
+      pickOpen = null;
+      redrawActs();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pickOpen) {
+      pickOpen = null;
+      redrawActs();
+    }
+  });
   function onPostsClick(e) {
     if (openReviews(e)) return;
     const del = e.target.closest('[data-del]');
@@ -856,6 +901,35 @@
       const [owner, id] = hb.dataset.hear.split('/'), p = (T.posts[owner] || {})[id] || (PT.posts[owner] || {})[id];
       if (p && p.kb && p.kb.build) hear(p.kb.build);
       return;
+    }
+    // ⌨: open / close the sound picker
+    const pk = e.target.closest('[data-sxpick]');
+    if (pk && me) {
+      pk.blur();
+      KK.sfx.ui();
+      pickOpen = pickOpen === pk.dataset.sxpick ? null : pk.dataset.sxpick;
+      return redrawActs();
+    }
+    // a sound: yours on this post (picking another swaps it, picking yours again takes it back)
+    const sx = e.target.closest('[data-sound]');
+    if (sx && me) {
+      sx.blur();
+      const [owner, id] = sx.dataset.key.split('/'), kind = sx.dataset.sound;
+      const rxs = ((T.reacts[owner] || {})[id]) || ((PT.reacts[owner] || {})[id]) || {};
+      const mine = mySound(rxs), ops = [];
+      if (mine) {
+        ops.push(N.ref(`reacts/${owner}/${id}/${mine[1]}/${me.uid}`).remove());
+        KK.notify.unsend(owner, `r_${id}_${mine[1]}_${me.uid}`);
+      }
+      const on = !mine || mine[0] !== kind;
+      if (on) {
+        ops.push(N.ref(`reacts/${owner}/${id}/${kind}/${me.uid}`).set(true));
+        KK.notify.send(owner, { t: 'react', post: id, kind }, `r_${id}_${kind}_${me.uid}`);
+      }
+      on ? KK.sfx.select() : KK.sfx.ui();
+      pickOpen = null;
+      redrawActs();
+      return Promise.all(ops).catch(warn);
     }
     const rx = e.target.closest('[data-react]');
     if (rx && me) {

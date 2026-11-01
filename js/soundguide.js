@@ -258,4 +258,7 @@
 
   G.PROFILES = PROFILES;
   G.TITLE = TITLE;
+  // the icons, for the sound reactions on posts (js/feed.js): id → svg, and each one's short name
+  G.ICONS = ICONS;
+  G.SHORT = { thocky: 'thocky', creamy: 'creamy', clacky: 'clacky', clicky: 'clicky', silent: 'silent', marbly: 'marbly', poppy: 'poppy', scratchy: 'scratchy', raindrops: 'raindrops', glassy: 'glassy' };
 })();

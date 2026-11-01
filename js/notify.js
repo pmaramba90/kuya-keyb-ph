@@ -58,11 +58,16 @@
     .map(([id, n]) => Object.assign({ id }, n))
     .sort((a, b) => (+b.at || 0) - (+a.at || 0));
 
-  const REACT = { heart: '♥', laugh: '😂', fire: '🔥', cream: '🍦' };
+  const REACT = { heart: '♥', laugh: '😂' };
   // what they did (everything from the database is escaped)
   function what(n) {
     switch (n.t) {
-      case 'react': return `reacted ${REACT[n.kind] || '♥'} to your post`;
+      case 'react': {
+        // a sound from the keyboard sound guide shows its icon and name
+        const sg = KK.soundguide, snd = { fire: 'thocky', cream: 'creamy' }[n.kind] || n.kind;
+        if (sg && sg.ICONS[snd]) return `reacted <span class="nt-snd">${sg.ICONS[snd]}</span> <b>${sg.SHORT[snd]}</b> to your post`;
+        return `reacted ${REACT[n.kind] || '♥'} to your post`;
+      }
       case 'reply': return `replied to your post: “${esc(String(n.text || '').slice(0, 80))}”`;
       case 'heart': return `hearted your keyboard${n.name ? ` <b>${esc(String(n.name).slice(0, 60))}</b>` : ''}`;
       case 'challenge': return 'challenged you to a match';
