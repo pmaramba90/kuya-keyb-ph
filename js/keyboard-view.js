@@ -214,6 +214,10 @@
 
     view.fit = function () {
       if (!view.layout) return;
+      // a hidden screen measures 0 wide (a phone fires resize as its address bar shows and
+      // hides): keep the size it had rather than drawing it 600px wide
+      if (!container.clientWidth && view.sized) return;
+      view.sized = !!container.clientWidth;
       const avail = container.clientWidth || 600;
       const u = Math.min(o.maxU, Math.floor(((avail - 2) / (view.layout.w + 0.9)) * 10) / 10);
       view.el.style.setProperty('--u', Math.max(8, u) + 'px');

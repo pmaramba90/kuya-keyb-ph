@@ -342,7 +342,10 @@
     const tab = name === 'user' ? NAV_TAB[app.userFrom] || app.userFrom || 'friends' : NAV_TAB[name] || name;
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('on', b.dataset.go === tab));
     KK.social.closeMenu();
-    if (name === 'home') KK.feed.render();
+    if (name === 'home') {
+      KK.feed.resetTab(); // home always opens on the feed
+      KK.feed.render();
+    }
     if (name === 'title') renderHome();
     if (name === 'play') renderPlay();
     if (name === 'friends') KK.social.renderFriends();
@@ -550,7 +553,7 @@
     $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
     $('#vsSubR').textContent = '';
     $('#vsAvR').hidden = true;
-    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; your combos raise everyone else\'s knockout bar';
+    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; your combos stack bricks on everyone else\'s screen';
     renderGameBuild($('#vsBuild'));
     requestAnimationFrame(() => app.vsKb.fit());
     KK.music.setMode('game', m.level);

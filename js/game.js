@@ -204,6 +204,16 @@
       this.hooks = o.hooks || {};
       this.toastEl = this.field.querySelector('.toast');
       if (this.meterEl && o.miniMeter) this.meterEl.dataset.mini = '1';
+      // lobbies: the bar is a brick wall rising from the bottom of the field; words land on it
+      this.field.querySelectorAll('.brickwall').forEach((n) => n.remove());
+      this.field.style.removeProperty('--wall');
+      this.wallEl = null;
+      if (o.wall) {
+        this.wallEl = document.createElement('div');
+        this.wallEl.className = 'brickwall';
+        this.wallEl.innerHTML = '<span class="bw-pct"></span>';
+        this.field.insertBefore(this.wallEl, this.field.firstChild);
+      }
       this.reset();
     }
 
@@ -226,10 +236,21 @@
       this.renderBar();
     }
 
+    // how high the brick wall stands (px); 0 without one. Full = the top of the field.
+    wallPx() {
+      return this.wallEl ? Math.round(U.clamp(this.bar, 0, 1) * Math.max(0, this.H - 34)) : 0;
+    }
+
     // overflow bar + the field's danger state: the border reddens and flickers as the
     // bar fills; from 75% the whole box shakes, faster and harder until it overflows
     renderBar() {
       renderOverflow(this.overflowEl, this.bar);
+      if (this.wallEl) {
+        const px = this.wallPx();
+        this.field.style.setProperty('--wall', px + 'px');
+        this.wallEl.style.height = px + 'px';
+        this.wallEl.querySelector('.bw-pct').textContent = px > 26 ? Math.round(U.clamp(this.bar, 0, 1) * 100) + '%' : '';
+      }
       const d = U.clamp(this.bar, 0, 1);
       const f = this.field;
       f.style.setProperty('--danger', d.toFixed(3));
@@ -293,7 +314,7 @@
       this.H = this.field.clientHeight;
       this.tickPowers(dt);
       const speed = this.fx.freeze > 0 ? 0 : this.fx.slow > 0 ? SLOW * Math.pow(SLOWER, Math.max(1, this.slowStack) - 1) : 1;
-      const floor = this.H - 30;
+      const floor = this.H - 30 - this.wallPx(); // the wall's top, in a lobby
       for (let i = this.words.length - 1; i >= 0; i--) {
         const w = this.words[i];
         if (!w) continue;
@@ -373,7 +394,7 @@
       if (this.missFills) this.bar = Math.min(1, this.bar + (this.p.missDamage + w.text.length * 0.003) * (this.p.missScale || 1));
       const g = this.goodPrefix(this.buffer);
       this.removeWord(w, 'dead');
-      this.popup(w.x + w.width / 2, this.H - 56, 'miss', 'neg');
+      this.popup(w.x + w.width / 2, this.H - 56 - this.wallPx(), 'miss', 'neg');
       if (!this.ai) {
         KK.sfx.miss();
         if (this.missFills && this.bar >= 0.75) KK.sfx.danger();
@@ -390,15 +411,40 @@
       this.checkDead();
     }
 
-    // overflow pushed up by the opponent's combo
+    // overflow pushed up by the opponent's combo (in a lobby: bricks stacked on your wall)
     damage(amount, label) {
       if (this.dead) return;
       this.bar = Math.min(1, this.bar + amount);
-      this.popup(this.W / 2, 24, `−${Math.round(amount * 100)}% ${label}`, 'neg hitpop');
+      if (this.wallEl) {
+        this.popup(this.W / 2, Math.max(24, this.H - 64 - this.wallPx()), `+${Math.round(amount * 100)}% wall · ${label}`, 'neg hitpop');
+        this.wallEl.classList.remove('rise');
+        void this.wallEl.offsetWidth;
+        this.wallEl.classList.add('rise');
+        this.bricks(amount);
+      } else this.popup(this.W / 2, 24, `−${Math.round(amount * 100)}% ${label}`, 'neg hitpop');
       this.shake('hit');
       this.renderBar();
       this.emit('change');
       this.checkDead();
+    }
+
+    // a hit on the wall: bricks drop in from the top and land on it, with a puff of dust
+    bricks(amount) {
+      const n = U.clamp(Math.round(amount * 40), 3, 9), top = this.H - Math.round(U.clamp(this.bar, 0, 1) * Math.max(0, this.H - 34));
+      for (let i = 0; i < n; i++) {
+        const b = document.createElement('i');
+        b.className = 'brick-fall';
+        b.style.left = (6 + Math.random() * (this.W - 40)) + 'px';
+        b.style.setProperty('--land', Math.max(0, top - 12) + 'px');
+        b.style.animationDelay = (i * 0.045) + 's';
+        this.field.appendChild(b);
+        setTimeout(() => b.remove(), 900 + i * 45);
+      }
+      const d = document.createElement('i');
+      d.className = 'brick-dust';
+      d.style.top = Math.max(0, top - 10) + 'px';
+      this.field.appendChild(d);
+      setTimeout(() => d.remove(), 900);
     }
 
     // the opponent missed a word: your overflow comes down
@@ -995,7 +1041,7 @@
     return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${paths.join('')}</svg>`;
   }
 
-  function wreck(b) {
+  function wreck(b, word) {
     const f = b.field;
     const W = f.clientWidth, H = f.clientHeight;
     const cx = W * (0.35 + Math.random() * 0.3), cy = H * (0.3 + Math.random() * 0.25);
@@ -1003,7 +1049,7 @@
     w.className = 'wreck';
     w.style.setProperty('--cx', cx + 'px');
     w.style.setProperty('--cy', cy + 'px');
-    w.innerHTML = crackPaths(W, H, cx, cy) + '<div class="wreck-flash"></div><div class="wreck-text"><span>OVERFLOW</span></div>';
+    w.innerHTML = crackPaths(W, H, cx, cy) + '<div class="wreck-flash"></div><div class="wreck-text"><span>' + (word || 'OVERFLOW') + '</span></div>';
     for (let i = 0; i < 28; i++) {
       const s = document.createElement('i');
       const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 300;
@@ -1559,10 +1605,12 @@
 
   /* --------------------------- lobbies: 2–4 players --------------------------- */
   // One screen: your field. Everyone gets the same words (the lobby's seed). Misses
-  // don't fill anything; every combo you land raises a knockout bar on each opponent
-  // still in, and a full bar knocks them out. The last one in wins; when the clock runs
-  // out, the highest score among those still in. Opponents (name, keyboard, score, bar)
-  // sit lower left (phones: a strip under the scores).
+  // don't fill anything; every combo you land stacks bricks on each opponent still in: a
+  // brick wall rises from the bottom of their field, the words land on its top, so they
+  // have less and less room (and time) to type. A wall that reaches the top walls them in
+  // (knocked out). The last one in wins; when the clock runs out, the highest score among
+  // those still in. Opponents (name, keyboard, score, wall) sit lower left (phones: a
+  // strip under the scores).
   //
   //   parties/{id}/live/{uid}      { sc, bar, c, mc, dead, koAt, at }   ~4 times a second
   //   parties/{id}/hits/{uid}/{k}  { n, dmg, label, from }   a combo landing on you
@@ -1582,7 +1630,7 @@
     const you = new Board({
       field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
       meter: laneL.querySelector('.cmeter'), overflow: laneL.querySelector('.meter-row'), miniMeter: true,
-      word: KK.keysound.comboKey(KK.app.build), p, missFills: false,
+      word: KK.keysound.comboKey(KK.app.build), p, missFills: false, wall: true,
       hooks: { combo: (b, t) => { announce(b, t); partyHit(t); }, change: () => partyHud(), dead: () => knockedOut() },
     });
     const foes = {};
@@ -1622,7 +1670,8 @@
     KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
     $('#vsNameL').textContent = KK.app.userName();
     $('#vsNameR').textContent = 'still in';
-    $('#laneL .meter-row .hud-lbl').textContent = 'knockout';
+    $('#laneL .meter-row .hud-lbl').textContent = 'wall';
+    laneL.classList.add('walled');
     partyHud(true);
     partyReady();
   };
@@ -1642,7 +1691,7 @@
     partyHud();
   }
 
-  // knocked out (their bar filled) or gone (left / no updates for a while)
+  // knocked out (walled in) or gone (left / no updates for a while)
   function foeOut(uid, why, at) {
     const f = run && run.foes[uid];
     if (!f || f.dead) return;
@@ -1651,7 +1700,7 @@
     f.koAt = at || KK.net.now();
     if (run.running && why === 'ko') {
       KK.sfx.shatter();
-      run.you.toast(`${f.display} knocked out!`, 'combo t-3');
+      run.you.toast(`${f.display} walled in!`, 'combo t-3');
     }
     partyHud();
   }
@@ -1669,10 +1718,10 @@
 
   function knockedOut() {
     run.koAt = KK.net.now();
-    wreck(run.you);
+    wreck(run.you, 'WALLED IN');
     KK.voice.overflow();
     partyPublish();
-    if (partyAlive() > 1) KK.ui.toast('knocked out · watching the rest');
+    if (partyAlive() > 1) KK.ui.toast('walled in · watching the rest');
     partyHud();
   }
 
@@ -1693,7 +1742,7 @@
         ${KK.social.avatarImg(f.uid, 'xs')}
         <span class="pf-who"><b>${esc(f.display)}</b><span>${esc(f.pname || 'keyboard')}</span></span>
         <b class="pf-sc">${f.sc.toLocaleString()}</b>
-        <span class="pf-bar" title="knockout bar"><i style="width:${Math.round(f.bar * 100)}%"></i></span>
+        <span class="pf-bar" title="their wall: ${Math.round(f.bar * 100)}% high"><i style="width:${Math.round(f.bar * 100)}%"></i></span>
         ${f.dead ? `<em class="pf-tag">${f.left ? 'left' : 'KO'}</em>` : ''}</div>`).join('');
     if (rows !== h.foes) $('#partyFoes').innerHTML = h.foes = rows;
   }
@@ -1728,7 +1777,7 @@
       KK.ui.countdown(() => {
         run.startAt = KK.net.now();
         begin();
-      }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos raise everyone else's knockout bar · fill theirs to knock them out · last one standing wins`, () => KK.voice.call('fight'));
+      }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos stack bricks on everyone else's screen · their wall rises and their room shrinks · wall them in to knock them out · last one standing wins`, () => KK.voice.call('fight'));
     };
     const stop = waitFor(`${run.base}/ready`, (v) => v && run.m.players.every((x) => v[x.uid]), go);
     const giveUp = setTimeout(() => {
@@ -1772,7 +1821,7 @@
       })
     );
     // still in first (highest score), then the knocked out (the later, the higher); a tie
-    // goes to the lower knockout bar, then a fixed order, so every screen agrees
+    // goes to the lower wall, then a fixed order, so every screen agrees
     all.sort((a, b) => (a.dead - b.dead) || (a.dead ? (b.koAt || 0) - (a.koAt || 0) : 0) || b.sc - a.sc || (a.bar || 0) - (b.bar || 0) || (a.uid < b.uid ? -1 : 1));
     const place = all.findIndex((x) => x.you) + 1, won = place === 1, n = all.length;
     bestRound('pvpBest', mine.sc);
@@ -1785,10 +1834,10 @@
     const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
     KK.ui.open(
       `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
-       <div class="ov-sub">${all[0].dead ? 'everyone was knocked out' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
+       <div class="ov-sub">${all[0].dead ? 'everyone was walled in' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
        <div class="party-res">${all.map((x, i) => `<div class="pr${x.you ? ' me' : ''}"><span class="pr-place">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}
          <span class="pr-who"><b>${esc(x.display)}${x.you ? ' (you)' : ''}</b><span>${esc(x.pname || '')}</span></span>
-         <span class="pr-how">${x.left ? 'left' : x.dead ? 'knocked out' : 'still in'}</span><b class="pr-sc">${(x.sc || 0).toLocaleString()}</b></div>`).join('')}</div>
+         <span class="pr-how">${x.left ? 'left' : x.dead ? 'walled in' : 'still in'}</span><b class="pr-sc">${(x.sc || 0).toLocaleString()}</b></div>`).join('')}</div>
        <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to lobbies</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
       {
         lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); },
@@ -1833,6 +1882,10 @@
     run.offs.forEach((f) => f());
     run.offs = [];
     $('#laneL .meter-row .hud-lbl').textContent = 'overflow';
+    $('#laneL').classList.remove('walled');
+    run.you.field.querySelectorAll('.brickwall, .brick-fall, .brick-dust').forEach((n) => n.remove());
+    run.you.field.style.removeProperty('--wall');
+    run.you.wallEl = null;
     $('#partyFoes').innerHTML = '';
     KK.online.matchEnded();
   }

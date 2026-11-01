@@ -220,6 +220,12 @@
     return false;
   }
 
+  // back to the list of threads (switching tabs, going home)
+  CF.reset = function () {
+    openId = replyTo = null;
+    composing = false;
+  };
+
   // open a thread (from a notification or a link)
   CF.open = function (tid) {
     KK.app.show('home');

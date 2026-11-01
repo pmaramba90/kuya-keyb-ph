@@ -457,22 +457,29 @@
   });
 
   /* --------------------------- tabs, composer, welcome --------------------------- */
-  // feed (posts) or conference (threads): the composer and posts give way to the threads
+  // feed (posts) or conference (threads): the composer stays, the posts give way to the threads
   function renderTabs() {
     document.querySelectorAll('#feedTabs [data-ft]').forEach((b) => {
       b.classList.toggle('on', b.dataset.ft === tab);
       b.setAttribute('aria-selected', b.dataset.ft === tab);
     });
     const conf = tab === 'conf';
-    $('#feedWhats').hidden = $('#feedPosts').hidden = conf;
+    $('#feedPosts').hidden = conf;
     if (conf) $('#feedMore').hidden = true;
     $('#confWrap').hidden = !conf;
     if (conf) KK.conf.render();
   }
   F.showTab = function (t) {
-    tab = t === 'conf' ? 'conf' : 'feed';
+    const to = t === 'conf' ? 'conf' : 'feed';
+    if (to !== tab) KK.conf.reset(); // the conference opens on its list of threads
+    tab = to;
     renderTabs();
     if (tab === 'feed') renderPosts();
+  };
+  // home (the tab, the logo, back): the feed, the default
+  F.resetTab = function () {
+    if (tab !== 'feed') KK.conf.reset();
+    tab = 'feed';
   };
   $('#feedTabs').addEventListener('click', (e) => {
     const b = e.target.closest('[data-ft]');
@@ -664,12 +671,16 @@
       if (!el) {
         el = document.createElement('div');
         el.className = 'pk-view';
-        const v = KK.kbview.create(el, { maxU: 24, legends: false });
+        const v = (el.kbv = KK.kbview.create(el, { maxU: 24, legends: false }));
         v.update(C.sanitizeBuild(post.p.kb.build));
         kbViews.set(key, el);
         slot.replaceWith(el);
         requestAnimationFrame(() => v.fit());
-      } else slot.replaceWith(el);
+      } else {
+        // back on the page: sized again for where it is now
+        slot.replaceWith(el);
+        requestAnimationFrame(() => el.kbv && el.kbv.fit());
+      }
     });
     [...kbViews.keys()].forEach((k) => !keep.has(k) && kbViews.delete(k));
   }

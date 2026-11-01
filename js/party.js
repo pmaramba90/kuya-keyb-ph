@@ -278,7 +278,7 @@
           : `<button class="btn ghost" data-pt="leave">leave lobby</button>`}
         <span class="hint">${pt.status === 'playing' ? 'a match is on' : host ? (ms.length < 2 ? 'waiting for players to join' : 'start when everyone is in') : `waiting for ${esc(pt.hostName || 'the host')} to start`}</span>
       </div>
-      <p class="hint pt-rules">${max === 2 ? '2 players' : `2–${max} players`} · one screen each · your combos raise every opponent's knockout bar · fill a bar and they're out · last one standing wins, or the highest score when the 2:00 runs out</p>`;
+      <p class="hint pt-rules">${max === 2 ? '2 players' : `2–${max} players`} · one screen each · your combos stack bricks on every opponent's screen · their wall rises and their room shrinks · walled in = out · last one standing wins, or the highest score when the 2:00 runs out</p>`;
   }
 
   // the two tabs: 1v1 match (online now) and lobbies
