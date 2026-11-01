@@ -724,9 +724,11 @@
   }
 
   const REPLY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9.5L5 19.5v-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  // a laughing face, drawn in outline like the heart
+  const LAUGH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.6 10.2q1.2-1.6 2.4 0M14 10.2q1.2-1.6 2.4 0"/><path d="M7.5 13.5h9a4.5 4.5 0 0 1-9 0z"/></svg>';
   const REACTS = {
     heart: { icon: HEART, label: 'heart' },
-    laugh: { icon: '<span class="emo">😂</span>', label: 'haha' },
+    laugh: { icon: LAUGH, label: 'haha' },
   };
   // sound reactions: the keyboard sound guide's ten profiles, one per player per post
   const SOUNDS = () => Object.keys(KK.soundguide.SHORT);

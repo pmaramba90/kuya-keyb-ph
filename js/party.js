@@ -38,7 +38,7 @@
   let askPw = null, pwDraft = ''; // the locked lobby you're typing its password for
   let playing = null; // the match you're in: { id, seed }
   const AGAIN_SECS = 30;
-  let againAt = 0, againTick = null; // the "play again?" card you're looking at (its ask's at)
+  let againAt = 0; // the "play again?" card you're looking at (its ask's at)
 
   P.start = function () {
     P.stop();
@@ -241,8 +241,6 @@
   /* ------------------------------- play again ------------------------------- */
   // everyone still in the lobby (and not gone from the last match)
   const still = (pt) => members(pt).filter(([uid]) => !(pt.left && pt.left[uid] && uid !== pt.host));
-  // a "play again?" card is up (or you said yes and wait): nothing else takes its place
-  P.asking = () => !!againAt;
   // the host, on the standings: anyone to play with?
   P.canAgain = function () {
     const pt = inId && all[inId];
@@ -261,7 +259,8 @@
     const at = ag ? +ag.at || 0 : 0;
     if (!ag || ag.done) {
       // settled without a match (a start clears it too: then the match takes over)
-      if (againAt && (!ag || againAt === at) && !(pt && pt.status === 'playing')) againOff(ag && ag.done, pt);
+      if (againAt && pt && pt.status === 'playing') KK.online.closeCard();
+      else if (againAt && (!ag || againAt === at)) againOff(ag && ag.done, pt);
       againAt = 0;
       return;
     }
@@ -277,8 +276,8 @@
     if (againAt !== at) {
       againAt = at;
       if (pt.host !== me.uid) KK.sfx.challenge(true);
-      againCard(pt, ag, true);
-    } else againCard(pt, ag, false);
+      againCard(pt, ag);
+    } else againCard(pt, ag);
   }
   // the host: settled, no match (why: no | time | off | few; who: their names)
   function againDone(why, list) {
@@ -287,49 +286,47 @@
     N.ref(`parties/${inId}/again/done`).set({ why, who }).catch((err) => console.warn('kkph lobby', err));
   }
   const againCancel = () => againDone('off');
-  // the card: who's in, who's thinking, the seconds left; the host can call it off
-  function againCard(pt, ag, fresh) {
+  // the card: like a challenge, above everything (the standings stay under it): who
+  // asked, a countdown bar, who's in so far; the host can call it off
+  function againCard(pt, ag) {
     const ans = ag.ans || {}, host = pt.host === me.uid, mine = ans[me.uid];
-    const left = () => Math.max(0, Math.ceil((AGAIN_SECS * 1000 - (N.now() - (+ag.at || 0))) / 1000));
     const rows = still(pt).map(([uid, m]) => `<div class="pr${uid === me.uid ? ' me' : ''}">${KK.social.avatarImg(uid, 'xs')}<span class="pr-who"><b>${esc(m.display || 'player')}${uid === me.uid ? ' (you)' : ''}</b><span>${esc(m.pname || 'keyboard')}</span></span>
         <span class="pr-how ag-${ans[uid] === true ? 'yes' : ans[uid] === false ? 'no' : 'wait'}">${uid === pt.host ? 'asked' : ans[uid] === true ? 'in ✓' : ans[uid] === false ? 'no' : 'thinking…'}</span></div>`).join('');
-    const btns = host ? '<button class="btn ghost" data-ov="cancel">call it off</button>'
-      : mine === true ? '<span class="hint">you\'re in · waiting for the others</span>'
-      : '<button class="btn primary" data-ov="yes" data-primary>I\'m in</button><button class="btn ghost" data-ov="no">no thanks</button>';
-    const html = `<div class="ov-h">play again?</div>
-      <div class="ov-sub">${host ? 'asking everyone to play again with the same players' : `${esc(pt.hostName || 'the host')} wants to play again with the same players`} · <b class="ag-secs" id="agSecs">${left()}</b>s</div>
-      <div class="party-res ag-list">${rows}</div><div class="ov-btns">${btns}</div>`;
-    if (!fresh && document.getElementById('agSecs')) {
-      document.querySelector('#ovCard .ag-list').innerHTML = rows;
-      document.querySelector('#ovCard .ov-btns').innerHTML = btns;
-      return;
-    }
+    const btns = host ? '<button class="btn ghost" data-ch-act="no">call it off</button>'
+      : mine === true ? '<p class="hint">you\'re in · waiting for the others</p>'
+      : '<button class="btn primary" data-ch-act="yes" data-ch-primary>I\'m in</button><button class="btn ghost" data-ch-act="no">no thanks</button>';
     const answer = (yes) => {
       if (!inId) return;
       N.ref(`parties/${inId}/again/ans/${me.uid}`).set(yes).catch((err) => console.warn('kkph lobby', err));
-      if (!yes) toLobby();
+      if (yes) KK.sfx.select();
+      else toLobby();
     };
-    KK.ui.open(html, host
-      ? { cancel: againCancel, esc: againCancel }
-      : { yes: () => { KK.sfx.select(); answer(true); }, no: () => { KK.sfx.ui(); answer(false); }, esc: () => mine !== true && answer(false) });
-    clearInterval(againTick);
-    againTick = setInterval(() => {
-      const el = document.getElementById('agSecs');
-      if (!el) return clearInterval(againTick);
-      const n = left();
-      el.textContent = n;
-      el.classList.toggle('warn', n <= 5);
-      if (n > 0) return;
-      clearInterval(againTick);
-      // time's up: the host settles it; nobody else waits for that longer than a moment
+    // time's up: the host settles it; nobody else waits for that longer than a moment
+    let late = false;
+    const timeout = () => {
+      if (late) return;
+      late = true;
       if (host) syncAgain(all[inId]);
       else setTimeout(() => againAt === +ag.at && againOff(null, pt), 3000);
-    }, 250);
+    };
+    KK.online.openCard(
+      `<div class="ch-tag">${host ? 'play again' : 'rematch?'}</div>
+       ${KK.social.avatarImg(pt.host, 'lg ch-av')}
+       <div class="ov-h">${host ? 'waiting for everyone…' : `<b>${esc(pt.hostName || 'the host')}</b> wants to play again`}</div>
+       <div class="ov-sub">same players · ${host ? 'they have' : 'you have'} <span class="ch-secs">${AGAIN_SECS}</span>s to say yes</div>
+       <div class="ch-time"><i></i></div>
+       <div class="party-res ag-list">${rows}</div>
+       <div class="ov-btns">${btns}</div>`,
+      host ? { no: againCancel, timeout }
+        : mine === true ? { no: () => {}, timeout } // you're in: esc doesn't take it back
+          : { yes: () => answer(true), no: () => answer(false), timeout },
+      (+ag.at || 0) + AGAIN_SECS * 1000,
+      AGAIN_SECS * 1000
+    );
   }
   // settled without a match: say why, and everyone's back in the lobby
   function againOff(done, pt) {
     againAt = 0;
-    clearInterval(againTick);
     // "you" for yourself
     const who = String((done && done.who) || '').split(', ').filter(Boolean).map((n) => (n.toLowerCase() === String(me.display).toLowerCase() ? 'you' : n)).join(', ');
     const host = (pt && pt.hostName) || 'the host';
@@ -342,7 +339,7 @@
     toLobby();
   }
   function toLobby() {
-    clearInterval(againTick);
+    KK.online.closeCard();
     KK.ui.close();
     if (KK.game.mode() === 'party') KK.game.quit();
     if (inId) KK.online.openLobby('parties');

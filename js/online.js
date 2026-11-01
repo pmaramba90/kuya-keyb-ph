@@ -282,7 +282,8 @@
   // its own overlay, above everything (a challenge can arrive mid-game)
   const chEl = $('#chOverlay'), chCard = $('#chCard');
   let chActs = null, chTimer = null;
-  function openCh(html, acts, until) {
+  // until: when its countdown runs out (total: how long it ran, for the bar; a challenge's by default)
+  function openCh(html, acts, until, total) {
     clearInterval(chTimer);
     chActs = acts;
     chCard.innerHTML = html;
@@ -295,7 +296,7 @@
       const bar = chCard.querySelector('.ch-time i'), num = chCard.querySelector('.ch-secs');
       const step = () => {
         const left = Math.max(0, until - N.now());
-        if (bar) bar.style.width = (left / (CH_SECS * 1000)) * 100 + '%';
+        if (bar) bar.style.width = (left / (total || CH_SECS * 1000)) * 100 + '%';
         if (num) num.textContent = Math.ceil(left / 1000);
         if (left <= 0 && chActs && chActs.timeout) chActs.timeout();
       };
@@ -311,6 +312,9 @@
     if (KK.app.typing) KK.app.typing.update();
   }
   O.chOpen = () => !chEl.hidden;
+  // the same card for the lobby's "play again?" (js/party.js): above the standings
+  O.openCard = openCh;
+  O.closeCard = closeCh;
   const flash = (html) => {
     openCh(`<div class="ov-h">${html}</div>`, {});
     setTimeout(() => chActs && !Object.keys(chActs).length && closeCh(), 2200);

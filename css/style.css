@@ -378,7 +378,9 @@ button.heart:active svg { transform: scale(1.3); }
 .r-heart.on svg { fill: var(--err); stroke: var(--err); animation: beat .35s ease; }
 .react .emo { font-size: 15px; line-height: 1; filter: grayscale(1); opacity: .65; transition: filter .15s, opacity .15s; }
 .react:hover .emo, .react.on .emo { filter: none; opacity: 1; }
+.r-laugh svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .r-laugh.on { color: var(--main); }
+.r-laugh.on svg { animation: beat .35s ease; }
 /* sound reactions: the keyboard sound guide's icons */
 .r-sound svg, .r-kb svg { fill: none; }
 .r-sound.on { color: var(--main); }

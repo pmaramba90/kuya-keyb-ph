@@ -454,6 +454,15 @@
       this.emit('change');
     }
 
+    // lobbies: an opponent's combo counters yours (their 5x takes 5 off your combo)
+    counter(by, label) {
+      if (this.dead || this.combo <= 0 || by <= 0) return;
+      const was = this.combo;
+      this.combo = Math.max(0, this.combo - by);
+      renderMeter(this.meterEl, this, false);
+      this.popup(this.W / 2, Math.max(48, this.H - 92 - this.wallPx()), `combo ${was}× → ${this.combo}× · ${label}`, 'neg');
+    }
+
     // one row of bricks (12px), as a share of the wall's full height
     wallLine() {
       return 12 / Math.max(1, this.H - 34);
@@ -1637,8 +1646,9 @@
 
   /* --------------------------- lobbies: 2–4 players --------------------------- */
   // One screen: your field. Everyone gets the same words (the lobby's seed). Misses
-  // don't fill anything; every combo you land stacks one row of bricks on each opponent
-  // still in (and knocks one off your own wall): the wall rises from the bottom of their
+  // don't fill anything; every combo you land stacks bricks on each opponent still in, a
+  // row for every 5 of it (5x = 1 row, 10x = 2 …), knocks as many rows off your own wall,
+  // and counters their combo by yours (your 5x takes 5 off theirs): the wall rises from the bottom of their
   // field, the words land on its top, so they have less and less room (and time) to
   // type. A wall that reaches the top walls them in
   // (knocked out). The last one in wins; when the clock runs out, the highest score among
@@ -1693,10 +1703,16 @@
     r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
       KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
       if (r !== run || !h || !run.running || run.you.dead) return;
-      // every combo, whatever its size, is one row of bricks on your wall
-      const n = U.clamp(Math.round(+h.n) || 1, 1, 5);
-      const f = run.foes[h.from];
-      takeHit(run.you.wallLine(), `${f ? f.display : 'a'} ${n === 5 ? 'WOW' : n + '×'}`);
+      // their combo: a row of bricks for every 5 of it, and it counters yours by as much
+      // (an older page sends no combo: its tier stands in)
+      const n = U.clamp(Math.round(+h.n) || 1, 1, 5), c = U.clamp(Math.floor(+h.c) || n * 5, 5, 999);
+      const f = run.foes[h.from], who = f ? f.display : 'a player';
+      setTimeout(() => {
+        if (r !== run || !run.running || run.you.dead) return;
+        run.you.damage(comboRows(c) * run.you.wallLine(), `${who} ${c}×`);
+        run.you.counter(c, who);
+        KK.sfx.hit();
+      }, 420);
     }));
     KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
     $('#vsNameL').textContent = KK.app.userName();
@@ -1736,16 +1752,20 @@
     partyHud();
   }
 
-  // your combo: every opponent still in takes it
+  // a combo as rows of bricks: one for every 5 (5x = 1, 10x = 2, 15x = 3 …), at most 10
+  const comboRows = (c) => U.clamp(Math.floor(c / 5), 1, 10);
+  // your combo: every opponent still in takes that many rows (and loses that much combo);
+  // the same number of rows comes off your own wall
   function partyHit(tier) {
     if (!run.running || run.you.dead) return;
-    run.you.clearLines(1); // your combo also knocks a row off your own wall
+    const c = run.you.combo, rows = comboRows(c);
+    run.you.clearLines(rows);
     const alive = Object.values(run.foes).filter((f) => !f.dead);
     if (!alive.length) return;
     const a = attackOf(run.you, tier), dmg = +(a.dmg * partyScale(Object.keys(run.foes).length)).toFixed(4);
     flyAttack('to-r', a.n, dmg);
     KK.sfx.attack();
-    alive.forEach((f) => KK.net.ref(`${run.base}/hits/${f.uid}`).push({ n: a.n, dmg, label: a.label, from: run.m.me }));
+    alive.forEach((f) => KK.net.ref(`${run.base}/hits/${f.uid}`).push({ n: a.n, c, dmg, label: a.label, from: run.m.me }));
   }
 
   function knockedOut() {
@@ -1866,7 +1886,6 @@
     const rec = KK.online.record(won, { opp: others[0] ? others[0].uid : '', oppName: `${n}-player lobby`, wins: [place, n], how: `#${place} of ${n}`, score: `#${place} of ${n}` });
     const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
     const again = KK.party.canAgain(); // the host: ask everyone to play again
-    if (KK.party.asking()) return; // the host already asked to play again: that card stays up
     KK.ui.open(
       `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
        <div class="ov-sub">${all[0].dead ? 'everyone was walled in' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
