@@ -113,12 +113,13 @@
   // one spawn event; in vs mode the same event is sent to both fields. Against another
   // player both sides draw from the same seeded generator, and the number of draws never
   // depends on what's on either field, so the two streams stay identical.
+  const live = (kind) => kind === 'pvp' || kind === 'party'; // against people: never paused, same words for all
   function makeSpawn(run) {
     const p = run.p, byLen = pool(run.lang), rnd = run.rnd;
     const roll = rnd(), pick = rnd(), sizeRoll = rnd();
     let power = null;
     const onField = Math.max(0, ...run.boards.map((b) => b.words.filter((w) => w.power).length));
-    const busy = run.kind === 'pvp' ? run.sincePower < 8 : onField >= (p.maxPowers || 1);
+    const busy = live(run.kind) ? run.sincePower < 8 : onField >= (p.maxPowers || 1);
     run.sincePower = (run.sincePower || 0) + 1;
     if (run.elapsed > 4 && roll < (p.powerChance || 0.1) && !busy) {
       // which powers can turn up depends on this field, but the draw is the same either
@@ -682,7 +683,7 @@
     run.last = performance.now();
     KK.anticheat.reset(caught);
     requestAnimationFrame(frame);
-    if (run.kind === 'pvp') keepTicking();
+    if (live(run.kind)) keepTicking();
   }
 
   function frame() {
@@ -697,7 +698,7 @@
   let ticker = null;
   function keepTicking() {
     if (ticker) return;
-    const onTick = () => run && run.running && run.kind === 'pvp' && performance.now() - run.last > 120 && advance();
+    const onTick = () => run && run.running && live(run.kind) && performance.now() - run.last > 120 && advance();
     try {
       const src = 'setInterval(() => postMessage(0), 100);';
       ticker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
@@ -712,7 +713,7 @@
   // vs AI just carry on (they pause when you leave the window).
   function advance() {
     const now = performance.now();
-    let dt = Math.min((now - run.last) / 1000, run.kind === 'pvp' ? 10 : 0.05);
+    let dt = Math.min((now - run.last) / 1000, live(run.kind) ? 10 : 0.05);
     run.last = now;
     while (dt > 0.0005 && run && run.running && !run.paused) {
       const s = Math.min(dt, 0.05);
@@ -1556,6 +1557,286 @@
     KK.online.matchEnded();
   }
 
+  /* --------------------------- lobbies: 2–4 players --------------------------- */
+  // One screen: your field. Everyone gets the same words (the lobby's seed). Misses
+  // don't fill anything; every combo you land raises a knockout bar on each opponent
+  // still in, and a full bar knocks them out. The last one in wins; when the clock runs
+  // out, the highest score among those still in. Opponents (name, keyboard, score, bar)
+  // sit lower left (phones: a strip under the scores).
+  //
+  //   parties/{id}/live/{uid}      { sc, bar, c, mc, dead, koAt, at }   ~4 times a second
+  //   parties/{id}/hits/{uid}/{k}  { n, dmg, label, from }   a combo landing on you
+  //   parties/{id}/ready/{uid} · res/{uid} · left/{uid}
+  const PARTY_SECS = 120, PARTY_LIVE_MS = 250, PARTY_STALE_MS = 15000;
+  // each combo hits every opponent, so it's scaled down with more of them: about 8
+  // combos knock someone out one-on-one, about 20 between three opponents
+  const partyScale = (foes) => Math.min(1, 1.2 / Math.max(1, foes));
+
+  // m: { id, me, players: [{ uid, display, pname, build }], seed, level, lang }
+  G.startParty = function (m) {
+    stopRun();
+    const p = vsParams(m.level);
+    const laneL = $('#laneL');
+    const base = 'parties/' + m.id;
+    const others = m.players.filter((x) => x.uid !== m.me);
+    const you = new Board({
+      field: $('#vsFieldL'), typed: $('#vsTypedL'), powers: laneL.querySelector('.powers'),
+      meter: laneL.querySelector('.cmeter'), overflow: laneL.querySelector('.meter-row'), miniMeter: true,
+      word: KK.keysound.comboKey(KK.app.build), p, missFills: false,
+      hooks: { combo: (b, t) => { announce(b, t); partyHit(t); }, change: () => partyHud(), dead: () => knockedOut() },
+    });
+    const foes = {};
+    others.forEach((x) => (foes[x.uid] = Object.assign({}, x, { sc: 0, bar: 0, c: 0, mc: 0, dead: false, koAt: 0, left: false, at: 0 })));
+    const r = (run = {
+      kind: 'party', m, base, lang: m.lang, level: m.level, p, you, foes, boards: [you], round: 1,
+      running: false, paused: false, over: false, hud: {}, offs: [], pubAt: 0, koAt: 0, startAt: 0,
+      rnd: U.rng(U.hash(m.seed + ':party')),
+      time: PARTY_SECS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], sincePower: 0, lastSec: PARTY_SECS,
+      tick(dt) {
+        spawnTick(dt);
+        you.step(dt);
+        if (!run.running) return;
+        partyHud();
+        if (performance.now() - run.pubAt >= PARTY_LIVE_MS) {
+          partyPublish();
+          run.pubAt = performance.now();
+        }
+        const now = KK.net.now();
+        Object.values(run.foes).forEach((f) => !f.dead && now - (f.at || run.startAt) > PARTY_STALE_MS && foeOut(f.uid, 'left'));
+        if (run.time <= 0 || partyAlive() <= 1) partyEnd();
+      },
+    });
+    others.forEach((x) => {
+      r.offs.push(KK.net.ref(`${base}/live/${x.uid}`).on((s) => r === run && s && onFoeLive(x.uid, s)));
+      r.offs.push(KK.net.ref(`${base}/left/${x.uid}`).on((v) => r === run && v && foeOut(x.uid, 'left')));
+    });
+    r.offs.push(KK.net.ref(`${base}/hits/${m.me}`).onChild((k, h) => {
+      KK.net.ref(`${base}/hits/${m.me}/${k}`).remove();
+      if (r !== run || !h || !run.running || run.you.dead) return;
+      // never trust the numbers: at most what a WOW combo can do
+      const n = U.clamp(Math.round(+h.n) || 1, 1, 5);
+      const dmg = U.clamp(+h.dmg || 0, 0, run.p.missDamage * (0.9 + 0.3 * 5) * partyScale(1));
+      const f = run.foes[h.from];
+      takeHit(dmg, `${f ? f.display : 'a'} ${n === 5 ? 'WOW' : n + '×'}`);
+    }));
+    KK.net.ref(`${base}/left/${m.me}`).onDisconnect(true);
+    $('#vsNameL').textContent = KK.app.userName();
+    $('#vsNameR').textContent = 'still in';
+    $('#laneL .meter-row .hud-lbl').textContent = 'knockout';
+    partyHud(true);
+    partyReady();
+  };
+
+  const partyAlive = () => (run.you.dead ? 0 : 1) + Object.values(run.foes).filter((f) => !f.dead).length;
+
+  function partyPublish() {
+    const b = run.you;
+    KK.net.ref(`${run.base}/live/${run.m.me}`).set({ sc: b.score, bar: +b.bar.toFixed(3), c: b.combo, mc: b.maxCombo, dead: b.dead ? 1 : 0, koAt: run.koAt || 0, at: KK.net.now() });
+  }
+
+  function onFoeLive(uid, s) {
+    const f = run.foes[uid];
+    if (!f || f.left) return;
+    Object.assign(f, { sc: Math.max(0, Math.floor(+s.sc || 0)), bar: U.clamp(+s.bar || 0, 0, 1), c: Math.floor(+s.c || 0), mc: Math.floor(+s.mc || 0), at: KK.net.now() });
+    if (s.dead && !f.dead) foeOut(uid, 'ko', +s.koAt || KK.net.now());
+    partyHud();
+  }
+
+  // knocked out (their bar filled) or gone (left / no updates for a while)
+  function foeOut(uid, why, at) {
+    const f = run && run.foes[uid];
+    if (!f || f.dead) return;
+    f.dead = true;
+    f.left = why === 'left';
+    f.koAt = at || KK.net.now();
+    if (run.running && why === 'ko') {
+      KK.sfx.shatter();
+      run.you.toast(`${f.display} knocked out!`, 'combo t-3');
+    }
+    partyHud();
+  }
+
+  // your combo: every opponent still in takes it
+  function partyHit(tier) {
+    if (!run.running || run.you.dead) return;
+    const alive = Object.values(run.foes).filter((f) => !f.dead);
+    if (!alive.length) return;
+    const a = attackOf(run.you, tier), dmg = +(a.dmg * partyScale(Object.keys(run.foes).length)).toFixed(4);
+    flyAttack('to-r', a.n, dmg);
+    KK.sfx.attack();
+    alive.forEach((f) => KK.net.ref(`${run.base}/hits/${f.uid}`).push({ n: a.n, dmg, label: a.label, from: run.m.me }));
+  }
+
+  function knockedOut() {
+    run.koAt = KK.net.now();
+    wreck(run.you);
+    KK.voice.overflow();
+    partyPublish();
+    if (partyAlive() > 1) KK.ui.toast('knocked out · watching the rest');
+    partyHud();
+  }
+
+  function partyHud(force) {
+    if (!run || run.kind !== 'party') return;
+    const h = run.hud, alive = partyAlive(), n = Object.keys(run.foes).length + 1;
+    const vals = { time: U.fmtTime(Math.max(0, run.time)), l: run.you.score.toLocaleString(), r: String(alive) };
+    if (force || h.time !== vals.time) $('#vsTime').textContent = h.time = vals.time;
+    if (force || h.l !== vals.l) $('#vsScoreL').textContent = h.l = vals.l;
+    if (force || h.r !== vals.r) $('#vsScoreR').textContent = h.r = vals.r;
+    $('#vsTime').classList.toggle('warn', run.time <= 10);
+    if (force) {
+      $('#vsRound').textContent = `lobby · ${n} players`;
+      $('#vsWins').innerHTML = '<em>last one standing wins</em>';
+    }
+    // the opponents, lower left
+    const rows = Object.values(run.foes).map((f) => `<div class="pf${f.dead ? ' out' : ''}">
+        ${KK.social.avatarImg(f.uid, 'xs')}
+        <span class="pf-who"><b>${esc(f.display)}</b><span>${esc(f.pname || 'keyboard')}</span></span>
+        <b class="pf-sc">${f.sc.toLocaleString()}</b>
+        <span class="pf-bar" title="knockout bar"><i style="width:${Math.round(f.bar * 100)}%"></i></span>
+        ${f.dead ? `<em class="pf-tag">${f.left ? 'left' : 'KO'}</em>` : ''}</div>`).join('');
+    if (rows !== h.foes) $('#partyFoes').innerHTML = h.foes = rows;
+  }
+
+  // everyone's in the game: a countdown once all have said ready (anyone not there in
+  // READY_SECS starts out as gone)
+  function partyReady() {
+    const r = run;
+    KK.net.ref(`${run.base}/ready/${run.m.me}`).set(true);
+    const until = Date.now() + READY_SECS * 1000;
+    KK.ui.open(
+      `<div class="ov-h">lobby match</div><div class="ov-sub">waiting for everyone to be ready…<br>starting without anyone not here in <b class="wait-secs">${READY_SECS}</b>s</div>
+       <div class="ch-time"><i class="wait-bar"></i></div>
+       <div class="ov-btns"><button class="btn ghost" data-ov="leave">leave match</button></div>`,
+      { leave: leaveParty, esc: leaveParty }
+    );
+    const clock = setInterval(() => {
+      const left = Math.max(0, until - Date.now());
+      const n = document.querySelector('#ovCard .wait-secs'), bar = document.querySelector('#ovCard .wait-bar');
+      if (n) n.textContent = Math.ceil(left / 1000);
+      if (bar) bar.style.width = (left / (READY_SECS * 10)) + '%';
+    }, 250);
+    let started = false;
+    const go = (ready) => {
+      if (started || r !== run || run.over) return;
+      started = true;
+      clearInterval(clock);
+      clearTimeout(giveUp);
+      Object.keys(run.foes).forEach((uid) => !(ready && ready[uid]) && foeOut(uid, 'left'));
+      if (partyAlive() <= 1) return endPartyEarly();
+      KK.music.duck(false);
+      KK.ui.countdown(() => {
+        run.startAt = KK.net.now();
+        begin();
+      }, `lobby · ${Object.keys(run.foes).length + 1} players · 2:00 · your combos raise everyone else's knockout bar · fill theirs to knock them out · last one standing wins`, () => KK.voice.call('fight'));
+    };
+    const stop = waitFor(`${run.base}/ready`, (v) => v && run.m.players.every((x) => v[x.uid]), go);
+    const giveUp = setTimeout(() => {
+      stop();
+      KK.net.ref(`${run.base}/ready`).once().then(go).catch(() => go(null));
+    }, READY_SECS * 1000);
+    run.offs.push(stop, () => clearTimeout(giveUp), () => clearInterval(clock));
+  }
+
+  // the clock ran out or one is left: everyone's result, then the standings
+  function partyEnd() {
+    if (!run.running) return;
+    run.running = false;
+    partyPublish();
+    const r = run, me = run.you;
+    const mine = { sc: me.score, dead: me.dead ? 1 : 0, koAt: run.koAt || 0, mc: me.maxCombo, bar: +me.bar.toFixed(3) };
+    KK.net.ref(`${run.base}/res/${run.m.me}`).set(mine);
+    me.words.slice().forEach((x) => me.removeWord(x, 'done'));
+    KK.music.duck(true);
+    let shown = false, timer = null;
+    const show = (res) => {
+      if (shown || r !== run || run.over) return;
+      shown = true;
+      clearTimeout(timer);
+      partyStandings(mine, res || {});
+    };
+    const stop = waitFor(`${run.base}/res`, (v) => v && Object.values(run.foes).every((f) => f.left || v[f.uid]), show);
+    timer = setTimeout(() => {
+      stop();
+      KK.net.ref(`${run.base}/res`).once().then(show).catch(() => show(null));
+    }, 6000);
+    run.offs.push(stop, () => clearTimeout(timer));
+  }
+
+  function partyStandings(mine, res) {
+    run.over = true;
+    const all = [Object.assign({ uid: run.m.me, display: KK.app.userName(), pname: KK.app.pvpName || 'your keyboard', you: true }, mine)].concat(
+      Object.values(run.foes).map((f) => {
+        const x = res[f.uid] || {};
+        return { uid: f.uid, display: f.display, pname: f.pname, sc: f.left ? f.sc : Math.max(0, Math.floor(+x.sc || f.sc)), dead: f.dead || !!x.dead, koAt: +x.koAt || f.koAt, left: f.left, bar: x.bar != null ? U.clamp(+x.bar || 0, 0, 1) : f.bar };
+      })
+    );
+    // still in first (highest score), then the knocked out (the later, the higher); a tie
+    // goes to the lower knockout bar, then a fixed order, so every screen agrees
+    all.sort((a, b) => (a.dead - b.dead) || (a.dead ? (b.koAt || 0) - (a.koAt || 0) : 0) || b.sc - a.sc || (a.bar || 0) - (b.bar || 0) || (a.uid < b.uid ? -1 : 1));
+    const place = all.findIndex((x) => x.you) + 1, won = place === 1, n = all.length;
+    bestRound('pvpBest', mine.sc);
+    if (won) {
+      KK.sfx.clear();
+      KK.voice.call('victor', 0.35);
+    } else KK.sfx.fail();
+    const others = all.filter((x) => !x.you);
+    const rec = KK.online.record(won, { opp: others[0] ? others[0].uid : '', oppName: `${n}-player lobby`, wins: [place, n], how: `#${place} of ${n}`, score: `#${place} of ${n}` });
+    const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
+    KK.ui.open(
+      `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
+       <div class="ov-sub">${all[0].dead ? 'everyone was knocked out' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
+       <div class="party-res">${all.map((x, i) => `<div class="pr${x.you ? ' me' : ''}"><span class="pr-place">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}
+         <span class="pr-who"><b>${esc(x.display)}${x.you ? ' (you)' : ''}</b><span>${esc(x.pname || '')}</span></span>
+         <span class="pr-how">${x.left ? 'left' : x.dead ? 'knocked out' : 'still in'}</span><b class="pr-sc">${(x.sc || 0).toLocaleString()}</b></div>`).join('')}</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to lobbies</button><button class="btn ghost" data-ov="menu">menu</button></div>`,
+      {
+        lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); },
+        menu: () => { KK.ui.close(); G.quit(); KK.app.show('play'); },
+        esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); },
+      }
+    );
+  }
+
+  // everyone else left before it began
+  function endPartyEarly() {
+    run.over = true;
+    run.running = false;
+    KK.music.duck(true);
+    KK.ui.open(
+      `<div class="ov-h">nobody else made it</div><div class="ov-sub">the other players didn't get ready in time · this doesn't count</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="lobby" data-primary>back to lobbies</button></div>`,
+      { lobby: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); }, esc: () => { KK.ui.close(); G.quit(); KK.online.openLobby('parties'); } }
+    );
+  }
+
+  // esc / the pause button: leave? (the match keeps going behind this)
+  function partyMenu() {
+    KK.ui.open(
+      `<div class="ov-h">leave the match?</div><div class="ov-sub">the match keeps going while this is open · leaving counts as a loss</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="back" data-primary>keep playing</button><button class="btn ghost" data-ov="leave">forfeit &amp; leave</button></div>`,
+      { back: () => KK.ui.close(), esc: () => KK.ui.close(), leave: leaveParty }
+    );
+  }
+  function leaveParty() {
+    KK.ui.close();
+    G.quit();
+    KK.online.openLobby('parties');
+  }
+
+  function endParty() {
+    if (!run.over) {
+      run.over = true;
+      KK.net.ref(`${run.base}/left/${run.m.me}`).set(true);
+      if (run.startAt) KK.online.record(false, { opp: Object.keys(run.foes)[0] || '', oppName: `${Object.keys(run.foes).length + 1}-player lobby`, wins: [0, 0], how: 'you left', score: 'left' });
+    }
+    run.offs.forEach((f) => f());
+    run.offs = [];
+    $('#laneL .meter-row .hud-lbl').textContent = 'overflow';
+    $('#partyFoes').innerHTML = '';
+    KK.online.matchEnded();
+  }
+
   /* ------------------------------ cheat detection ------------------------------ */
   // KK.anticheat caught typing no person did: the run stops and doesn't count (no
   // scores, records or unlocks). Against a person it's a forfeit, and they're told why.
@@ -1564,6 +1845,12 @@
     if (run.kind === 'pvp') {
       KK.net.ref(`${run.base}/cheat/${run.m.me}`).set(reason);
       return endEarly('cheating detected', `${esc(reason)} · you forfeit the match`, false, 'cheating detected');
+    }
+    if (run.kind === 'party') {
+      run.running = false;
+      endParty();
+      const out = () => { KK.ui.close(); G.quit(); KK.app.show('play'); };
+      return KK.ui.open(`<div class="ov-h">cheating detected</div><div class="ov-sub">${esc(reason)} · you're out of the lobby match</div><div class="ov-btns"><button class="btn primary" data-ov="menu" data-primary>back to play</button></div>`, { menu: out, esc: out });
     }
     run.running = false;
     run.boards.forEach((b) => b.words.slice().forEach((x) => b.removeWord(x, 'done')));
@@ -1583,6 +1870,7 @@
   G.pause = function (fromKey) {
     if (!run || !run.running) return;
     if (run.kind === 'pvp') return fromKey && pvpMenu();
+    if (run.kind === 'party') return fromKey && partyMenu();
     run.paused = true;
     KK.music.duck(true);
     const b = G.human();
@@ -1617,6 +1905,7 @@
 
   G.quit = function () {
     if (run && run.kind === 'pvp') endPvp();
+    if (run && run.kind === 'party') endParty();
     stopRun();
     run = null;
     KK.builder.level = 1;

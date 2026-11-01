@@ -163,6 +163,20 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 - Leaving, closing the page, or losing connection for 12 seconds mid-round also counts as a loss.
 - Each win or loss is added to the build you played: **wins: 1 · losses: 0** shows on that saved build on the home page. Matches against the AI don't count.
 
+vs players has two tabs: **1v1 match** (the list and challenges above) and **lobbies**.
+
+### Lobbies
+
+- **create lobby** opens a room for up to 4 players (you're the host, marked with a crown). Other players see it in the lobbies tab and press **join**.
+- Joining sends a request: the host hears a ping and sees each player's name and keyboard with **accept** / **reject**. A rejected player is told the host said no. While waiting you can **cancel**.
+- The host presses **start match** once 2 or more players are in. Members can **leave**; if the host leaves or disconnects, the lobby closes.
+- A lobby match is one screen per player, not split lanes. Your field is full size; your opponents sit **lower left**, each with their username, keyboard and current score, and a bar showing how close they are to being knocked out.
+- There's **no overflow** from missed words. The only bar is your **knockout** bar, and it rises only when an opponent lands a combo: every combo hits every other player still in. Hits are scaled by how many opponents there are, so a 4-player lobby isn't over in seconds.
+- Fill your bar to the top and you're **knocked out** (KO shows on everyone's screen). Last one standing wins.
+- If nobody is knocked out by the end of **2:00**, the highest score wins. Ties go to whoever has the lower knockout bar. Knocked-out players rank by how long they lasted.
+- Everyone sees the same standings. The result counts toward the keyboard you played (a win for 1st, a loss otherwise) and appears in your match history as "N-player lobby".
+- After the match, **back to lobbies** returns to the room: the host's lobby reopens for a rematch with everyone who stayed.
+
 ## Going online
 
 Without setup, vs players works between tabs of one browser, which is handy for testing. To let everyone play each other, connect a free Firebase project (Spark plan, no card needed):
@@ -322,6 +336,7 @@ js/auth.js            local sign up / log in (PBKDF2-hashed passwords)
 js/net-config.js      Firebase web config (null = everything stays in this browser)
 js/net.js             online layer: Firebase Auth + Realtime Database, or a localStorage stand-in
 js/online.js          vs players: presence, lobby, challenges, build sync, records, user count
+js/party.js           vs players lobbies: create / join / accept / reject, start, rematch
 js/social.js          profiles, profile pictures (crop + store), friends and friend requests
 js/data-*.js          switches, keycap sets, word lists (english + tagalog)
 js/catalog.js         parts, sound multipliers, switch/keycap inference

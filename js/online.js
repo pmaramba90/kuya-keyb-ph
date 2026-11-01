@@ -43,6 +43,7 @@
   const count = (n) => Math.max(0, Math.floor(Number(n) || 0));
   const recText = (r) => `${count(r && r.w)}W–${count(r && r.l)}L`;
   O.recText = recText;
+  O.inParty = false; // in a lobby (js/party.js): no 1v1 challenges meanwhile
 
   // the builds you can play with: your saved ones, or the default if there are none
   function picks() {
@@ -50,6 +51,7 @@
     if (!app.profiles.length) return [{ pid: 'default', name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), rec: app.progress.pvpDefault }];
     return app.profiles.map((p) => ({ pid: p.id, name: p.name, build: p.build, rec: p }));
   }
+  O.myPick = () => myPick();
   function myPick() {
     const list = picks(), want = KK.app.settings.pvpBuild;
     return list.find((p) => p.pid === want) || list.find((p) => p.pid === KK.app.profileId) || list[0];
@@ -118,7 +120,7 @@
       const id = N.now().toString(36) + Math.random().toString(36).slice(2, 6);
       N.ref(`history/${me.uid}/${id}`).set({
         opp: String(m.opp), oppName: String(m.oppName || 'player').slice(0, 40), won: !!won,
-        score: `${count(m.wins[0])}–${count(m.wins[1])}`, how: String(m.how || '').slice(0, 40),
+        score: m.score ? String(m.score).slice(0, 12) : `${count(m.wins[0])}–${count(m.wins[1])}`, how: String(m.how || '').slice(0, 40),
         build: String(pick.name).slice(0, 60), at: N.now(),
       }).then(() => app.screen === 'play' && app.renderHistory()) // play may already be showing
         .catch((err) => console.warn('kkph history', err));
@@ -185,6 +187,14 @@
     O.inMatch = false;
     beatNow();
     KK.app.pvpDone();
+    KK.party.matchEnded();
+  };
+  // a lobby match starting (js/party.js): busy, and the keyboard its result counts for
+  O.beginParty = function (pick) {
+    O.inMatch = true;
+    O.matchPick = pick;
+    closeLobby();
+    beatNow();
   };
 
   // home page counter (works signed out)
@@ -193,8 +203,10 @@
   };
 
   /* ----------------------------------- lobby ----------------------------------- */
-  O.openLobby = function () {
+  // tab: '1v1' or 'parties' (a lobby you're in always opens on it)
+  O.openLobby = function (tab) {
     KK.app.show('lobby');
+    KK.party.showTab(tab || (O.inParty ? 'parties' : '1v1'));
     closeLobby();
     lobbyOffs.push(N.ref('builds').on((v) => { builds = v || {}; renderLobby(); }));
     const tick = setInterval(renderLobby, 5000); // drop players who went quiet
@@ -236,7 +248,7 @@
     const id = theirs[p.pid] && theirs[p.pid].build ? p.pid : Object.keys(theirs).find((k) => theirs[k] && theirs[k].build && k !== 'default');
     const x = (id && theirs[id]) || { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), ...(theirs.default || {}) };
     const d = describe(x.build);
-    const busy = p.state === 'match' || !!outgoing;
+    const busy = p.state === 'match' || !!outgoing || O.inParty;
     return `<div class="pl-card">
       <div class="pl-head"><span class="av-wrap pl-link" data-user="${esc(uid)}" title="view profile">${KK.social.avatarImg(uid, 'sm')}<i class="pl-dot ${p.state === 'match' ? 'busy' : ''}"></i></span><b class="pl-link" data-user="${esc(uid)}" title="view profile">${esc(p.display || p.name)}</b>
         <span class="sub">${p.state === 'match' ? 'in a match' : 'online'}</span>
@@ -253,6 +265,7 @@
     KK.app.saveSettings();
     renderPick();
     beatNow();
+    KK.party.pickChanged();
   });
   $('#lobbyList').addEventListener('click', (e) => {
     const u = e.target.closest('[data-user]');
@@ -375,7 +388,7 @@
       if (N.now() - ch.at > CH_SECS * 1000) return;
       handled.add(key);
       const path = `challenges/${me.uid}/${from}`;
-      if (O.inMatch || incoming || outgoing) return N.ref(path).update({ status: 'busy' });
+      if (O.inMatch || O.inParty || incoming || outgoing) return N.ref(path).update({ status: 'busy' });
       showIncoming(from, ch, path);
     });
   }

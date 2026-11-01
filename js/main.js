@@ -323,7 +323,7 @@
   app.show = function (name) {
     if (!app.user) name = 'title'; // everything past the home page needs an account
     // leaving a match against a person between rounds still ends it
-    if (PLAY_SCREENS[app.screen] && name !== app.screen && (KK.game.isRunning() || KK.game.mode() === 'pvp')) KK.game.quit();
+    if (PLAY_SCREENS[app.screen] && name !== app.screen && (KK.game.isRunning() || KK.game.mode() === 'pvp' || KK.game.mode() === 'party')) KK.game.quit();
     if (app.screen === 'lobby' && name !== 'lobby') KK.online.leftLobby();
     // the keyboards screen and a friend's page preview other boards' sound; leaving
     // them restores yours
@@ -534,8 +534,29 @@
     KK.music.duck(false);
     KK.game.startPvp(m);
   };
+  // a lobby match (2–4 players, js/party.js): one screen, the others lower left
+  app.startParty = function (m, mine) {
+    gesture();
+    ui.close();
+    if (!app.pvpPrev) app.pvpPrev = { build: app.build, profileId: app.profileId };
+    app.build = mine.build;
+    app.pvpName = mine.name;
+    app.profileId = app.profiles.some((p) => p.id === mine.pid) ? mine.pid : null;
+    KK.keysound.setBuild(app.build);
+    app.show('vs');
+    document.body.classList.add('party');
+    $('#vsSubL').textContent = `${mine.name} · ${KK.keysound.writeup(app.build).headline}`;
+    $('#vsSubR').textContent = '';
+    $('#vsAvR').hidden = true;
+    $('#keysHint').innerHTML = '<span class="kbd">esc</span> forfeit &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; your combos raise everyone else\'s knockout bar';
+    renderGameBuild($('#vsBuild'));
+    requestAnimationFrame(() => app.vsKb.fit());
+    KK.music.setMode('game', m.level);
+    KK.music.duck(false);
+    KK.game.startParty(m);
+  };
   app.pvpDone = function () {
-    document.body.classList.remove('pvp');
+    document.body.classList.remove('pvp', 'party');
     $('#vsOpp').hidden = true;
     $('#keysHint').innerHTML = HINT_VS;
     if (!app.pvpPrev) return;
@@ -825,6 +846,7 @@
       const imported = authMode === 'signup' && claimLegacyData(user);
       setUser(user);
       KK.online.start();
+      KK.party.start();
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
@@ -843,6 +865,7 @@
   $('#logoutBtn').addEventListener('click', () => {
     if (KK.game.isRunning() || KK.game.mode() === 'pvp') KK.game.quit();
     KK.online.stop();
+    KK.party.stop();
     KK.social.stop();
     KK.feed.stop();
     KK.notify.stop();
@@ -1146,6 +1169,7 @@
     if (who && !app.user) {
       setUser(who.name);
       KK.online.start();
+      KK.party.start();
       KK.social.start();
       KK.feed.start();
       KK.notify.start();

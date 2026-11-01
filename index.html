@@ -304,15 +304,28 @@
       <!-- vs players: who's online, their builds, challenge -->
       <section class="screen" id="scr-lobby">
         <div class="lobby">
-          <div class="grp-h">vs players <span class="sub">challenge anyone online · best of 3 · 1:30 rounds · same rules as vs AI · wins count for the keyboard you pick</span></div>
+          <div class="grp-h">vs players <span class="sub">1v1: challenge anyone online, best of 3 · lobbies: 2–4 players, last one standing · wins count for the keyboard you pick</span></div>
           <div class="lobby-me">
             <span class="hud-lbl">your keyboard</span>
             <select class="select" id="lobbyPick"></select>
             <div class="lobby-desc" id="lobbyDesc"></div>
           </div>
-          <div class="grp-h">online now <span class="sub" id="lobbyCount"></span></div>
-          <div class="lobby-list" id="lobbyList"></div>
-          <p class="hint" id="lobbyHint"></p>
+          <div class="chips lobby-tabs" id="lobbyTabs"><button class="chip on" data-lt="1v1">1v1 match</button><button class="chip" data-lt="parties">lobbies</button></div>
+          <!-- 1v1: everyone online, challenge one -->
+          <div id="lt1v1">
+            <div class="grp-h">online now <span class="sub" id="lobbyCount"></span></div>
+            <div class="lobby-list" id="lobbyList"></div>
+            <p class="hint" id="lobbyHint"></p>
+          </div>
+          <!-- lobbies (js/party.js): create one or ask to join; the host accepts or rejects -->
+          <div id="ltParties" hidden>
+            <div class="pt-room" id="partyRoom" hidden></div>
+            <div id="partyListWrap">
+              <div class="pt-new"><button class="btn primary" data-pt="create">create lobby</button><span class="hint">up to 4 players · you accept or reject who joins</span></div>
+              <div class="grp-h">open lobbies</div>
+              <div class="pt-list" id="partyList"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -363,6 +376,8 @@
           <div class="vs-side r"><span class="vs-who-top"><span class="hud-lbl" id="vsNameR">ai</span><img class="av sm" id="vsAvR" alt="" hidden></span><span class="vs-sub" id="vsSubR"></span><b id="vsScoreR">0</b></div>
         </div>
         <div class="vs-lanes">
+          <!-- a lobby match: your opponents (name, keyboard, score, knockout bar) -->
+          <div class="party-foes" id="partyFoes"></div>
           <div class="lane" id="laneL">
             <div class="lane-head">
               <div class="meter-row"><span class="hud-lbl">overflow</span><div class="overflow"><div class="ofill"></div></div><span class="opct">0%</span></div>
@@ -479,6 +494,7 @@
   <script src="js/notify.js"></script>
   <script src="js/mention.js"></script>
   <script src="js/chat.js"></script>
+  <script src="js/party.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

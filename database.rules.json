@@ -284,6 +284,20 @@
         }
       }
     },
+    "parties": {
+      ".read": "auth != null",
+      "$p": {
+        ".write": "auth != null && (data.exists() ? data.child('host').val() === auth.uid : newData.child('host').val() === auth.uid)",
+        "requests": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "denied": { "$uid": { ".write": "auth != null && auth.uid === $uid && !newData.exists()" } },
+        "members": { "$uid": { ".write": "auth != null && auth.uid === $uid && data.exists()" } },
+        "live": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "ready": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "res": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "left": { "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+        "hits": { "$to": { "$k": { ".write": "auth != null && (auth.uid === $to || root.child('parties').child($p).child('members').child(auth.uid).exists())" } } }
+      }
+    },
     "matches": {
       "$mid": {
         ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",
