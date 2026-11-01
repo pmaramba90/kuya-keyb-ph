@@ -513,7 +513,7 @@
           if (!f.display) f.display = p.display || f.name;
           const where = [f.city, f.country].filter(Boolean).join(', ');
           const sub = [f.nickname && `“${f.nickname}”`, where, st].filter(Boolean).join(' · ');
-          return `<div class="fr-card link" data-user="${esc(uid)}" title="view profile"><span class="av-wrap">${S.avatarImg(uid, 'sm')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
+          return `<div class="fr-card link${st === 'offline' ? ' offline' : ''}" data-user="${esc(uid)}" title="view profile"><span class="av-wrap">${S.avatarImg(uid, 'sm')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
             <div class="fr-text"><b>${esc(f.display || f.name || '…')}</b><span>${esc(sub)}</span></div>
             ${st === 'online' ? `<button class="btn primary sm" data-fr="challenge" data-uid="${esc(uid)}">challenge</button>` : ''}
             <button class="picon" data-fr="remove" data-uid="${esc(uid)}" title="remove friend">✕</button></div>`;
