@@ -920,6 +920,14 @@
     b.querySelector('span').textContent = open ? '▴' : '▾';
   });
 
+  // the header stays at the top: how tall it is (for what sits below it), and a shadow
+  // once the page has scrolled under it
+  const head = document.querySelector('.top');
+  const headH = () => document.documentElement.style.setProperty('--head-h', head.offsetHeight + 'px');
+  if (window.ResizeObserver) new ResizeObserver(headH).observe(head);
+  headH();
+  addEventListener('scroll', () => head.classList.toggle('stuck', scrollY > 4), { passive: true });
+
   // the site's colours: dark blue (default), dark green, dark grey or dark red
   const THEME_BG = { blue: '#0f1a2e', green: '#0c1d16', grey: '#17181b', red: '#1f0d11' };
   const applyTheme = () => {
