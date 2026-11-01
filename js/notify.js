@@ -95,6 +95,7 @@
     if (!menu.hidden) return NT.close();
     KK.sfx.ui();
     KK.social.closeMenu();
+    KK.chat.closeMenu();
     shownSeen = seen; // the ones newer than your last look stay marked as new this time
     menu.hidden = false;
     $('#bellBtn').classList.add('on');

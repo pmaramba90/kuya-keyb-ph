@@ -163,6 +163,33 @@
         }
       }
     },
+    "chats": {
+      "$chat": {
+        ".read": "auth != null && ($chat.beginsWith(auth.uid + '_') || $chat.endsWith('_' + auth.uid))",
+        "$mid": {
+          ".write": "auth != null && !data.exists() && ($chat.beginsWith(auth.uid + '_') || $chat.endsWith('_' + auth.uid))",
+          ".validate": "newData.hasChildren(['from', 'text', 'at']) && newData.child('from').val() === auth.uid",
+          "from": { ".validate": "newData.isString()" },
+          "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "inbox": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$other": {
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === $other)",
+          ".validate": "newData.hasChildren(['at', 'last', 'from'])",
+          "at": { ".validate": "newData.isNumber()" },
+          "last": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "from": { ".validate": "newData.isString() && (newData.val() === $uid || newData.val() === $other)" },
+          "read": { ".validate": "newData.isBoolean()" },
+          "$x": { ".validate": false }
+        }
+      }
+    },
     "notifs": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

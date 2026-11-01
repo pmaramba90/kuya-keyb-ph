@@ -150,6 +150,7 @@
     umEditing(false);
   });
   S.closeMenu = () => {
+    if (KK.chat) KK.chat.closeMenu();
     umenu.hidden = true;
     $('#navUser').classList.remove('on');
     $('#navUser').setAttribute('aria-expanded', 'false');
@@ -515,6 +516,7 @@
           const sub = [f.nickname && `“${f.nickname}”`, where, st].filter(Boolean).join(' · ');
           return `<div class="fr-card link${st === 'offline' ? ' offline' : ''}" data-user="${esc(uid)}" title="view profile"><span class="av-wrap">${S.avatarImg(uid, 'sm')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
             <div class="fr-text"><b>${esc(f.display || f.name || '…')}</b><span>${esc(sub)}</span></div>
+            <button class="btn sm" data-fr="message" data-uid="${esc(uid)}">message</button>
             ${st === 'online' ? `<button class="btn primary sm" data-fr="challenge" data-uid="${esc(uid)}">challenge</button>` : ''}
             <button class="picon" data-fr="remove" data-uid="${esc(uid)}" title="remove friend">✕</button></div>`;
         }).join('')
@@ -541,6 +543,7 @@
     else if (act === 'decline') S.decline(uid);
     else if (act === 'cancel') S.cancel(uid).catch((err) => console.warn('kkph friends', err));
     else if (act === 'challenge') KK.online.challenge(uid, (info[uid] || {}).display || 'friend');
+    else if (act === 'message') KK.chat.open(uid);
     else if (act === 'remove') {
       if (!b.dataset.armed) {
         b.dataset.armed = '1';

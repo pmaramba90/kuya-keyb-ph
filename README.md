@@ -57,9 +57,10 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
   - Each review also shows its item's **average** once it has more than one review (for example "avg ★ 4 · 2 reviews").
   - **On the side**, which stays in view while you scroll the feed (and scrolls by itself if it's taller than the window), after the sign-up and online counts:
     - **Popular Keyboards**: the three keyboards on the site with the most hearts, from anyone, not just friends. **show more** lists up to 10, and **show less** goes back to 3. Each is drawn whole, scaled down. Click one to open its owner's page.
-    - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have.
+    - **Top Rated**: the five best-rated items across every review on the site, with their average stars and how many reviews they have. Click one (or the item on any review in the feed) to see every review of it, newest first, with each reviewer, their stars, what they wrote and their shop link.
     - **High Scores**: the top 5 all-time single-player best totals on the site, from everyone. Each player's best is saved online (only ever going up), and older bests are filled in the next time that player signs in. Badges go to the top 3.
     - **This Week**: you and your friends ranked by wins against players. It starts fresh every Monday.
+  - **Messages** (the speech-bubble button next to the bell, with a red count of unread conversations) list your conversations, newest first, unread ones marked. Message anyone with **message** on their profile, or on a friend in the friends tab: a chat box opens at the bottom right (a sheet above the tab bar on phones) with text and emoji (no GIFs). Minimise it to its name bar or close it; it steps aside during games. A new message plays three quick clicky key presses. Only the two players in a conversation can read it (database rules).
   - **The bell** (top right, next to your picture) shows a red count of new notifications:
     - someone reacted to or replied to your post
     - hearted your keyboard
@@ -96,7 +97,7 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 
 ## Full keyboards
 
-There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 1,462 prebuilt boards from 81 brands. Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. The boards come from three sources:
+There's a third option next to "build a new keyboard" and "continue last build": **full keyboards**. It lists 1,462 prebuilt boards from 81 brands. Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with a **▶ hear it** button right under its name. The boards come from three sources:
 
 | source | boards | how |
 |---|---|---|
@@ -333,6 +334,7 @@ js/kbs.js             full (prebuilt) keyboards screen
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
 js/notify.js          the bell: notifications
 js/mention.js         @ tags: the picker, tag links, tag notifications
+js/chat.js            messages: the envelope list, the chat box, emoji, the new-message clicks
 js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inhuman-speed keys
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules

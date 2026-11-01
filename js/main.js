@@ -712,6 +712,7 @@
     $('#userHi').innerHTML = `<span class="av-wrap">${KK.social.avatarImg(uid, 'md')}<i class="pl-dot ${st === 'online' ? '' : st === 'offline' ? 'off' : 'busy'}"></i></span>
       <div class="user-who"><div class="dash-name">${KK.feed.profileName(name, KK.feed.isOfficial(uid) || String((u && u.name) || '').toLowerCase() === KK.feed.OFFICIAL)}</div><div class="hint">${esc(sub)}</div><div class="badges" data-uid="${esc(uid)}"></div></div>
       <span class="user-rel" id="userRel"></span>
+      <button class="btn sm" id="userMessage">message</button>
       ${st === 'online' ? `<button class="btn primary sm" id="userChallenge">challenge</button>` : ''}`;
     app.renderUserRel();
     KK.feed.paintBadges();
@@ -725,6 +726,7 @@
     $('#userKbsH').hidden = !rest.length;
     $('#userKbs').innerHTML = rest.length ? rest.map((k) => kbCard(k, { owner: uid })).join('') : kbs.length ? '' : '<p class="hint">no keyboards saved yet.</p>';
     KK.feed.showPostsOf(uid, $('#userPosts')); // their posts, as they show in the feed
+    $('#userMessage').addEventListener('click', () => KK.chat.open(uid));
     const ch = $('#userChallenge');
     if (ch) ch.addEventListener('click', () => KK.online.challenge(uid, name));
   };
@@ -814,6 +816,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
+      KK.chat.start();
       app.pullScores().finally(() => app.publishScores());
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
@@ -831,6 +834,7 @@
     KK.social.stop();
     KK.feed.stop();
     KK.notify.stop();
+    KK.chat.stop();
     KK.net.logout();
     clearUser();
     setAuthMode('login');
@@ -1125,6 +1129,7 @@
       KK.social.start();
       KK.feed.start();
       KK.notify.start();
+      KK.chat.start();
       app.pullScores().finally(() => app.publishScores());
     }
     if (app.screen === 'title') {

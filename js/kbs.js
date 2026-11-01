@@ -117,6 +117,7 @@
     $('#kbInfo').innerHTML = `
       <div class="kbd-title">${esc(kb.title)}</div>
       <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · from ${C.money(kb.price, cur)} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>
+      <button class="btn primary kbd-hear" data-act="demo">▶ hear it</button>
       ${look.img ? `<img class="kbd-photo" alt="${esc(kb.title)}" src="${esc(thumb(look.img, 720))}" onerror="this.remove()">` : ''}
       ${kb.looks.length > 1 ? `<div class="grp-h">color</div><div class="chips">${kb.looks.map((l, i) => `<button class="chip${i === K.look ? ' on' : ''}" data-act="look" data-v="${i}"><i class="dotc" style="background:${l.caseColor}"></i>${esc(l.name)}</button>`).join('')}</div>` : ''}
       <div class="grp-h">switch</div>

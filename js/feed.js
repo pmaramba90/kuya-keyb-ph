@@ -412,12 +412,13 @@
     ratedAt = N.now();
     const all = (await N.ref('posts').once().catch(() => null)) || {};
     const r = {};
-    Object.values(all).forEach((ps) => Object.values(ps || {}).forEach((p) => {
+    Object.entries(all).forEach(([uid, ps]) => Object.entries(ps || {}).forEach(([id, p]) => {
       if (!p || p.type !== 'review' || !itemById(p.kind, p.item)) return;
       const k = p.kind + ':' + p.item, v = rating(p.rating);
       if (!v) return;
-      (r[k] = r[k] || { kind: p.kind, item: p.item, sum: 0, n: 0 }).sum += v;
+      (r[k] = r[k] || { kind: p.kind, item: p.item, sum: 0, n: 0, list: [] }).sum += v;
       r[k].n++;
+      r[k].list.push({ uid, id, p }); // every review of it, for its reviews list
     }));
     ratings = r;
   }
@@ -432,11 +433,49 @@
     $('#feedRated').innerHTML = top.length
       ? top.map((x, i) => {
           const it = itemById(x.kind, x.item), avg = Math.round((x.sum / x.n) * 10) / 10;
-          return `<div class="rated-row"><span class="pop-rank">${i + 1}</span><span class="kb-text"><b>${esc(it.name)}</b><span>${KINDS[x.kind].label} · ${x.n} review${x.n > 1 ? 's' : ''}</span></span><span class="rated-n">${stars(Math.round(avg * 2) / 2)}<b>${avg}</b></span></div>`;
+          return `<div class="rated-row" data-reviews="${esc(x.kind + ':' + x.item)}" role="button" tabindex="0" title="see every review"><span class="pop-rank">${i + 1}</span><span class="kb-text"><b>${esc(it.name)}</b><span>${KINDS[x.kind].label} · ${x.n} review${x.n > 1 ? 's' : ''}</span></span><span class="rated-n">${stars(Math.round(avg * 2) / 2)}<b>${avg}</b></span></div>`;
         }).join('')
       : '<p class="hint">no reviews yet. Write one with ★ review.</p>';
     renderPosts(); // reviews show their item's average too
   }
+
+  // every review of one item (from Top Rated or a review card), newest first
+  F.showReviews = async function (key) {
+    ratedAt = 0; // fresh: a review may have just been posted
+    await loadRatings();
+    const x = ratings[key], [kind, item] = String(key).split(':'), it = itemById(kind, item);
+    if (!it) return;
+    const list = x ? x.list.slice().sort((a, b) => (+b.p.at || 0) - (+a.p.at || 0)) : [];
+    const avg = x ? Math.round((x.sum / x.n) * 10) / 10 : 0;
+    KK.ui.open(
+      `<div class="ov-h">${esc(it.name)}</div>
+       <div class="ov-sub">${KINDS[kind].label}${x ? ` · ${stars(Math.round(avg * 2) / 2)} <b>${avg}</b> · ${x.n} review${x.n > 1 ? 's' : ''}` : ''}</div>
+       <div class="rv-list">${list.length ? list.map(({ uid, p }) => {
+          const r = rating(p.rating), shop = shopOf(p.link);
+          return `<div class="rv"><div class="rv-top">${KK.social.avatarImg(uid, 'xs')}${F.nameHtml(uid)}${stars(r)}<b>${r}</b><span class="rv-at">${F.ago(p.at)}</span></div>
+            ${p.text ? `<p>${KK.mention.html(String(p.text).slice(0, 1000), byAdmin(uid))}</p>` : ''}
+            ${shop ? `<a class="btn sm rev-shop" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer nofollow ugc">buy on ${shop} ↗</a>` : ''}</div>`;
+        }).join('') : '<p class="hint">no reviews yet.</p>'}</div>
+       <div class="ov-btns"><button class="btn primary" data-ov="close" data-primary>close</button></div>`,
+      { close: () => KK.ui.close(), esc: () => KK.ui.close() }
+    );
+  };
+  const openReviews = (e) => {
+    const r = e.target.closest('[data-reviews]');
+    if (!r || e.target.closest('a, button')) return false;
+    KK.sfx.ui();
+    F.showReviews(r.dataset.reviews);
+    return true;
+  };
+  $('#feedRated').addEventListener('click', openReviews);
+  $('#feedRated').addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && openReviews(e) && e.preventDefault());
+  // a name in the reviews list: their page
+  $('#ovCard').addEventListener('click', (e) => {
+    const u = e.target.closest('.rv-list [data-user]');
+    if (!u) return;
+    KK.ui.close();
+    KK.app.showUser(u.dataset.user, KK.app.screen);
+  });
 
   /* --------------------------- tabs, composer, welcome --------------------------- */
   function renderTabs() {
@@ -728,7 +767,7 @@
         <div class="post-who">${F.nameHtml(uid)}<span>${act ? act.head : review ? 'wrote a review' : 'posted'} · ${F.ago(p.at)}</span></div>
         ${canDelete(uid) ? `<button class="picon" data-del="${esc(id)}" data-uid="${esc(uid)}" title="${uid === ME() ? 'delete' : 'delete (moderator)'}">✕</button>` : ''}
       </div>
-      ${it ? `<div class="rev">
+      ${it ? `<div class="rev" data-reviews="${esc(p.kind + ':' + p.item)}" title="see every review of it">
         ${it.img ? `<img class="rev-img" src="${esc(thumb(it.img))}" alt="" loading="lazy" onerror="this.remove()">` : ''}
         <div class="rev-what"><span class="rev-kind">${KINDS[p.kind].label}</span><b>${esc(it.name)}</b><span class="hint">${esc(it.sub || '')}</span>
         <div class="rev-rate">${stars(r)}<b>${r}</b><span class="hint">/ 5</span>${avg && avg.n > 1 ? `<span class="rev-avg">avg ★ ${avg.avg} · ${avg.n} reviews</span>` : ''}</div></div>
@@ -795,6 +834,7 @@
     onPostsClick(e);
   }));
   function onPostsClick(e) {
+    if (openReviews(e)) return;
     const del = e.target.closest('[data-del]');
     if (del && me) {
       del.blur();

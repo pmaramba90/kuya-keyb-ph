@@ -44,6 +44,11 @@
           <span>marketplace</span>
         </button>
       </nav>
+      <!-- messages: your conversations; a chat box opens bottom right -->
+      <div class="bell-wrap msg-wrap" id="msgWrap" hidden>
+        <button class="bell" id="msgBtn" title="messages" aria-label="messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4.5 3.5V16.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7.5 10h9M7.5 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><i class="nav-badge" id="msgBadge" hidden></i></button>
+        <div class="bell-menu" id="msgMenu" hidden></div>
+      </div>
       <!-- the bell: reactions, replies, hearts, challenges, friend requests -->
       <div class="bell-wrap" id="bellWrap" hidden>
         <button class="bell" id="bellBtn" title="notifications" aria-label="notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><i class="nav-badge" id="bellBadge" hidden></i></button>
@@ -427,6 +432,13 @@
   <input id="mobileType" class="mobile-type" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="type here" tabindex="-1">
   <button class="btn primary type-btn" id="typeBtn" hidden>⌨ tap here to type</button>
   <button class="pad-pause" id="padPause" hidden aria-label="pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
+  <!-- a conversation (js/chat.js): text and emoji -->
+  <div class="chatbox" id="chatBox" hidden>
+    <div class="cb-head"><button class="cb-who" id="cbWho" type="button"></button><button class="picon" id="cbMin" type="button" title="minimise" aria-label="minimise">–</button><button class="picon" id="cbClose" type="button" title="close" aria-label="close">✕</button></div>
+    <div class="cb-body" id="cbBody"></div>
+    <div class="cb-emoji" id="cbEmoji" hidden></div>
+    <form class="cb-form" id="cbForm" autocomplete="off"><button type="button" class="cb-emo-btn" id="cbEmoBtn" title="emoji" aria-label="emoji">😊</button><input class="search" id="cbInput" maxlength="500" placeholder="write a message…" aria-label="message"><button class="btn primary sm" type="submit">send</button></form>
+  </div>
   <div class="overlay ch-overlay" id="chOverlay" hidden><div class="ov-card ch-card" id="chCard"></div></div>
   <!-- profile picture: drag to position, zoom, save (Facebook-style) -->
   <div class="overlay av-overlay" id="avOverlay" hidden>
@@ -468,6 +480,7 @@
   <script src="js/feed.js"></script>
   <script src="js/notify.js"></script>
   <script src="js/mention.js"></script>
+  <script src="js/chat.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
