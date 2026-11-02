@@ -108,6 +108,8 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 
 There's a third option next to "build a new keyboard": **full keyboards**. It lists 2,087 prebuilt boards from 122 brands (complete keyboards only: no kits, barebones, PCB modules or macropads). Search them, for example "keychron k8" or "razer blackwidow", or filter by brand, size or switch type. Click one and its details open with **▶ hear it** and **★ review** right under its name. Review opens a panel right there (stars with halves, a few words, an optional Amazon / Lazada / Shopee link): post it and you stay on full keyboards, with a "review posted ✓" note. It shows in the feed and counts toward Top Rated like any review. The boards come from three sources:
 
+The list is sorted by brand, then keyboard name, so each brand's boards sit together (**A → Z** by default; tap it for **Z → A**). Next to it, two icons switch between **cards** (picture, name, brand, size, switches, price) and a **list** (a heading per brand, then just each keyboard's name and price, 200 at a time). The view and the order are remembered.
+
 | source | boards | how |
 |---|---|---|
 | mechanicalkeyboards.com | 1,018 | the store's product feed (kits, barebones, PCB modules and macropads removed) |

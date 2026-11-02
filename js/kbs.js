@@ -18,6 +18,22 @@
   const TYPES = ['all', 'linear', 'tactile', 'clicky', 'silent', 'topre', 'magnetic'];
   const FACTORY = { caseFoam: 'case foam', plateFoam: 'plate foam', peFoam: 'pe foam', tape: 'tape mod', stabLube: 'lubed stabilizers' };
 
+  // the list: cards (picture, name, brand, size, price) or rows (just name and price), sorted
+  // by brand then name, A→Z or Z→A; both remembered
+  const PAGE = { cards: 48, list: 200 };
+  const viewMode = () => (KK.app.settings.kbsView === 'list' ? 'list' : 'cards');
+  const sortDir = () => (KK.app.settings.kbsSort === 'za' ? -1 : 1);
+  const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  const ICON = {
+    cards: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>',
+    list: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>',
+  };
+  function renderTools() {
+    const v = viewMode(), az = sortDir() === 1;
+    $('#kbTools').innerHTML = `<button class="chip kbs-sort" data-kbt="sort" title="sorted by brand, then name">${az ? 'A → Z' : 'Z → A'}</button>
+      <span class="kbs-views" role="group" aria-label="show as">${['cards', 'list'].map((m) => `<button class="kbs-view${v === m ? ' on' : ''}" data-kbt="view" data-v="${m}" title="${m}" aria-label="show as ${m}" aria-pressed="${v === m}">${ICON[m]}</button>`).join('')}</span>`;
+  }
+
   const thumb = (url, w) => (url ? url + (url.includes('?') ? '&' : '?') + 'width=' + w : '');
   const typeOk = (s, t) => (t === 'all' ? true : t === 'topre' ? !!s.dome : t === 'magnetic' ? !!s.he : s.type === t && !s.dome);
 
@@ -27,21 +43,35 @@
     $('#kbTypes').innerHTML = TYPES.map((t) => `<button class="chip${t === 'all' ? ' on' : ''}" data-f="type" data-v="${t}">${t}</button>`).join('');
     $('#kbQ').placeholder = `search ${C.keyboards.length.toLocaleString()} keyboards… e.g. keychron k8`;
     K.view = KK.kbview.create($('#kbRender'), { maxU: 30 });
+    K.limit = PAGE[viewMode()];
+    renderTools();
+    $('#kbTools').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-kbt]');
+      if (!b) return;
+      b.blur();
+      KK.sfx.tab();
+      if (b.dataset.kbt === 'view') KK.app.settings.kbsView = b.dataset.v;
+      else KK.app.settings.kbsSort = sortDir() === 1 ? 'za' : 'az';
+      KK.app.saveSettings();
+      K.limit = PAGE[viewMode()];
+      renderTools();
+      renderList();
+    });
 
-    $('#kbQ').addEventListener('input', (e) => { f.q = e.target.value; K.limit = 48; renderList(); });
-    $('#kbBrand').addEventListener('change', (e) => { f.brand = e.target.value; K.limit = 48; renderList(); });
+    $('#kbQ').addEventListener('input', (e) => { f.q = e.target.value; K.limit = PAGE[viewMode()]; renderList(); });
+    $('#kbBrand').addEventListener('change', (e) => { f.brand = e.target.value; K.limit = PAGE[viewMode()]; renderList(); });
     $('#scr-kbs .kbs-filters').addEventListener('click', (e) => {
       const c = e.target.closest('[data-f]');
       if (!c) return;
       f[c.dataset.f] = c.dataset.v;
       c.parentElement.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === c));
       c.blur();
-      K.limit = 48;
+      K.limit = PAGE[viewMode()];
       renderList();
     });
     $('#kbList').addEventListener('click', (e) => {
       if (e.target.closest('[data-more]')) {
-        K.limit += 48;
+        K.limit += PAGE[viewMode()];
         renderList();
         return;
       }
@@ -83,22 +113,31 @@
 
   function filtered() {
     const terms = f.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const d = sortDir();
     return C.keyboards.filter(
       (k) =>
         (f.brand === 'all' || k.vendor === f.brand) &&
         (f.size === 'all' || k.size === f.size) &&
         (f.type === 'all' || k.switches.some((s) => typeOk(C.switchById[s.id], f.type))) &&
         terms.every((t) => k.search.includes(t))
-    );
+    ).sort((a, b) => d * (byName(a.vendor, b.vendor) || byName(a.title, b.title)));
   }
 
   function renderList() {
-    const list = filtered();
+    const list = filtered(), cur = KK.app.settings.currency, rows = viewMode() === 'list';
     $('#kbCount').textContent = list.length.toLocaleString() + ' keyboards';
+    $('#kbList').classList.toggle('as-list', rows);
+    // rows: just the name and price, under a heading for each brand
+    let brand = null;
+    const row = (k) => {
+      const head = k.vendor !== brand ? `<div class="kbr-brand">${esc(k.vendor)}</div>` : '';
+      brand = k.vendor;
+      return `${head}<button class="kbr${K.sel && K.sel.id === k.id ? ' sel' : ''}" data-kb="${esc(k.id)}"><span class="kbr-t">${esc(k.title)}</span><span class="kbr-p">${C.money(k.price, cur)}</span></button>`;
+    };
     $('#kbList').innerHTML =
       list
         .slice(0, K.limit)
-        .map((k) => `<button class="kbc${K.sel && K.sel.id === k.id ? ' sel' : ''}" data-kb="${esc(k.id)}">
+        .map((k) => rows ? row(k) : `<button class="kbc${K.sel && K.sel.id === k.id ? ' sel' : ''}" data-kb="${esc(k.id)}">
           ${k.looks[0].img
             ? `<span class="kbc-img"><img loading="lazy" alt="" src="${esc(thumb(k.looks[0].img, 300))}" onerror="this.remove()"></span>`
             : `<span class="kbc-img noimg" style="--case:${k.looks[0].caseColor}">${KK.kbview.swatch(C.keycapById[k.looks[0].keycap])}</span>`}
@@ -114,7 +153,7 @@
     K.sel = C.keyboardById[id];
     K.look = 0;
     K.sw = 0;
-    document.querySelectorAll('#kbList .kbc').forEach((c) => c.classList.toggle('sel', c.dataset.kb === id));
+    document.querySelectorAll('#kbList [data-kb]').forEach((c) => c.classList.toggle('sel', c.dataset.kb === id));
     renderDetail();
   }
 
