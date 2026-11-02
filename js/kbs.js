@@ -18,10 +18,10 @@
   const TYPES = ['all', 'linear', 'tactile', 'clicky', 'silent', 'topre', 'magnetic'];
   const FACTORY = { caseFoam: 'case foam', plateFoam: 'plate foam', peFoam: 'pe foam', tape: 'tape mod', stabLube: 'lubed stabilizers' };
 
-  // the list: cards (picture, name, brand, size, price) or rows (just name and price), sorted
-  // by brand then name, A→Z or Z→A; both remembered
+  // the list: rows (just name and price, the default) or cards (picture, name, brand, size,
+  // price), sorted by brand then name, A→Z or Z→A; both remembered
   const PAGE = { cards: 48, list: 200 };
-  const viewMode = () => (KK.app.settings.kbsView === 'list' ? 'list' : 'cards');
+  const viewMode = () => (KK.app.settings.kbsView === 'cards' ? 'cards' : 'list');
   const sortDir = () => (KK.app.settings.kbsSort === 'za' ? -1 : 1);
   const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   const ICON = {
