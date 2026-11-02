@@ -158,6 +158,8 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 
 ## vs players
 
+**Who counts as online:** someone with the site open who has used it (mouse, keys, taps, scrolling, or coming back to the tab) in the last 10 minutes. A tab left open and untouched drops off the list after 10 minutes, and comes back the moment it's used again; in a match or a lobby you stay online.
+
 **vs players** on the home page lists everyone online: each player's username and the keyboard they've picked to play with (name, how it sounds, board, switch, keycaps, and its win–loss record). Once you're signed in, the home page also shows how many players are online now, under the sign-up count.
 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).

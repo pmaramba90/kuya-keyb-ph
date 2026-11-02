@@ -21,6 +21,10 @@
   const O = (KK.online = { inMatch: false, matchPick: null });
   const CH_SECS = 10;
   const BEAT_MS = 15000, GONE_MS = 45000;
+  // an open tab nobody has touched for this long stops counting as online (in a match or a
+  // lobby you stay online)
+  const IDLE_MS = 10 * 60 * 1000;
+  let lastActive = Date.now(), away = false;
   let me = null, offs = [], beat = null, lobbyOffs = [], players = {}, builds = {};
   let outgoing = null, incoming = null; // the challenge being shown, if any
   const handled = new Set();
@@ -130,11 +134,32 @@
   };
 
   /* --------------------------------- presence --------------------------------- */
+  // online = a heartbeat in the last GONE_MS. A tab only beats while someone's using it:
+  // left open and untouched for IDLE_MS (or hidden that long), it goes quiet and drops off
+  const idle = () => !O.inMatch && !O.inParty && Date.now() - lastActive > IDLE_MS;
   function beatNow() {
     if (!me) return;
+    if (idle()) {
+      if (!away) N.ref('presence/' + me.uid).remove().catch(() => {}); // off the list right away
+      away = true;
+      return;
+    }
+    away = false;
     const pick = myPick();
     N.ref('presence/' + me.uid).set({ name: me.name, display: me.display, state: O.inMatch ? 'match' : 'idle', pid: pick.pid, at: N.now() });
   }
+  // anything you do counts as being here; back from away, you're online again at once
+  function active() {
+    lastActive = Date.now();
+    if (away && me) beatNow();
+  }
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((t) => window.addEventListener(t, active, { passive: true, capture: true }));
+  let moved = 0;
+  window.addEventListener('pointermove', () => {
+    if (Date.now() - moved > 5000) { moved = Date.now(); active(); } // a moving mouse, at most every 5s
+  }, { passive: true });
+  document.addEventListener('visibilitychange', () => !document.hidden && active());
+  O._idleFor = (ms) => (lastActive = Date.now() - ms); // tests: pretend nobody's touched the tab
 
   O.start = function () {
     O.stop();
