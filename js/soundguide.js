@@ -190,8 +190,8 @@
         <ul class="sg-points">
           ${fold('The Sound', p.sound)}
           ${fold("How It's Achieved", p.how)}
-          <li><b>Popular Switches</b><div class="sg-chips">${list(p.switches).map((s) => `<span>${esc(s)}</span>`).join('')}</div></li>
-          <li><b>Popular Keyboards</b><div class="sg-chips">${list(p.boards).map((s) => `<span>${esc(s)}</span>`).join('')}</div></li>
+          <li><b>Popular Switches</b>${names(p.switches)}</li>
+          <li><b>Popular Keyboards</b>${names(p.boards)}</li>
         </ul>
       </div>`;
     // the board, drawn small in this profile's build
@@ -202,6 +202,9 @@
     $('#sgPrev').disabled = at === 0;
     $('#sgNext').disabled = at === PROFILES.length - 1;
   };
+
+  // popular switches / keyboards: chips on a computer, one line of names on a phone
+  const names = (v) => `<div class="sg-chips">${list(v).map((s) => `<span>${esc(s)}</span>`).join('')}</div><p class="sg-list">${esc(list(v).join(', '))}</p>`;
 
   // the two long descriptions: folded on phones until tapped (always open on a computer)
   function fold(title, text) {

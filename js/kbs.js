@@ -284,6 +284,7 @@
 
   function select(id) {
     K.sel = C.keyboardById[id];
+    K.more = false; // a new keyboard opens with its details folded
     K.look = 0;
     K.sw = 0;
     document.querySelectorAll('#kbList [data-kb]').forEach((c) => c.classList.toggle('sel', c.dataset.kb === id));
@@ -315,8 +316,12 @@
         <label class="kbd-pick"><span class="hud-lbl">color</span><select class="select" data-pick="look"${kb.looks.length > 1 ? '' : ' disabled'}>${kb.looks.map((l, i) => `<option value="${i}"${i === K.look ? ' selected' : ''}>${esc(l.name)}</option>`).join('')}</select></label>
         <label class="kbd-pick"><span class="hud-lbl">switch</span><select class="select" data-pick="kbsw"${kb.switches.length > 1 ? '' : ' disabled'}>${kb.switches.map((s, i) => `<option value="${i}"${i === K.sw ? ' selected' : ''}>${esc(s.name)} · ${C.switchById[s.id].typeLabel}</option>`).join('')}</select></label>
       </div>`;
+    // the meters and the parts list: always shown beside the list; in a phone's bubble
+    // folded under "details ›"
     $('#kbSound').innerHTML = `
       <div class="pv-summary kbd-headline">${esc(w.headline)}</div>
+      <button class="kbd-more-btn" data-act="more" aria-expanded="${!!K.more}">details <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <div class="kbd-more">
       ${meter('deep', 'high', w.meters.pitch)}${meter('quiet', 'loud', w.meters.volume)}${meter('thock', 'clack', w.meters.clack)}
       <div class="specs kbd-specs">
         ${spec('switch', `${esc(sw.name)} <em>${sw.typeLabel} · ${sw.force}g</em>`)}
@@ -324,7 +329,9 @@
         ${spec('plate', `${C.PLATES[b.plate].name} · ${C.MOUNTS[b.mount].name}`)}
         ${spec('keycaps', `${C.KC_PROFILES[kc.profile].name} ${C.KC_MATERIALS[kc.material].name} <em>${kc.legend.name} legends</em>`)}
         ${spec('factory', factory.length ? factory.join(', ') : 'nothing extra')}
+      </div>
       </div>`;
+    $('#kbDetail').classList.toggle('more', !!K.more);
     renderActions();
     // in a bubble: placed now, and again once the photo has its height
     if (anchor) {
@@ -346,6 +353,10 @@
       <div class="kbd-btns">
         <button class="btn primary" data-act="play">${mode === 'vs' ? `play vs AI · ${d}` : 'play level 1'} with this keyboard →</button>
         <button class="btn" data-act="save">save to my builds</button>
+      </div>
+      <div class="kbd-btns kbd-quick">
+        <button class="btn primary" data-act="test">Test It Out</button>
+        <button class="btn" data-act="save">Save Keyboard</button>
       </div>`;
   }
 
@@ -415,6 +426,17 @@
     const v = el.dataset.v;
     switch (el.dataset.act) {
       case 'close': closeBubble(); break;
+      case 'more':
+        K.more = !K.more;
+        $('#kbDetail').classList.toggle('more', K.more);
+        el.setAttribute('aria-expanded', K.more);
+        placeBubble(true);
+        break;
+      // phones: straight into single player
+      case 'test':
+        useThis();
+        KK.app.startGame(1);
+        break;
       case 'demo': KK.keysound.demo(); break;
       case 'review': reviewPanel(!rev); break;
       case 'revCancel': reviewPanel(false); break;

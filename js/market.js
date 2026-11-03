@@ -24,7 +24,7 @@
   const okPhoto = (v, max) => typeof v === 'string' && v.length < max && PHOTO.test(v);
 
   let all = {}, off = null, wired = false;
-  const f = { q: '', kind: 'all', type: 'all' };
+  const f = { q: '', kind: 'all' };
   const titleOf = (x) => `${KINDS[x.kind] || 'Selling'}: ${x.title}`;
   const peso = (n) => '₱' + Math.round(+n).toLocaleString();
   const itemLabel = (type, id) => (type === 'keyboard' ? (C.keyboardById[id] || {}).title : type === 'switch' ? (C.switchById[id] || {}).name : '') || '';
@@ -52,7 +52,6 @@
   function renderFilters() {
     const chip = (key, v, label) => `<button class="chip${f[key] === v ? ' on' : ''}" data-mf="${key}" data-v="${v}">${label}</button>`;
     $('#mkKinds').innerHTML = chip('kind', 'all', 'all') + chip('kind', 'sell', 'selling') + chip('kind', 'buy', 'buying');
-    $('#mkTypes').innerHTML = chip('type', 'all', 'everything') + chip('type', 'keyboard', 'keyboards') + chip('type', 'switch', 'switches') + chip('type', 'other', 'other');
   }
 
   function listings() {
@@ -60,7 +59,7 @@
     return Object.entries(all)
       .filter(([, x]) => x && KINDS[x.kind] && TYPES[x.type] && typeof x.title === 'string' && okPhoto(x.thumb, 80000))
       .map(([id, x]) => Object.assign({ id }, x))
-      .filter((x) => (f.kind === 'all' || x.kind === f.kind) && (f.type === 'all' || x.type === f.type))
+      .filter((x) => f.kind === 'all' || x.kind === f.kind)
       .filter((x) => {
         const hay = [x.title, x.itemName, x.city, x.country, x.desc].join(' ').toLowerCase();
         return terms.every((t) => hay.includes(t));

@@ -769,6 +769,10 @@ body.mk-locked { overflow: hidden; }
 .kbd-pick .select:disabled { opacity: 1; color: var(--sub); }
 .kbd-headline { font-size: 15px; margin: 14px 0 12px; }
 .kbd-close, .kbs-tail { display: none; }
+.kbd-more-btn, .kbd-btns.kbd-quick { display: none; }
+.kbd-more-btn { align-items: center; gap: 4px; margin: 2px 0 6px; padding: 4px 0; background: none; border: 0; color: var(--main); font: inherit; font-size: 13px; cursor: pointer; }
+.kbd-more-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.kbs-detail.more .kbd-more-btn svg { transform: rotate(90deg); }
 .kbd-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
 .kbd-acts .btn { padding: 8px 14px; font-size: 13px; }
 .kbd-acts .kbd-review { background: var(--bg3); }
@@ -869,6 +873,11 @@ body.mk-locked { overflow: hidden; }
 .fw.low .r { color: color-mix(in srgb, var(--err) 70%, var(--sub)); }
 .fw.done { animation: done .35s ease-out forwards; }
 .fw.dead { animation: dead .35s ease-in forwards; }
+/* explode: words near a typed one pop */
+.fw.popped { animation: popped .32s ease-out forwards; color: #ffb347; }
+@keyframes popped { 0% { transform: var(--tr) scale(1); } 35% { transform: var(--tr) scale(1.35); opacity: 1; filter: brightness(1.6); } 100% { transform: var(--tr) scale(.3); opacity: 0; } }
+.shard { position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #ffb347; pointer-events: none; animation: shard .45s ease-out forwards; }
+@keyframes shard { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
 @keyframes done { to { opacity: 0; filter: blur(3px); letter-spacing: .3em; } }
 @keyframes dead { to { opacity: 0; transform: var(--tr) translateY(16px); } }
 .pop { position: absolute; font-size: 14px; color: var(--main); pointer-events: none; animation: rise .9s ease-out forwards; }
@@ -1112,8 +1121,7 @@ body.no-game-kb .game-kb { display: none; }
 .pg-hide { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--sub); cursor: pointer; margin-bottom: 4px; }
 .guide-link { margin-top: 2px; }
 /* explode: a ring that grows to the blast radius */
-.boom { position: absolute; width: var(--r); height: var(--r); margin: calc(var(--r) / -2) 0 0 calc(var(--r) / -2); border-radius: 50%; pointer-events: none; border: 3px solid #ff9f43; background: radial-gradient(circle, rgba(255, 159, 67, .45), rgba(255, 90, 31, .12) 55%, transparent 70%); animation: boom .65s ease-out forwards; }
-@keyframes boom { from { transform: scale(.15); opacity: 1; } 60% { opacity: .8; } to { transform: scale(1); opacity: 0; } }
+
 
 /* saved builds on the title screen */
 .saved { width: 100%; max-width: 760px; margin-top: 34px; text-align: left; }
@@ -1393,7 +1401,19 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   .kbs-detail { display: none; }
   .kbs-detail.bubble { display: block; position: absolute; left: 0; right: 0; z-index: 30; max-height: min(74vh, 680px); overflow-y: auto; overscroll-behavior: contain; padding: 16px 14px 14px; border: 2px solid var(--main); border-radius: 22px; box-shadow: 5px 6px 0 rgba(0, 0, 0, .4); animation: kb-pop .16s ease-out; }
   .kbs-detail.bubble.up { transform-origin: bottom center; }
-  .kbs-detail.bubble .kbd-photo { max-height: 200px; object-fit: contain; }
+  .kbs-detail.bubble .kbd-photo { height: 200px; object-fit: contain; } /* its room kept while it loads */
+  /* in the bubble: the real photo only (no drawn board), no scrollbar, the meters and
+     parts folded under "details ›", and just Test It Out · Save Keyboard */
+  .kbs-detail.bubble { scrollbar-width: none; }
+  .kbs-detail.bubble::-webkit-scrollbar { display: none; }
+  .kbs-detail.bubble .kbd-render, .kbs-detail.bubble .kbd-actions > .chips, .kbs-detail.bubble .kbd-btns:not(.kbd-quick) { display: none; }
+  .kbs-detail.bubble .kbd-more-btn { display: inline-flex; }
+  .kbs-detail.bubble:not(.more) .kbd-more { display: none; }
+  .kbs-detail.bubble .kbd-quick { display: flex; flex-wrap: nowrap; margin-top: 0; }
+  .kbs-detail.bubble .kbd-quick .btn { flex: 1; padding: 11px 8px; }
+  .kbs-detail.bubble .kbd-quick .btn:not(.primary) { background: var(--bg3); }
+  .kbs-detail.bubble .kbd-actions { margin-top: 10px; padding-top: 12px; }
+  .kbs-detail.bubble .kbd-headline { margin: 12px 0 4px; }
   .kbs-tail { display: block; position: absolute; z-index: 31; width: 16px; height: 16px; background: var(--bg2); border: solid var(--main); border-width: 2px 0 0 2px; transform: rotate(45deg); pointer-events: none; }
   .kbs-tail.up { border-width: 0 2px 2px 0; }
   .kbs-tail[hidden] { display: none; }
@@ -1558,7 +1578,13 @@ body[data-screen='game'] .chat-dock, body[data-screen='vs'] .chat-dock { display
 @keyframes comp-grow { from { max-height: 42px; } to { max-height: 220px; } }
 .whats-in { min-width: 0; padding: 11px 16px; border: 0; border-radius: 22px; background: var(--bg); color: var(--sub); font-size: 13px; text-align: left; cursor: text; transition: background .15s; }
 .whats-in:hover { background: var(--bg3); }
-.feed-tabs { display: flex; gap: 6px; margin: 4px 0 12px; }
+/* feed / conference: folder tabs, the open one running into the page below it */
+.feed-tabs { --ftp: color-mix(in srgb, var(--bg2) 45%, var(--bg)); display: flex; gap: 4px; margin: 6px 0 0; position: relative; z-index: 1; }
+.feed-tabs .ft-tab { margin-bottom: -1px; padding: 10px 20px; border: 1px solid transparent; border-bottom: 0; border-radius: 12px 12px 0 0; background: transparent; color: var(--sub); }
+.feed-tabs .ft-tab:hover { color: var(--text); }
+.feed-tabs .ft-tab.on { background: var(--ftp); border-color: var(--bg3); color: var(--main); }
+.ft-panel { background: color-mix(in srgb, var(--bg2) 45%, var(--bg)); border: 1px solid var(--bg3); border-radius: 0 14px 14px 14px; padding: 14px; }
+.ft-panel.second { border-radius: 14px; }
 .feed-more { display: block; margin: 14px auto 0; }
 .dash-posts-h { margin-top: 30px; }
 .dash-posts .post { text-align: left; }
@@ -1682,6 +1708,15 @@ body.touch .keys-hint { display: none; }
   /* decluttered: no "nobody online" strip, no sign-up counts, the featured keyboard's
      numbers three across */
   .online-strip:has(.os-none) { display: none; }
+  /* online friends at half the size */
+  .online-strip { gap: 8px; padding: 6px 10px; margin-bottom: 10px; border-radius: 10px; }
+  .os-friend { min-width: 44px; gap: 2px; }
+  .os-who { gap: 2px; }
+  .os-who .av { width: 26px; height: 26px; }
+  .os-who .pl-dot { width: 7px; height: 7px; border-width: 1.5px; }
+  .os-who b { max-width: 54px; font-size: 10px; }
+  .os-act { width: 22px; height: 22px; }
+  .os-act svg { width: 13px; height: 13px; }
   .feed-side .feed-count { display: none; }
   .feat-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .feat-stats .tile { padding: 8px 10px; }
@@ -1909,6 +1944,7 @@ body.touch .keys-hint { display: none; }
 .sg-points p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text); }
 .sg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .sg-chips span { background: var(--bg); color: var(--text); font-size: 12px; padding: 5px 10px; border-radius: 20px; box-shadow: inset 0 0 0 1px var(--bg3); }
+.sg-points .sg-list { display: none; }
 @media (max-width: 700px) {
   .sg-stage { grid-template-columns: minmax(0, 1fr); }
   .sg-arrow { display: none; }
@@ -1922,6 +1958,20 @@ body.touch .keys-hint { display: none; }
   .sg-tab { width: auto; height: auto; aspect-ratio: 1; border-radius: 8px; }
   .sg-tab svg { width: 18px; height: 18px; }
   .sg-points p { font-size: 13px; }
+  /* the whole card on one screen: no heading or "this demo" line, names as plain text */
+  .sg-head .grp-h, .sg-howto, .sg-demo { display: none; }
+  .sg-head .back-link { margin-bottom: 8px; }
+  .sg-tabs { margin-bottom: 10px; }
+  .sg-card { padding: 14px 14px 12px; }
+  .sg-top { flex-wrap: nowrap; gap: 10px; }
+  .sg-icon { width: 40px; height: 40px; border-radius: 10px; }
+  .sg-icon svg { width: 24px; height: 24px; }
+  .sg-tag { font-size: 12px; }
+  .sg-hear { width: auto; padding: 8px 12px; font-size: 13px; }
+  .sg-kb { margin: 12px 0 10px; min-height: 0; }
+  .sg-points { gap: 9px; }
+  .sg-points .sg-chips { display: none; }
+  .sg-points .sg-list { display: block; font-size: 12.5px; line-height: 1.5; }
 }
 
 /* ---------------------------------- conference ---------------------------------- */

@@ -495,6 +495,7 @@
       b.setAttribute('aria-selected', b.dataset.ft === tab);
     });
     const conf = tab === 'conf';
+    $('#ftPanel').classList.toggle('second', conf); // its top left corner rounds off
     $('#feedPosts').hidden = conf;
     if (conf) $('#feedMore').hidden = true;
     $('#confWrap').hidden = !conf;

@@ -103,9 +103,12 @@
               <button class="chip ft-tab on" data-ft="feed" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 12.5h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>feed</button>
               <button class="chip ft-tab" data-ft="conf" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H8.5l-3.5 3v-3H3.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M18.5 9h2a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H19.5v2.5l-3-2.5h-5a1 1 0 0 1-1-1v-.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>conference</button>
             </div>
-            <div class="feed-posts" id="feedPosts"></div>
-            <button class="btn ghost feed-more" id="feedMore" hidden>load more</button>
-            <div class="conf" id="confWrap" hidden></div>
+            <!-- the open tab's page: the tab above runs into it -->
+            <div class="ft-panel" id="ftPanel" role="tabpanel">
+              <div class="feed-posts" id="feedPosts"></div>
+              <button class="btn ghost feed-more" id="feedMore" hidden>load more</button>
+              <div class="conf" id="confWrap" hidden></div>
+            </div>
           </div>
           <aside class="feed-side">
             <p class="feed-count" id="feedCount"></p>
@@ -261,7 +264,6 @@
           <div class="filters mk-filters">
             <input class="search" id="mkQ" autocomplete="off" spellcheck="false" placeholder="search listings…">
             <div class="chips" id="mkKinds"></div>
-            <div class="chips" id="mkTypes"></div>
           </div>
           <div class="mk-grid" id="mkList"></div>
         </div>

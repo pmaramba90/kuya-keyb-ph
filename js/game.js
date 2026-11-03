@@ -22,7 +22,7 @@
   // desc / note: what the guide before a game says about each
   const POWERS = {
     freeze: { label: '❄ freeze', secs: 4, weight: 1, desc: 'stops every word for 4s', note: 'only when the screen is crowded' },
-    slow: { label: '◷ slow', secs: 7, weight: 1, desc: 'words fall at 40% speed for 7s', note: 'stacks: another slow makes them slower still and adds 7s' },
+    slow: { label: '◷ slow', secs: 7, weight: 1, desc: 'words fall at 40% speed for 7s', note: 'stacks: each slow keeps its own 7s, and while two run words fall slower still' },
     double: { label: '×2 double', secs: 10, weight: 1, desc: 'double points for 10s' },
     erase: { label: '✕ erase', secs: 0, weight: 0.7, desc: 'clears the screen and scores every word on it', note: 'only when the screen is crowded · power-ups it clears are yours' },
     subtract: { label: '− subtract', secs: 10, weight: 0.8, desc: 'each word you type takes 5% off your overflow, for 10s', note: 'only once your overflow bar has started filling' },
@@ -33,7 +33,9 @@
   // freeze and erase only turn up when the field is crowded (this many words or more)
   const CROWD_ONLY = { freeze: 1, erase: 1 };
   const crowdAt = (p) => Math.max(6, Math.round(p.maxOn * 0.45));
-  const EXPLODE_R = 0.3; // blast radius, as a share of the field's width (at least 130px)
+  // blast radius, as a share of the field's width (at least 58px): a fifth of the area it
+  // used to cover (0.3 / 130px)
+  const EXPLODE_R = 0.134;
   const SUBTRACT = 0.05; // overflow taken off per word while subtract is on
 
   // word sizes: the smaller the word, the more it's worth (so small + long is the jackpot)
@@ -226,7 +228,7 @@
       Object.assign(this, {
         words: [], buffer: '', bar: 0, combo: 0, maxCombo: 0, score: 0,
         keys: 0, correct: 0, done: 0, missed: 0, powersUsed: 0, dead: false,
-        fx: { freeze: 0, slow: 0, double: 0, subtract: 0, explode: 0 }, slowStack: 0,
+        fx: { freeze: 0, slow: 0, double: 0, subtract: 0, explode: 0 }, slows: [],
       });
       this.field.classList.remove('frozen', 'slowed', 'doubled', 'exploding');
       this.measure();
@@ -313,7 +315,7 @@
       this.W = this.field.clientWidth;
       this.H = this.field.clientHeight;
       this.tickPowers(dt);
-      const speed = this.fx.freeze > 0 ? 0 : this.fx.slow > 0 ? SLOW * Math.pow(SLOWER, Math.max(1, this.slowStack) - 1) : 1;
+      const speed = this.fx.freeze > 0 ? 0 : this.slows.length ? SLOW * Math.pow(SLOWER, this.slows.length - 1) : 1;
       const floor = this.H - 30 - this.wallPx(); // the wall's top, in a lobby
       for (let i = this.words.length - 1; i >= 0; i--) {
         const w = this.words[i];
@@ -528,10 +530,11 @@
         this.toast(`erase! +${sum}`, 'pw-erase');
         this.gain(gained);
       } else if (type === 'slow') {
-        // stacks: slower with each one, and the time adds up
-        this.slowStack = (this.fx.slow > 0 ? this.slowStack || 1 : 0) + 1;
-        this.fx.slow += POWERS.slow.secs;
-        this.toast(this.slowStack > 1 ? `slow ×${this.slowStack}!` : 'slow!', 'pw-slow');
+        // stacks: each slow runs its own clock; while two run words fall slower still, and
+        // when one ends it's back to one slow
+        this.slows.push(POWERS.slow.secs);
+        this.fx.slow = Math.max(...this.slows);
+        this.toast(this.slows.length > 1 ? `slow ×${this.slows.length}!` : 'slow!', 'pw-slow');
       } else if (type === 'reset') {
         this.bar = 0;
         this.renderBar();
@@ -547,7 +550,7 @@
     // a word typed while explode is on: the words near where it was are cleared and scored
     blast(w) {
       const cx = w ? w.x + w.width / 2 : this.W / 2, cy = w ? w.y : this.H / 2;
-      const r = Math.max(130, this.W * EXPLODE_R);
+      const r = Math.max(58, this.W * EXPLODE_R);
       let sum = 0, n = 0;
       const gained = [];
       this.words.slice().forEach((o) => {
@@ -556,12 +559,12 @@
         sum += pts;
         n++;
         this.popup(o.x + o.width / 2, o.y, '+' + pts, 'dbl');
-        this.removeWord(o, 'done');
+        this.burst(o);
+        this.removeWord(o, 'popped');
         if (o.power) gained.push(o);
       });
       this.score += sum;
       this.buffer = '';
-      this.boom(cx, cy, r);
       if (!this.ai && n) KK.sfx.power('explode');
       if (n) this.popup(cx, cy - 26, `boom ×${n}`, 'dbl');
       this.gain(gained);
@@ -575,21 +578,33 @@
       });
     }
 
-    // the blast: a ring that grows to the radius and fades
-    boom(x, y, r) {
-      const el = document.createElement('div');
-      el.className = 'boom';
-      el.style.cssText = `left:${x}px;top:${y}px;--r:${r * 2}px`;
-      this.field.appendChild(el);
-      setTimeout(() => el.remove(), 700);
+    // a word caught in a blast pops: it swells and bursts, a few bits flying off
+    burst(o) {
+      const x = o.x + o.width / 2, y = o.y + 12;
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + Math.random() * 0.6, d = 18 + Math.random() * 16;
+        const el = document.createElement('i');
+        el.className = 'shard';
+        el.style.cssText = `left:${x}px;top:${y}px;--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px`;
+        this.field.appendChild(el);
+        setTimeout(() => el.remove(), 500);
+      }
     }
 
     tickPowers(dt) {
       let active = false;
+      // slows: each on its own clock
+      if (this.slows.length) {
+        const n = this.slows.length;
+        this.slows = this.slows.map((t) => t - dt).filter((t) => t > 0);
+        for (let i = this.slows.length; i < n; i++) if (!this.ai) KK.sfx.powerEnd();
+        this.fx.slow = this.slows.length ? Math.max(...this.slows) : 0;
+        active = true;
+      }
       for (const k in this.fx) {
+        if (k === 'slow') continue;
         if (this.fx[k] > 0) {
           this.fx[k] = Math.max(0, this.fx[k] - dt);
-          if (this.fx[k] === 0 && k === 'slow') this.slowStack = 0;
           if (this.fx[k] === 0 && !this.ai) KK.sfx.powerEnd();
           active = true;
         }
@@ -603,9 +618,11 @@
 
     renderPowers() {
       if (!this.powersEl) return;
+      const chip = (k, v) => `<span class="pchip pw-${k}">${POWERS[k].label} <b>${v.toFixed(1)}s</b></span>`;
+      // every slow its own chip, with its own clock
       const html = Object.entries(this.fx)
         .filter(([, v]) => v > 0)
-        .map(([k, v]) => `<span class="pchip pw-${k}">${POWERS[k].label}${k === 'slow' && this.slowStack > 1 ? ' ×' + this.slowStack : ''} <b>${v.toFixed(1)}s</b></span>`)
+        .map(([k, v]) => (k === 'slow' ? this.slows.slice().sort((a, b) => b - a).map((t) => chip(k, t)).join('') : chip(k, v)))
         .join('');
       const out = html || (this.ai ? '' : '<span class="hint">type a glowing word to grab its power-up</span>');
       if (this.powersEl.innerHTML !== out) this.powersEl.innerHTML = out;
@@ -765,6 +782,7 @@
   }
 
   function begin() {
+    if (!run) return; // left during the countdown
     run.running = true;
     run.last = performance.now();
     KK.anticheat.reset(caught);
