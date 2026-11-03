@@ -99,9 +99,18 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 
 ## Image converter
 
-On your profile, **image converter** turns a photo of a keyboard into a custom board. Upload the photo and the board appears beside it in the photo's colors:
+On your profile, **image converter** turns a photo of a keyboard into a custom board drawn like it: the same size, the same case color, and every key in its own color (a black Esc and Enter, a grey F5–F8 block, blue modifiers…). Upload the photo; beside the board it shows the photo straightened, with each key it found outlined, and what it read ("read as tkl · turned upright (90°) · straightened 12°"). The photo is read in the browser by `js/kbread.js`:
 
-- **How the colors are read**: the photo's outer edge is taken as the background and dropped. The board is the densest block of rows and columns that's left, so captions, feature icons and shadows around it don't count. Its pixels are grouped into five colors: the **keys** (alphas) are the most common color in the middle of the board, the **case** is the color that hugs the board's edge but is rare in its middle (when the case is the same color as the keys, a darker shade of the keys), the **mods** are the next most common key color, and the **accent** is the most vivid of the rest (a red Esc, a blue Enter…). Each of the four has a color picker to fix it by hand.
+1. **The angle.** A keyboard's key edges run in two directions at right angles; the strongest such pair in the photo is the board's, refined to a tenth of a degree by turning until the key edges stack into the tightest lines. Any tilt works.
+2. **The board.** Where the straightened photo has upright *and* level edges packed together. A bedspread's folds, a desk's edge or a diagonal color boundary have one or neither, so the background drops out, whatever it is. Captions, feature icons or a cable next to the board are cut off where the rows in between are bare. A board narrower at the top than the bottom (the phone tilted back) is stretched square again.
+3. **The way up.** A board standing on its end is turned a quarter; whether it's upside down is settled in the next step.
+4. **The size.** The real key positions of each size (60%, 65%, 75%, tkl, full, the ones with an f-row also with its gap a little wider or narrower) are laid over the photo, each also upside down, and moved and scaled until the key outlines sit on the photo's key edges. The best fit wins: its key outlines land on edges, the middles of its caps are calm, it covers the whole block of keys (a 60% laid over part of a tkl leaves the f-row and the nav cluster unexplained), and it leaves no keys over plain case. The f-row only has to be there as a row, since makers space it differently (Esc right by F1, an extra F13, a knob).
+5. **The colors.** Each key's color is read from the middle of its cap (nudged to the most even spot; long keys like the spacebar at several points, so a shine doesn't decide it). F-row keys are found where they really are: Esc and the keys after F12 stay at the ends, and each group of four F-keys slides along the row to where its gaps line up and its keys are most alike. The light is evened out first: the brightest bits are taken as white (a warm lamp no longer turns white caps cream), and the fall-off across the board, measured on its main key color, is divided out (keys at a shaded edge read the same as the rest). Keys of one color are then grouped. The alphas, mods and accents take the color most of their keys have, and every key that differs keeps its own. The case is read from bare case right around the keys; near-blacks are taken as neutral.
+
+Wrong size? Pick another under **base** and the photo is read again for that size. Wrong way up? **↻ turn** tries the next way round that reads as a keyboard (the size is kept). The four color pickers (case, keys, mods, accent) adjust the main colors; keys with their own color keep theirs.
+
+Tested with a home photo (a tkl on a two-color bedspread, warm light, a cable) as is, sideways, upside down and tilted 7°–40°, and with two store photos (a 75% with a knob, and a 60% in a three-quarter view above a row of feature icons): the size, the way up and the colors came out right in every case.
+
 - **The parts** start from the board you're on and work like the builder's: **base** (size, case material, plate, mount), **switches** (all 586, grouped by type), **keycaps** (profile and material) and **mods & lube**. They change how it sounds (the sound line updates as you go, **▶ hear it** plays it) and its shape (size, keycap profile), never its colors.
 - **save to my builds** names it (optional) and saves it as a new build. Its colors go with it everywhere it's drawn: your featured keyboard, keyboard rows, posts, vs players. Opened in the builder, the keycaps step says the photo's colors are kept and offers **use the keycaps' colors instead**; a new case material keeps the photo's case color.
 
@@ -391,6 +400,7 @@ js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
 js/convert.js         image converter: a keyboard photo → a custom board in its colors
+js/kbread.js          reading a keyboard photo: angle, board, way up, size, each key's color
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
 js/conference.js      home → conference: threads, votes, comments and replies
 js/market.js          marketplace: listings, the new-listing form, open / message / delete

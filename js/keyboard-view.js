@@ -161,6 +161,8 @@
 
   /* ---------------------------------- view ---------------------------------- */
   const V = (KK.kbview = {});
+  // a layout's keys in units ({ x, y, w, h?, codes, cls }), for reading photos (js/kbread.js)
+  V.layout = place;
 
   V.create = function (container, opts) {
     const o = Object.assign({ maxU: 52, legends: true }, opts || {});
@@ -200,7 +202,8 @@
           const legend = o.legends ? legendHTML(key, st) : '';
           const h = key.h ? `;height:calc(var(--u)*${key.h})` : '';
           // stock boards: keys the photo shows in their own color (wasd, arrows, esc…)
-          const own = !b.paint && kc.keys && key.codes.map((cd) => kc.keys[cd]).find(Boolean);
+          const tints = b.paint ? b.paint.keys : kc.keys;
+          const own = tints && key.codes.map((cd) => tints[cd]).find(Boolean);
           const tint = own ? `;--kc:${own};--kl:${U.readable(own)}` : '';
           return `<div class="k ${key.cls}" data-i="${i}" style="left:calc(var(--u)*${key.x});top:calc(var(--u)*${key.y});width:calc(var(--u)*${key.w})${h}${tint}"><div class="cap">${legend}</div></div>`;
         })

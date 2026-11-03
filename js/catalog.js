@@ -770,8 +770,16 @@
     out.mods = Array.isArray(out.mods) ? out.mods.filter((m) => has(C.modById, m)) : [];
     if (typeof out.caseColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(out.caseColor)) out.caseColor = C.CASES[out.case].colors[0][1];
     const p = out.paint;
-    if (p && typeof p === 'object' && PAINT.every((k) => typeof p[k] === 'string' && /^#[0-9a-f]{6}$/i.test(p[k]))) out.paint = PAINT.reduce((o, k) => ((o[k] = p[k]), o), {});
-    else delete out.paint;
+    const isHex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+    if (p && typeof p === 'object' && PAINT.every((k) => isHex(p[k]))) {
+      const q = PAINT.reduce((o, k) => ((o[k] = p[k]), o), {});
+      // keys in a color of their own (a black Enter on white alphas…): key code → color
+      if (p.keys && typeof p.keys === 'object') {
+        const ks = Object.keys(p.keys).filter((c) => /^[A-Za-z0-9]{1,24}$/.test(c) && isHex(p.keys[c])).slice(0, 130);
+        if (ks.length) q.keys = ks.reduce((o, c) => ((o[c] = p.keys[c]), o), {});
+      }
+      out.paint = q;
+    } else delete out.paint;
     const pre = has(C.keyboardById, out.prebuilt) && C.keyboardById[out.prebuilt];
     if (!pre) ['prebuilt', 'look', 'swIdx'].forEach((k) => delete out[k]);
     else {
