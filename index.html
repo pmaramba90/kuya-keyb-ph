@@ -296,7 +296,7 @@
         <div class="kbs-head">
           <div class="grp-h">full keyboards <span class="sub">prebuilt and gaming boards from mechanicalkeyboards.com and the makers' stores · pick one, pick its switch, play</span></div>
           <div class="filters kbs-filters">
-            <input class="search" id="kbQ" autocomplete="off" spellcheck="false">
+            <span class="ac"><input class="search" id="kbQ" autocomplete="off" spellcheck="false"><span class="ac-ghost" id="kbGhost" aria-hidden="true"></span><button class="ac-tab" id="kbTab" type="button" tabindex="-1" title="take the suggestion (Tab)" hidden>tab ⇥</button></span>
             <select class="select" id="kbBrand"></select>
             <div class="chips" id="kbSizes"></div>
             <div class="chips" id="kbTypes"></div>
@@ -306,6 +306,7 @@
         </div>
         <div class="kbs-wrap">
           <div class="kbs-list" id="kbList"></div>
+          <i class="kbs-tail" id="kbTail" hidden></i>
           <aside class="kbs-detail" id="kbDetail">
             <div id="kbInfo"></div>
             <div class="kbd-render" id="kbRender"></div>

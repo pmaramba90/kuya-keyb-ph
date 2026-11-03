@@ -566,7 +566,14 @@ body:not(.signed-out) #scr-title .home-count { display: none; }
 
 /* ------------------------------ full keyboards ------------------------------ */
 .kbs-head .grp-h .sub { margin-left: 8px; }
-.kbs-filters .search { min-width: 260px; }
+/* the search box and its suggestion: the rest of the word, faint, right after your text */
+.ac { position: relative; display: flex; flex: 1; min-width: 260px; }
+.ac .search { width: 100%; min-width: 0; padding-right: 62px; }
+.ac-ghost { position: absolute; inset: 0; display: flex; align-items: center; padding-right: 62px; color: var(--sub); white-space: pre; overflow: hidden; pointer-events: none; }
+.ac-ghost i { font-style: normal; color: transparent; }
+.ac-tab { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); padding: 3px 8px; border: 0; border-radius: 6px; background: var(--bg3); color: var(--sub); font: inherit; font-size: 11px; cursor: pointer; }
+.ac-tab:hover { color: var(--main); }
+.ac-tab[hidden] { display: none; }
 .kbs-wrap { display: grid; grid-template-columns: 1fr 440px; gap: 22px; align-items: start; }
 .kbs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .kbc { display: flex; flex-direction: column; gap: 6px; text-align: left; background: var(--bg2); border: 2px solid transparent; border-radius: var(--r); padding: 8px; cursor: pointer; transition: border-color .15s, background .15s; }
@@ -578,8 +585,10 @@ body:not(.signed-out) #scr-title .home-count { display: none; }
 .kbc-img.noimg .kc-sw { flex: 1; padding: 8px; border-radius: 8px; background: var(--case); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 .kbc-t { font-size: 12px; color: var(--text); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 3.9em; }
 .kbc.sel .kbc-t { color: var(--main); }
-.kbc-m { font-size: 10.5px; color: var(--sub); }
+.kbc-p { font-size: 11.5px; color: var(--sub); font-variant-numeric: tabular-nums; }
 .kbs-list .more { grid-column: 1 / -1; }
+@keyframes kb-pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .kbs-detail.bubble { animation: none; } }
 /* cards or a list: the switch next to the count */
 .kbs-tools { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
 .kbs-sort { font-variant-numeric: tabular-nums; }
@@ -612,6 +621,13 @@ body:not(.signed-out) #scr-title .home-count { display: none; }
 .kbd-sub a { color: var(--main); text-decoration: none; }
 .kbd-photo { display: block; width: 100%; border-radius: 6px; background: #f3f3f3; margin-bottom: 12px; }
 .kbs-detail .grp-h { margin: 12px 0 6px; }
+/* color and switch, side by side */
+.kbd-picks { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; margin: 4px 0 2px; }
+.kbd-pick { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.kbd-pick .select { width: 100%; min-width: 0; background: var(--bg3); text-overflow: ellipsis; }
+.kbd-pick .select:disabled { opacity: 1; color: var(--sub); }
+.kbd-headline { font-size: 15px; margin: 14px 0 12px; }
+.kbd-close, .kbs-tail { display: none; }
 .kbd-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
 .kbd-acts .btn { padding: 8px 14px; font-size: 13px; }
 .kbd-acts .kbd-review { background: var(--bg3); }
@@ -1210,8 +1226,16 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   .nav-btn span { display: none; }
   .nav-user span { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vs-lanes { gap: 10px; }
-  .kbs-wrap { grid-template-columns: 1fr; }
-  .kbs-detail { position: static; max-height: none; }
+  .kbs-wrap { grid-template-columns: 1fr; position: relative; }
+  /* one column: a tap opens the keyboard in a speech bubble at the row (js/kbs.js) */
+  .kbs-detail { display: none; }
+  .kbs-detail.bubble { display: block; position: absolute; left: 0; right: 0; z-index: 30; max-height: min(74vh, 680px); overflow-y: auto; overscroll-behavior: contain; padding: 16px 14px 14px; border: 2px solid var(--main); border-radius: 22px; box-shadow: 5px 6px 0 rgba(0, 0, 0, .4); animation: kb-pop .16s ease-out; }
+  .kbs-detail.bubble.up { transform-origin: bottom center; }
+  .kbs-detail.bubble .kbd-photo { max-height: 200px; object-fit: contain; }
+  .kbs-tail { display: block; position: absolute; z-index: 31; width: 16px; height: 16px; background: var(--bg2); border: solid var(--main); border-width: 2px 0 0 2px; transform: rotate(45deg); pointer-events: none; }
+  .kbs-tail.up { border-width: 0 2px 2px 0; }
+  .kbs-tail[hidden] { display: none; }
+  .kbd-close { display: grid; place-items: center; float: right; width: 30px; height: 30px; margin: -6px -4px 4px 8px; border: 0; border-radius: 50%; background: var(--bg3); color: var(--sub); font-size: 13px; cursor: pointer; }
   .home-word { font-size: 40px; }
   .game-build { flex-basis: auto; width: 100%; max-width: 420px; }
   .cmeter { min-width: 0; }
@@ -1541,8 +1565,6 @@ body.touch .keys-hint { display: none; }
   .step { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 8px; border-radius: 0; font-size: 11px; line-height: 1.25; text-align: center; border-bottom: 2px solid transparent; margin-bottom: -1px; }
   .step .n { margin: 0; font-size: 10px; }
   .step.on { border-bottom-color: var(--main); }
-  /* full keyboards: the picked keyboard on top (a tap on the list scrolls up to it) */
-  .kbs-detail { order: -1; scroll-margin-top: 10px; }
   /* reviews use the composer's full width */
   .whats.open:has(.rev-kinds) #whatsAv { display: none; }
   .whats.open:has(.rev-kinds) .composer { grid-column: 1 / -1; }
@@ -1713,6 +1735,15 @@ body.touch .keys-hint { display: none; }
 .sg-points li { position: relative; padding-left: 18px; }
 .sg-points li::before { content: ""; position: absolute; left: 0; top: 7px; width: 8px; height: 8px; border-radius: 2px; background: var(--main); transform: rotate(45deg); }
 .sg-points b { display: block; font-size: 12px; font-weight: 600; color: var(--main); letter-spacing: .04em; margin-bottom: 4px; }
+/* The Sound / How It's Achieved: a plain heading on a computer, a tap-to-open fold on phones */
+.sg-fold-h { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: default; pointer-events: none; }
+.sg-fold-h svg { display: none; width: 14px; height: 14px; margin-bottom: 4px; fill: none; stroke: var(--main); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+@media (max-width: 700px) {
+  .sg-fold-h { width: 100%; cursor: pointer; pointer-events: auto; }
+  .sg-fold-h svg { display: block; }
+  .sg-fold.open .sg-fold-h svg { transform: rotate(180deg); }
+  .sg-fold:not(.open) p { display: none; }
+}
 .sg-points p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text); }
 .sg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .sg-chips span { background: var(--bg); color: var(--text); font-size: 12px; padding: 5px 10px; border-radius: 20px; box-shadow: inset 0 0 0 1px var(--bg3); }

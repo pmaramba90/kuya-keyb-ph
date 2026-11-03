@@ -188,8 +188,8 @@
         <div class="sg-kb" id="sgKb"></div>
         <p class="sg-demo"><span>this demo</span> ${esc(sw ? sw.name : p.demo.sw)} · ${esc(C.PLATES[b.plate] ? C.PLATES[b.plate].name || b.plate : b.plate)} plate · ${esc(C.MOUNTS[b.mount] ? C.MOUNTS[b.mount].name : b.mount + ' mount')} · ${esc(kc ? kc.profile + ' ' + kc.material : '')} keycaps${b.mods.length ? ' · ' + b.mods.map((m) => (C.MODS.find((x) => x.id === m) || { name: m }).name).join(', ') : ' · no foam'} <em>· sounds ${esc(head)}</em></p>
         <ul class="sg-points">
-          <li><b>The Sound</b><p>${esc(p.sound)}</p></li>
-          <li><b>How It's Achieved</b><p>${esc(p.how)}</p></li>
+          ${fold('The Sound', p.sound)}
+          ${fold("How It's Achieved", p.how)}
           <li><b>Popular Switches</b><div class="sg-chips">${list(p.switches).map((s) => `<span>${esc(s)}</span>`).join('')}</div></li>
           <li><b>Popular Keyboards</b><div class="sg-chips">${list(p.boards).map((s) => `<span>${esc(s)}</span>`).join('')}</div></li>
         </ul>
@@ -202,6 +202,11 @@
     $('#sgPrev').disabled = at === 0;
     $('#sgNext').disabled = at === PROFILES.length - 1;
   };
+
+  // the two long descriptions: folded on phones until tapped (always open on a computer)
+  function fold(title, text) {
+    return `<li class="sg-fold"><button class="sg-fold-h" data-sgf aria-expanded="false"><b>${esc(title)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><p>${esc(text)}</p></li>`;
+  }
 
   function go(i) {
     if (i < 0 || i >= PROFILES.length || i === at) return;
@@ -225,6 +230,12 @@
   };
 
   $('#scr-guide').addEventListener('click', (e) => {
+    const f = e.target.closest('[data-sgf]');
+    if (f) {
+      const open = f.parentElement.classList.toggle('open');
+      f.setAttribute('aria-expanded', open);
+      return KK.sfx.ui();
+    }
     const b = e.target.closest('[data-sg], #sgPrev, #sgNext, #sgBack');
     if (!b || b.disabled) return;
     b.blur();

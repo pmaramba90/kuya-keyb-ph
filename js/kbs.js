@@ -18,10 +18,10 @@
   const TYPES = ['all', 'linear', 'tactile', 'clicky', 'silent', 'topre', 'magnetic'];
   const FACTORY = { caseFoam: 'case foam', plateFoam: 'plate foam', peFoam: 'pe foam', tape: 'tape mod', stabLube: 'lubed stabilizers' };
 
-  // the list: rows (just name and price, the default) or cards (picture, name, brand, size,
-  // price), sorted by brand then name, A→Z or Z→A; both remembered
+  // the list: rows (the default) or cards (with a picture), both just the name and price,
+  // sorted by brand then name, A→Z or Z→A; both remembered
   const PAGE = { cards: 48, list: 200 };
-  const viewMode = () => (KK.app.settings.kbsView === 'cards' ? 'cards' : 'list');
+  const viewMode = () => (KK.app.settings.kbsLayout === 'cards' ? 'cards' : 'list');
   const sortDir = () => (KK.app.settings.kbsSort === 'za' ? -1 : 1);
   const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   const ICON = {
@@ -32,6 +32,105 @@
     const v = viewMode(), az = sortDir() === 1;
     $('#kbTools').innerHTML = `<button class="chip kbs-sort" data-kbt="sort" title="sorted by brand, then name">${az ? 'A → Z' : 'Z → A'}</button>
       <span class="kbs-views" role="group" aria-label="show as">${['cards', 'list'].map((m) => `<button class="kbs-view${v === m ? ' on' : ''}" data-kbt="view" data-v="${m}" title="${m}" aria-label="show as ${m}" aria-pressed="${v === m}">${ICON[m]}</button>`).join('')}</span>`;
+  }
+
+  /* ----------------- search suggestions: finish the word you're typing ----------------- */
+  // "key" → Key(chron): a brand first, else a word from the keyboards' names (the most
+  // common one). Tab, → at the end, or a tap on the "tab" pill takes it
+  let vocab = null;
+  function words() {
+    if (vocab) return vocab;
+    const brands = new Map(), names = new Map();
+    const add = (m, w) => {
+      const k = w.toLowerCase(), e = m.get(k);
+      if (e) e.n++;
+      else m.set(k, { w, n: 1 });
+    };
+    C.keyboards.forEach((k) => {
+      add(brands, k.vendor);
+      k.title.split(/\s+/).forEach((w) => {
+        w = w.replace(/^[^\w]+|[^\w+]+$/g, '');
+        if (w.length >= 3 && !/^\d+$/.test(w)) add(names, w);
+      });
+    });
+    const sorted = (m) => [...m.values()].sort((a, b) => b.n - a.n);
+    return (vocab = { brands: sorted(brands), names: sorted(names) });
+  }
+  // what's left to type (and the finished value), or null
+  function suggest(v) {
+    if (!v || /\s$/.test(v)) return null;
+    const low = v.toLowerCase(), W = words();
+    const longer = (x, p) => x.w.length > p.length && x.w.toLowerCase().startsWith(p);
+    // the whole box as the start of a brand ("cooler m" → Cooler Master)
+    const whole = W.brands.find((x) => longer(x, low));
+    if (whole) return { rest: whole.w.slice(v.length), value: whole.w };
+    // else the last word
+    const tok = v.match(/(\S+)$/)[1], t = tok.toLowerCase();
+    if (t.length < 2) return null;
+    const hit = W.brands.find((x) => !/\s/.test(x.w) && longer(x, t)) || W.names.find((x) => longer(x, t));
+    return hit ? { rest: hit.w.slice(tok.length), value: v.slice(0, v.length - tok.length) + hit.w } : null;
+  }
+  let sug = null;
+  function showSuggest() {
+    const q = $('#kbQ'), ghost = $('#kbGhost'), at = q.selectionStart === q.value.length;
+    sug = document.activeElement === q && at ? suggest(q.value) : null;
+    // the hint sits right after your text, so only while it isn't scrolled
+    if (sug && q.scrollWidth > q.clientWidth) sug = null;
+    $('#kbTab').hidden = !sug;
+    if (!sug) return void (ghost.textContent = '');
+    const cs = getComputedStyle(q);
+    ghost.style.font = cs.font;
+    ghost.style.letterSpacing = cs.letterSpacing;
+    ghost.style.paddingLeft = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) + 'px';
+    ghost.innerHTML = `<i>${esc(q.value)}</i>${esc(sug.rest)}`;
+  }
+  function takeSuggest() {
+    if (!sug) return false;
+    const q = $('#kbQ');
+    q.value = sug.value;
+    q.focus();
+    q.setSelectionRange(q.value.length, q.value.length);
+    q.dispatchEvent(new Event('input', { bubbles: true }));
+    KK.sfx.ui();
+    return true;
+  }
+
+  /* ------------- phones: the keyboard opens in a speech bubble where you tapped ------------- */
+  // one column (phones, narrow windows): the details float over the list, pointing at the
+  // row you tapped; a computer shows them in the panel beside the list
+  const bubbly = () => matchMedia('(max-width: 900px)').matches;
+  let anchor = null; // { id, x }: the row the bubble points at, and where on it you tapped
+  function closeBubble() {
+    if (!anchor) return;
+    anchor = null;
+    const box = $('#kbDetail');
+    box.classList.remove('bubble', 'up');
+    box.style.top = '';
+    $('#kbTail').hidden = true;
+  }
+  // below the row; above it when there's no room below but there is above. noScroll: a
+  // re-place (resize, new content) never moves the page
+  function placeBubble(noScroll) {
+    if (!anchor) return;
+    const row = document.querySelector(`#kbList [data-kb="${CSS.escape(anchor.id)}"]`);
+    if (!row || !bubbly()) return closeBubble();
+    const box = $('#kbDetail'), tail = $('#kbTail');
+    const wrap = $('#scr-kbs .kbs-wrap').getBoundingClientRect(), r = row.getBoundingClientRect();
+    const GAP = 12, h = box.offsetHeight, head = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--head-h')) || 0;
+    // the screen's bottom: above the phone's tab bar
+    const nav = document.querySelector('.nav'), foot = nav && getComputedStyle(nav).position === 'fixed' ? Math.min(innerHeight, nav.getBoundingClientRect().top) : innerHeight;
+    const up = foot - r.bottom < h + GAP + 8 && r.top - head >= h + GAP + 8;
+    const top = up ? r.top - wrap.top - GAP - h : r.bottom - wrap.top + GAP;
+    box.style.top = top + 'px';
+    box.classList.toggle('up', up);
+    tail.hidden = false;
+    tail.classList.toggle('up', up);
+    tail.style.top = (up ? top + h - 9 : top - 7) + 'px';
+    tail.style.left = U.clamp(anchor.x - wrap.left, 30, wrap.width - 30) - 8 + 'px';
+    if (noScroll || up) return;
+    // the bubble's bottom on screen, without pushing the row off the top
+    const over = r.bottom + GAP + h + 8 - foot;
+    if (over > 0) scrollBy({ top: Math.min(over, r.top - head - 8), behavior: 'smooth' });
   }
 
   const thumb = (url, w) => (url ? url + (url.includes('?') ? '&' : '?') + 'width=' + w : '');
@@ -50,7 +149,7 @@
       if (!b) return;
       b.blur();
       KK.sfx.tab();
-      if (b.dataset.kbt === 'view') KK.app.settings.kbsView = b.dataset.v;
+      if (b.dataset.kbt === 'view') KK.app.settings.kbsLayout = b.dataset.v;
       else KK.app.settings.kbsSort = sortDir() === 1 ? 'za' : 'az';
       KK.app.saveSettings();
       K.limit = PAGE[viewMode()];
@@ -58,7 +157,15 @@
       renderList();
     });
 
-    $('#kbQ').addEventListener('input', (e) => { f.q = e.target.value; K.limit = PAGE[viewMode()]; renderList(); });
+    $('#kbQ').addEventListener('input', (e) => { f.q = e.target.value; K.limit = PAGE[viewMode()]; renderList(); showSuggest(); });
+    $('#kbQ').addEventListener('keydown', (e) => {
+      const end = e.target.selectionStart === e.target.value.length;
+      if (((e.key === 'Tab' && !e.shiftKey) || (e.key === 'ArrowRight' && end)) && takeSuggest()) e.preventDefault();
+    });
+    ['focus', 'blur', 'click', 'keyup'].forEach((t) => $('#kbQ').addEventListener(t, () => setTimeout(showSuggest, 0)));
+    // the pill: pointerdown keeps the box's focus (and the hint) until the tap lands
+    $('#kbTab').addEventListener('pointerdown', (e) => e.preventDefault());
+    $('#kbTab').addEventListener('click', () => takeSuggest());
     $('#kbBrand').addEventListener('change', (e) => { f.brand = e.target.value; K.limit = PAGE[viewMode()]; renderList(); });
     $('#scr-kbs .kbs-filters').addEventListener('click', (e) => {
       const c = e.target.closest('[data-f]');
@@ -79,11 +186,35 @@
       if (!card) return;
       card.blur();
       KK.sfx.ui();
-      select(card.dataset.kb);
-      // phones: the picked keyboard shows above the list
-      if (matchMedia('(max-width: 700px)').matches) $('#kbDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const id = card.dataset.kb;
+      if (bubbly()) {
+        // the same row again closes it
+        if (anchor && anchor.id === id) return closeBubble();
+        const r = card.getBoundingClientRect();
+        anchor = { id, x: e.clientX || r.left + r.width / 2 };
+        $('#kbDetail').classList.add('bubble');
+      }
+      select(id); // draws the details, then places the bubble
     });
     $('#kbDetail').addEventListener('click', onDetail);
+    // color and switch: the two dropdowns
+    $('#kbDetail').addEventListener('change', (e) => {
+      const s = e.target.closest('[data-pick]');
+      if (!s) return;
+      KK.sfx.ui();
+      if (s.dataset.pick === 'look') K.look = +s.value;
+      else K.sw = +s.value;
+      renderDetail();
+      KK.keysound.demo();
+    });
+    // a tap anywhere else (or Esc) closes the bubble
+    document.addEventListener('pointerdown', (e) => {
+      if (anchor && !e.target.closest('#kbDetail, #kbTail, #kbList [data-kb]')) closeBubble();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && anchor) closeBubble();
+    });
+    window.addEventListener('resize', () => placeBubble(true));
     // the review panel's stars: hover to preview, click (above) to set, arrows to adjust
     $('#kbDetail').addEventListener('pointermove', (e) => {
       const st = e.target.closest('#kbrStars');
@@ -103,6 +234,7 @@
   };
 
   K.open = function () {
+    closeBubble();
     KK.app.show('kbs');
     renderList();
     if (!K.sel) {
@@ -142,11 +274,12 @@
             ? `<span class="kbc-img"><img loading="lazy" alt="" src="${esc(thumb(k.looks[0].img, 300))}" onerror="this.remove()"></span>`
             : `<span class="kbc-img noimg" style="--case:${k.looks[0].caseColor}">${KK.kbview.swatch(C.keycapById[k.looks[0].keycap])}</span>`}
           <span class="kbc-t">${esc(k.title)}</span>
-          <span class="kbc-m">${esc(k.vendor)} · ${k.sizeName} · ${k.switches.length} switch${k.switches.length === 1 ? '' : 'es'} · from ${C.money(k.price, KK.app.settings.currency)}</span>
+          <span class="kbc-p">${C.money(k.price, cur)}</span>
         </button>`)
         .join('') +
       (list.length > K.limit ? `<button class="btn ghost more" data-more>show more (${(list.length - K.limit).toLocaleString()} left)</button>` : '') +
       (list.length ? '' : '<p class="hint">no keyboards match — try fewer words.</p>');
+    placeBubble(true); // a new list: the bubble follows its row (or closes if it's gone)
   }
 
   function select(id) {
@@ -171,30 +304,34 @@
     const spec = (k, v) => `<div class="spec"><span>${k}</span><b>${v}</b></div>`;
     const meter = (l, r, v) => `<div class="meter"><span>${l}</span><div class="bar" style="--v:${Math.round(v * 100)}%"><i></i></div><span>${r}</span></div>`;
     $('#kbInfo').innerHTML = `
+      <button class="kbd-close" data-act="close" aria-label="close">✕</button>
       <div class="kbd-title">${esc(kb.title)}</div>
       <div class="kbd-title kbd-price">${C.money(kb.price, cur)}</div>
       <div class="kbd-sub">${esc(kb.vendor)} · ${kb.sizeName} · <a href="${esc(kb.url)}" target="_blank" rel="noopener noreferrer">view on ${esc(kb.store)} ↗</a></div>
       <div class="kbd-acts"><button class="btn primary kbd-hear" data-act="demo">▶ hear it</button><button class="btn kbd-review" data-act="review" aria-expanded="false">★ review</button></div>
       <div class="kb-review" id="kbReview" hidden></div>
       ${look.img ? `<img class="kbd-photo" alt="${esc(kb.title)}" src="${esc(thumb(look.img, 720))}" onerror="this.remove()">` : ''}
-      ${kb.looks.length > 1 ? `<div class="grp-h">color</div><div class="chips">${kb.looks.map((l, i) => `<button class="chip${i === K.look ? ' on' : ''}" data-act="look" data-v="${i}"><i class="dotc" style="background:${l.caseColor}"></i>${esc(l.name)}</button>`).join('')}</div>` : ''}
-      <div class="grp-h">switch</div>
-      <div class="chips">${kb.switches.map((s, i) => { const o = C.switchById[s.id]; return `<button class="chip t-${o.type}${i === K.sw ? ' on' : ''}" data-act="kbsw" data-v="${i}"><i class="dot"></i>${esc(s.name)}</button>`; }).join('')}</div>`;
+      <div class="kbd-picks">
+        <label class="kbd-pick"><span class="hud-lbl">color</span><select class="select" data-pick="look"${kb.looks.length > 1 ? '' : ' disabled'}>${kb.looks.map((l, i) => `<option value="${i}"${i === K.look ? ' selected' : ''}>${esc(l.name)}</option>`).join('')}</select></label>
+        <label class="kbd-pick"><span class="hud-lbl">switch</span><select class="select" data-pick="kbsw"${kb.switches.length > 1 ? '' : ' disabled'}>${kb.switches.map((s, i) => `<option value="${i}"${i === K.sw ? ' selected' : ''}>${esc(s.name)} · ${C.switchById[s.id].typeLabel}</option>`).join('')}</select></label>
+      </div>`;
     $('#kbSound').innerHTML = `
-      <div class="grp-h">how it sounds</div>
-      <div class="pv-summary">${esc(w.headline)}</div>
-      <div class="tags">${w.tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
+      <div class="pv-summary kbd-headline">${esc(w.headline)}</div>
       ${meter('deep', 'high', w.meters.pitch)}${meter('quiet', 'loud', w.meters.volume)}${meter('thock', 'clack', w.meters.clack)}
-      <button class="btn sm" data-act="demo">▶ hear it</button>
       <div class="specs kbd-specs">
         ${spec('switch', `${esc(sw.name)} <em>${sw.typeLabel} · ${sw.force}g</em>`)}
         ${spec('case', `${kb.sizeName} ${C.CASES[b.case].name}`)}
         ${spec('plate', `${C.PLATES[b.plate].name} · ${C.MOUNTS[b.mount].name}`)}
         ${spec('keycaps', `${C.KC_PROFILES[kc.profile].name} ${C.KC_MATERIALS[kc.material].name} <em>${kc.legend.name} legends</em>`)}
         ${spec('factory', factory.length ? factory.join(', ') : 'nothing extra')}
-      </div>
-      <p class="hint">specs are read from the product page; the sound is built from exactly these parts — no mods.</p>`;
+      </div>`;
     renderActions();
+    // in a bubble: placed now, and again once the photo has its height
+    if (anchor) {
+      placeBubble();
+      const ph = $('#kbInfo .kbd-photo');
+      if (ph) ph.addEventListener('load', () => placeBubble(true), { once: true });
+    }
   }
 
   function renderActions() {
@@ -277,8 +414,7 @@
     KK.sfx.ui();
     const v = el.dataset.v;
     switch (el.dataset.act) {
-      case 'look': K.look = +v; renderDetail(); KK.keysound.demo(); break;
-      case 'kbsw': K.sw = +v; renderDetail(); KK.keysound.demo(); break;
+      case 'close': closeBubble(); break;
       case 'demo': KK.keysound.demo(); break;
       case 'review': reviewPanel(!rev); break;
       case 'revCancel': reviewPanel(false); break;
