@@ -360,6 +360,34 @@
         }
       }
     },
+    "market": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && (newData.exists() ? newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid) : (data.child('uid').val() === auth.uid || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com')))",
+        ".validate": "newData.hasChildren(['uid', 'kind', 'type', 'cond', 'country', 'city', 'title', 'thumb', 'at'])",
+        "uid": { ".validate": "newData.isString()" },
+        "kind": { ".validate": "newData.val() === 'sell' || newData.val() === 'buy'" },
+        "type": { ".validate": "newData.val() === 'keyboard' || newData.val() === 'switch' || newData.val() === 'other'" },
+        "item": { ".validate": "newData.isString() && newData.val().length <= 200 && newData.parent().child('type').val() !== 'other'" },
+        "itemName": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "cond": { ".validate": "newData.val() === 'new' || newData.val() === 'used'" },
+        "country": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "city": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+        "desc": { ".validate": "newData.isString() && newData.val().length <= 1000" },
+        "price": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 99999999" },
+        "thumb": { ".validate": "newData.isString() && newData.val().length < 80000 && newData.val().matches(/^data:image\\/jpeg;base64,[A-Za-z0-9+\\/=]+$/)" },
+        "at": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+        "$other": { ".validate": false }
+      }
+    },
+    "marketPhotos": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && (newData.exists() ? newData.parent().parent().child('market').child($id).child('uid').val() === auth.uid : (root.child('market').child($id).child('uid').val() === auth.uid || (auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com')))",
+        ".validate": "newData.isString() && newData.val().length < 400000 && newData.val().matches(/^data:image\\/jpeg;base64,[A-Za-z0-9+\\/=]+$/)"
+      }
+    },
     "matches": {
       "$mid": {
         ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",

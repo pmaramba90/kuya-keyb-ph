@@ -250,9 +250,21 @@
         </div>
       </section>
 
-      <!-- marketplace: later -->
+      <!-- marketplace (js/market.js): buy and sell; + posts a listing -->
       <section class="screen" id="scr-market">
-        <div class="narrow empty-page"><div class="grp-h">marketplace</div><p class="hint">coming soon.</p></div>
+        <div class="mk">
+          <div class="mk-head">
+            <div class="grp-h">marketplace <span class="sub">buy and sell keyboards, switches and parts · message the seller to deal</span></div>
+            <button class="mk-add" id="mkAdd" title="post a listing" aria-label="post a listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          </div>
+          <div class="filters mk-filters">
+            <input class="search" id="mkQ" autocomplete="off" spellcheck="false" placeholder="search listings…">
+            <div class="chips" id="mkKinds"></div>
+            <div class="chips" id="mkTypes"></div>
+          </div>
+          <div class="mk-grid" id="mkList"></div>
+        </div>
+        <div class="mk-modal" id="mkModal" hidden><div class="mk-sheet" id="mkSheet" role="dialog" aria-modal="true"></div></div>
       </section>
 
       <!-- your profile -->
@@ -516,6 +528,7 @@
   <script src="js/party.js"></script>
   <script src="js/soundguide.js"></script>
   <script src="js/conference.js"></script>
+  <script src="js/market.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

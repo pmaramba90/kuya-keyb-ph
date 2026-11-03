@@ -351,6 +351,7 @@
     if (name === 'friends') KK.social.renderFriends();
     if (name === 'profile') KK.social.renderProfile();
     if (name === 'guide') KK.soundguide.render();
+    if (name === 'market') KK.market.open();
     if (name === 'game') {
       app.gameKb.update(app.build);
       renderGameBuild($('#gameBuild'));
@@ -874,6 +875,7 @@
     KK.social.stop();
     KK.feed.stop();
     KK.conf.stop();
+    KK.market.stop();
     KK.notify.stop();
     KK.chat.stop();
     KK.net.logout();

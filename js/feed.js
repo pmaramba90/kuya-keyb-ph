@@ -1169,7 +1169,9 @@
     compMsg('');
   }
 
-  // attach a photo: shrunk in the browser to a JPEG under ~380 KB (it's kept in the database)
+  // attach a photo: shrunk in the browser to a JPEG under ~380 KB (it's kept in the database);
+  // marketplace listings use it too
+  F.shrinkPhoto = shrinkPhoto;
   function shrinkPhoto(file) {
     return new Promise((res, rej) => {
       const url = URL.createObjectURL(file), im = new Image();

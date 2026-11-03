@@ -81,7 +81,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 - **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **Anyone's profile**: you can open any player's page, friend or not. Type a username on friends and press **view profile**, or click someone in popular keyboards, the vs players list or your match history. If you're not friends, the page has an **add friend** button. Once you've sent a request it shows **request sent**; if they've asked you, it shows **accept friend request**; once you're friends it shows **✓ friends**.
 - **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The page has two separate sections: **your friends** (with how many are online; offline friends are faded to 50% so the online ones stand out) and **friend requests** (not friends yet), in its own outlined panel with **received** / **sent** tabs (cancel takes back one you sent). The requests panel always sits above your friends. It turns gold while someone is waiting on you, and a new request switches it to received. Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
-- **marketplace**: coming soon.
+- **marketplace**: players buying and selling keyboards, switches and other keyboard gear. See [Marketplace](#marketplace).
 - **edit profile** (on your profile): change your picture or remove it, and set an optional nickname, city, country and email. Your email is only visible to you. Log out is here.
 
 **Profile pictures**: "change photo" (in your drop-down or on edit profile) opens the picture window with your current picture, a grid of **11 cat pictures** (img/avatars, square 256 px, each cropped around the face) and **upload your own photo**. Tap a cat or upload a photo, adjust it like Facebook's, then **save** (it stays off until you pick something new). Drag to position it in the circle and zoom with the slider (or the mouse wheel). It's cropped in the browser to a 192 px square JPEG (a few KB) and saved in the database, because file storage would need Firebase's paid plan. Without a picture you get the keyboard logo. Pictures show in the nav, on home, on friends, in the vs players list, on challenges, on the VS card and beside both names at the top of the match.
@@ -96,6 +96,22 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 - Each account has its own current build, saved builds, level progress and vs-AI record. Saving a build only saves it to the signed-in account.
 - Builds made before accounts existed are given to the first account created on that browser.
 - Each browser tab keeps its own sign-in, so two tabs can be two players.
+
+## Marketplace
+
+Listings show as cards, newest first: the photo with a **Selling** (yellow) or **Buying** (blue) tag, the title, the price if one was given, the condition and city, and who posted it and when. Filter by **all / selling / buying** and **everything / keyboards / switches / other**, or search (title, item, city, country, description). Click a card to open it: the full-size photo, the item, condition, location, description and the seller (or buyer), with **message <name>** (opens a chat with them) or, on your own listing, **delete listing**.
+
+The round yellow **+** posts a listing:
+
+1. **Selling** or **Buying**.
+2. **Photo** (required): a picture of the keyboard, switch or accessory. It's shrunk in the browser; a small copy is shown on the cards and the full one only loads when the listing opens.
+3. **Item type**: Keyboard, Switch or Other. For a keyboard or switch you pick it from the catalog (2,087 keyboards, 586 switches) with a search box. The first option is always **Other / Not on the List**, pinned at the top whatever you type. Picking an item fills an empty title with its name.
+4. **Condition**: Brand New or Used (Mint).
+5. **Location**: the country (Philippines by default) and the city (Philippine cities are suggested as you type). Your profile's city and country are filled in if you've set them.
+6. **Title** and **description**. The title shows **Selling:** or **Buying:** in front of it, matching what you picked.
+7. **Price** in pesos, optional.
+
+Anything required that's missing is named under the form instead of posting. Listings are stored at `market/{id}` (the photo apart at `marketPhotos/{id}`); only the poster can change or delete theirs.
 
 ## Keyboard sound guide
 
@@ -368,6 +384,7 @@ js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
 js/conference.js      home → conference: threads, votes, comments and replies
+js/market.js          marketplace: listings, the new-listing form, open / message / delete
 js/soundguide.js      keyboard sound guide: the ten sound profiles, their demo boards
 js/notify.js          the bell: notifications
 js/mention.js         @ tags: the picker, tag links, tag notifications
