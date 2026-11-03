@@ -244,7 +244,7 @@ The config values are public by design. The database rules are what keep each pl
 1. **Build**: choose the base (layout, case material and color, plate, mount), the switches (586 from keybumps.com), the keycaps (727 sets from mechanicalkeyboards.com), and any mods and lube.
 2. **Summary**: a write-up of how the board sounds, an estimated price (USD by default, PHP or EUR optional), and shop links for every part. Name and save the build here. Saved builds appear on the home screen after a refresh, where you can load, rename or delete them.
 3. **Play (survival)**: each level lasts 1 minute.
-   - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it a little. If the bar fills, it's game over. Survive the minute to unlock the next level.
+   - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it: 1.5% a word, plus 0.1% more for every word of your current combo (a 10x combo drains 2.5% a word, up to 5.5% at 40x). If the bar fills, it's game over. Survive the minute to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - **Top 5 beside the field**: the site's five best single-player totals (the same list as High Scores, read fresh when each level starts), with you in it. You're shown at your best; once your total in this run passes it, your row climbs live as you score (your rank shows under the five, after "···", until you make it in). On phones it's one slim line under the field, scrolled so you're in view.
    - **Play → single player / vs AI** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.
@@ -266,7 +266,9 @@ The config values are public by design. The database rules are what keep each pl
    - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
    - A spec sheet of your build sits beside the in-game keyboard.
-   - **Clearing a level** adds a bonus to that level's score: **level clear** (300 × the level) plus **clean screen** (25 × the level for every word under 8 still falling when time runs out, so 200 × the level for an empty screen). Both show on the results card.
+   - **Clearing a level** adds a bonus to that level's score: **level clear**, which climbs by 2,000 a level for levels 1–5 (2,000, 4,000 … 10,000), by 3,000 for 6–10 (13,000, 16,000 … 25,000), by 4,000 for 11–15 (29,000 … 45,000), and so on (+1,000 more every five levels); plus **clean screen** (25 × the level for every word under 8 still falling when time runs out, so 200 × the level for an empty screen).
+   - **Max combo bonus**, cleared or not: 50 × the level × your best combo in it (a 20x combo on level 3 = +3,000).
+   - **Combo pay**: on top of the combo multiplier, every word in a combo pays 5 more per word of the combo (2x: +5, 10x: +45, up to +250), doubled while ×2 double is on. The combo meter shows it ("+45 a word"). All bonuses show on the results card.
    - Your **total score** carries across levels and shows at the top left. Words typed higher up score more, and a combo raises the multiplier up to x3.
    - **Word sizes**: words fall in four sizes, and the smaller the word, the more it's worth: tiny ×2, small ×1.5, normal ×1, large ×0.7. Longer words score more too, so small long words are the jackpot (an 8-letter word scores 160 tiny vs 56 large).
    - **Announcer** (switch in the footer: "announcer: dragon / classic"):
@@ -288,7 +290,7 @@ The config values are public by design. The database rules are what keep each pl
      - ×2 **double** doubles your score for 10s.
      - ✕ **erase** clears the screen and scores every word on it. Only turns up when the field is crowded.
      - − **subtract** lowers your own overflow bar by 5% for every word you type, for 10s. Only turns up once your overflow bar has started filling.
-     - ✸ **explode** is on for 8s (the field glows orange). The glowing word and every word you type while it's on blow up the words near them: everything close by (a fifth of the area it used to reach: about 13% of the field's width, at least 58px) is cleared and scored. There's no ring: each word caught pops, swelling orange and bursting into a few bits. The sound is the same.
+     - ✸ **explode** is on for 8s (the field glows orange). The glowing word and every word you type while it's on blow up the words near them: everything within about 19% of the field's width (at least 82px) is cleared and scored. A thin plain white ring grows out to that reach and fades, and each word caught pops, swelling orange and bursting into a few bits.
      - ↺ **reset** empties your overflow bar. Single player only, from level 7, and only once the bar has started filling.
      - **Power-ups you destroy are yours**: when explode or erase clears a glowing word, you get its power-up too.
      - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).

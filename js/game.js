@@ -33,9 +33,17 @@
   // freeze and erase only turn up when the field is crowded (this many words or more)
   const CROWD_ONLY = { freeze: 1, erase: 1 };
   const crowdAt = (p) => Math.max(6, Math.round(p.maxOn * 0.45));
-  // blast radius, as a share of the field's width (at least 58px): a fifth of the area it
-  // used to cover (0.3 / 130px)
-  const EXPLODE_R = 0.134;
+  // blast radius, as a share of the field's width (at least 82px): about two fifths of the
+  // area the first blast covered (0.3 / 130px)
+  const EXPLODE_R = 0.19, EXPLODE_MIN = 82;
+  // a combo pays on top of the multiplier: this much more per word for every word of the
+  // combo (10x: +50 a word), up to COMBO_CAP
+  const COMBO_PTS = 5, COMBO_CAP = 250;
+  const comboBonus = (combo) => Math.min(COMBO_CAP, COMBO_PTS * Math.max(0, combo - 1));
+  G.comboBonus = comboBonus;
+  // a typed word drains the overflow bar a little; a combo drains it more (+0.1% a word
+  // for every word of the combo, up to 40)
+  const HEAL_COMBO = 0.001;
   const SUBTRACT = 0.05; // overflow taken off per word while subtract is on
 
   // word sizes: the smaller the word, the more it's worth (so small + long is the jackpot)
@@ -75,7 +83,7 @@
       maxLen: Math.min(6 + L, 12),
       maxOn: Math.min(9 + 2 * L, 28),
       missDamage: Math.min(0.08 + 0.008 * (L - 1), 0.14),
-      heal: 0.012,
+      heal: 0.015,
     };
   };
 
@@ -174,7 +182,7 @@
     root.querySelector('.cm-count').textContent = c + 'x';
     root.querySelector('.cm-tier').textContent = heat ? KK.voice.label(b.word, tier).replace(/!+$/, '') : c ? 'warming up…' : 'no combo yet';
     root.querySelector('.cm-fill').style.width = (heat === 5 ? 100 : ((c % 5) / 5) * 100) + '%';
-    const m = 'x' + b.mult().toFixed(2).replace(/\.?0+$/, '') + ' score';
+    const cb = comboBonus(c), m = 'x' + b.mult().toFixed(2).replace(/\.?0+$/, '') + ' score' + (cb ? ` · +${cb} a word` : '');
     root.querySelector('.cm-next').textContent = heat === 5 ? `${m} · max heat` : `${m} · next: ${KK.voice.label(b.word, heat + 1 === 5 ? 'wow' : heat + 1).replace(/!+$/, '')} at ${(heat + 1) * 5}x`;
     if (bump) {
       root.classList.remove('bump');
@@ -364,13 +372,13 @@
     }
 
     complete(w) {
-      const pts = this.points(w, true);
-      this.score += pts;
       this.combo++;
+      const pts = this.points(w, true) + comboBonus(this.combo) * (this.fx.double > 0 ? 2 : 1);
+      this.score += pts;
       this.maxCombo = Math.max(this.maxCombo, this.combo);
       this.done++;
       this.buffer = '';
-      this.bar = Math.max(0, this.bar - this.p.heal);
+      this.bar = Math.max(0, this.bar - this.p.heal - HEAL_COMBO * Math.min(this.combo, 40));
       if (this.fx.subtract > 0 && this.bar > 0) {
         this.bar = Math.max(0, this.bar - SUBTRACT);
         this.popup(this.W - 70, 40, `−${Math.round(SUBTRACT * 100)}% overflow`, 'relief');
@@ -550,7 +558,7 @@
     // a word typed while explode is on: the words near where it was are cleared and scored
     blast(w) {
       const cx = w ? w.x + w.width / 2 : this.W / 2, cy = w ? w.y : this.H / 2;
-      const r = Math.max(58, this.W * EXPLODE_R);
+      const r = Math.max(EXPLODE_MIN, this.W * EXPLODE_R);
       let sum = 0, n = 0;
       const gained = [];
       this.words.slice().forEach((o) => {
@@ -565,6 +573,7 @@
       });
       this.score += sum;
       this.buffer = '';
+      this.boom(cx, cy, r);
       if (!this.ai && n) KK.sfx.power('explode');
       if (n) this.popup(cx, cy - 26, `boom ×${n}`, 'dbl');
       this.gain(gained);
@@ -576,6 +585,15 @@
         this.popup(o.x + o.width / 2, o.y - 20, '+ ' + POWERS[o.power].label, 'dbl');
         this.activate(o.power, o);
       });
+    }
+
+    // the blast: a thin white ring that grows to the radius and fades
+    boom(x, y, r) {
+      const el = document.createElement('div');
+      el.className = 'boom';
+      el.style.cssText = `left:${x}px;top:${y}px;--r:${r * 2}px`;
+      this.field.appendChild(el);
+      setTimeout(() => el.remove(), 600);
     }
 
     // a word caught in a blast pops: it swells and bursts, a few bits flying off
@@ -907,10 +925,19 @@
     $('#hudTime').classList.toggle('warn', run.time <= 10);
   }
 
-  // clearing a level: a bonus that grows with the level, and a clean-screen bonus for
-  // every word under CLEAN_FROM still falling when the clock runs out
-  const CLEAR_BONUS = 300, CLEAN_FROM = 8, CLEAN_PER = 25;
-  G.clearBonus = (level, left) => ({ clear: CLEAR_BONUS * level, clean: Math.max(0, CLEAN_FROM - left) * CLEAN_PER * level });
+  // clearing a level: a bonus that climbs by 2,000 a level for levels 1–5 (2,000 … 10,000),
+  // 3,000 for 6–10 (13,000 … 25,000), 4,000 for 11–15 (29,000 … 45,000), and so on; plus
+  // a clean-screen bonus for every word under CLEAN_FROM still falling when time runs out
+  const CLEAN_FROM = 8, CLEAN_PER = 25;
+  const levelBonus = (level) => {
+    let sum = 0;
+    for (let l = 1; l <= level; l++) sum += 1000 * (2 + Math.floor((l - 1) / 5));
+    return sum;
+  };
+  G.clearBonus = (level, left) => ({ clear: levelBonus(level), clean: Math.max(0, CLEAN_FROM - left) * CLEAN_PER * level });
+  // the level's best combo pays too, cleared or not: 50 × the level × the max combo
+  const COMBO_LEVEL = 50;
+  G.maxComboBonus = (level, maxCombo) => COMBO_LEVEL * level * Math.max(0, maxCombo);
 
   function soloEnd(survived) {
     if (!run || run.kind !== 'solo' || !run.running) return;
@@ -919,6 +946,8 @@
     const left = b.words.length;
     const bonus = survived ? G.clearBonus(run.level, left) : null;
     if (bonus) b.score += bonus.clear + bonus.clean; // part of the level's score
+    const comboPay = G.maxComboBonus(run.level, b.maxCombo);
+    b.score += comboPay;
     b.words.slice().forEach((w) => b.removeWord(w, survived ? 'done' : 'dead'));
     const total = run.startTotal + b.score;
     const stars = !survived ? 0 : b.bar < 0.25 ? 3 : b.bar < 0.6 ? 2 : 1;
@@ -956,7 +985,7 @@
          <div><span class="hud-lbl">max combo</span><b>${b.maxCombo}x</b></div>
          <div><span class="hud-lbl">acc</span><b>${b.acc()}%</b></div>
        </div>
-       ${bonus ? `<div class="res-bonus"><span>level clear <b>+${bonus.clear.toLocaleString()}</b></span><span>clean screen <b>+${bonus.clean.toLocaleString()}</b> <i>${left === 0 ? 'no words left!' : left + ' word' + (left > 1 ? 's' : '') + ' left'}</i></span></div>` : ''}
+       <div class="res-bonus">${bonus ? `<span>level clear <b>+${bonus.clear.toLocaleString()}</b></span><span>clean screen <b>+${bonus.clean.toLocaleString()}</b> <i>${left === 0 ? 'no words left!' : left + ' word' + (left > 1 ? 's' : '') + ' left'}</i></span>` : ''}<span>max combo <b>+${comboPay.toLocaleString()}</b> <i>${b.maxCombo}x on level ${run.level}</i></span></div>
        <div class="res-small">words <b>${b.done}</b> · missed <b>${b.missed}</b> · power-ups <b>${b.powersUsed}</b></div>
        <div class="ov-btns">
          ${survived ? `<button class="btn primary" data-ov="next" data-primary>level ${level + 1} →</button><button class="btn" data-ov="retry">retry level ${level}</button>` : `<button class="btn primary" data-ov="restart" data-primary>play again from level 1</button>`}

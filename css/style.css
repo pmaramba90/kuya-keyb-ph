@@ -873,7 +873,9 @@ body.mk-locked { overflow: hidden; }
 .fw.low .r { color: color-mix(in srgb, var(--err) 70%, var(--sub)); }
 .fw.done { animation: done .35s ease-out forwards; }
 .fw.dead { animation: dead .35s ease-in forwards; }
-/* explode: words near a typed one pop */
+/* explode: a thin white ring grows out, and the words in it pop */
+.boom { position: absolute; width: var(--r); height: var(--r); margin: calc(var(--r) / -2) 0 0 calc(var(--r) / -2); border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9); pointer-events: none; animation: boom .5s ease-out forwards; }
+@keyframes boom { from { transform: scale(.1); opacity: 1; } to { transform: scale(1); opacity: 0; } }
 .fw.popped { animation: popped .32s ease-out forwards; color: #ffb347; }
 @keyframes popped { 0% { transform: var(--tr) scale(1); } 35% { transform: var(--tr) scale(1.35); opacity: 1; filter: brightness(1.6); } 100% { transform: var(--tr) scale(.3); opacity: 0; } }
 .shard { position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #ffb347; pointer-events: none; animation: shard .45s ease-out forwards; }
