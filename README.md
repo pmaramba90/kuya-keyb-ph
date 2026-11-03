@@ -243,8 +243,8 @@ The config values are public by design. The database rules are what keep each pl
 
 1. **Build**: choose the base (layout, case material and color, plate, mount), the switches (586 from keybumps.com), the keycaps (727 sets from mechanicalkeyboards.com), and any mods and lube.
 2. **Summary**: a write-up of how the board sounds, an estimated price (USD by default, PHP or EUR optional), and shop links for every part. Name and save the build here. Saved builds appear on the home screen after a refresh, where you can load, rename or delete them.
-3. **Play (survival)**: each level lasts 1 minute.
-   - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it: 1.5% a word, plus 0.1% more for every word of your current combo (a 10x combo drains 2.5% a word, up to 5.5% at 40x). If the bar fills, it's game over. Survive the minute to unlock the next level.
+3. **Play (survival)**: each level lasts 30 seconds on levels 1–3, 45 seconds on levels 4–6 and 1 minute from level 7 on.
+   - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it: 1.5% a word, plus 0.1% more for every word of your current combo (a 10x combo drains 2.5% a word, up to 5.5% at 40x). If the bar fills, it's game over. Survive the level's time to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - **Top 5 beside the field**: the site's five best single-player totals (the same list as High Scores, read fresh when each level starts), with you in it. You're shown at your best; once your total in this run passes it, your row climbs live as you score (your rank shows under the five, after "···", until you make it in). On phones it's one slim line under the field, scrolled so you're in view.
    - **Play → single player / vs AI** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.

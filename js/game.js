@@ -6,7 +6,8 @@
 
   /*
    * Two modes share one engine:
-   *   solo — survive 1 minute per level; misses fill the overflow bar.
+   *   solo — survive each level (30s for levels 1–3, 45s for 4–6, 1 minute from 7);
+   *           misses fill the overflow bar.
    *   vs AI — you (left) against an AI typist (right), best of 3 three-minute rounds.
    *           Both fields get the same word stream; combo milestones attack the
    *           opponent's overflow bar (harder at higher tiers).
@@ -14,7 +15,9 @@
    * A Board is one playing field (words, input, combo, overflow, power-ups).
    */
   const G = (KK.game = {});
-  const LEVEL_SECONDS = 60;
+  // single player: how long a level lasts — short to start, a full minute from level 7
+  const levelSeconds = (L) => (L <= 3 ? 30 : L <= 6 ? 45 : 60);
+  G.levelSeconds = levelSeconds;
   const ROUND_SECONDS = 90;
   const VS_LEVEL = { easy: 3, medium: 4, hard: 5 };
   const AI_WORD = { easy: 'creamy', medium: 'thocky', hard: 'clicky' };
@@ -898,7 +901,7 @@
     });
     run = {
       kind: 'solo', level, lang, p, board, boards: [board], startTotal: startTotal || 0, rnd: Math.random,
-      time: LEVEL_SECONDS, elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: LEVEL_SECONDS,
+      time: levelSeconds(level), elapsed: 0, spawnT: 0.2, burst: 4, recent: [], lastSec: levelSeconds(level),
       running: false, paused: false, hud: {},
       tick(dt) {
         if (board.fx.freeze <= 0) spawnTick(dt);
@@ -912,7 +915,7 @@
     soloHud(true);
     KK.feed.gameBoard($('#gameLb'), run.startTotal);
     KK.feed.loadGameBoard().then(() => run && run.kind === 'solo' && KK.feed.gameBoard($('#gameLb'), run.startTotal + run.board.score));
-    KK.ui.countdown(begin, "type the falling words · don't let misses overflow the bar · survive 1:00 for a clear bonus · fewer words left on screen = more bonus");
+    KK.ui.countdown(begin, `type the falling words · don't let misses overflow the bar · survive ${U.fmtTime(levelSeconds(level))} for a clear bonus · fewer words left on screen = more bonus`);
   };
 
   function soloHud(force) {

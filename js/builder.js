@@ -310,7 +310,7 @@
             ${B.mode === 'vs' ? vsBlock(app, prog) : `
             <div class="grp"><div class="grp-h">level</div><div class="chips">${levels.join('')}</div></div>
             <button class="btn primary big" data-act="start">start level ${B.level} →</button>
-            <p class="hint" style="margin-top:12px">survive 1 minute · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>`}
+            <p class="hint" style="margin-top:12px">survive ${KK.game.levelSeconds(B.level) === 60 ? '1 minute' : KK.game.levelSeconds(B.level) + ' seconds'} · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>`}
           </section>
         </div>
         <section class="sum-parts">
