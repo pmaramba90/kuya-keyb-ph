@@ -42,7 +42,7 @@
       caps: `${C.KC_PROFILES[kc.profile].name} ${C.KC_MATERIALS[kc.material].name}`,
     };
   };
-  const swatch = (d) => `<span class="pswatch" style="background:${d.b.caseColor}"><i style="background:${d.kc.colors.a}"></i><i style="background:${d.kc.colors.m}"></i><i style="background:${d.kc.colors.x}"></i></span>`;
+  const swatch = (d) => { const c = C.colorsOf(d.b); return `<span class="pswatch" style="background:${d.b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>`; };
   // records can come from other players' data: only ever print them as whole numbers
   const count = (n) => Math.max(0, Math.floor(Number(n) || 0));
   const recText = (r) => `${count(r && r.w)}W–${count(r && r.l)}L`;

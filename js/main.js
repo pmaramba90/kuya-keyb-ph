@@ -156,8 +156,8 @@
     $('#savedList').innerHTML = app.profiles
       .map((p) => {
         const b = C.sanitizeBuild(p.build);
-        const kc = C.keycapById[b.keycap], sw = C.switchById[b.switch];
-        const c = kc.colors;
+        const sw = C.switchById[b.switch];
+        const c = C.colorsOf(b);
         return `<div class="pcard${p.id === app.profileId ? ' cur' : ''}" data-id="${p.id}">
           <button class="pmain" data-pact="load" title="load this build">
             <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
@@ -316,7 +316,7 @@
   };
   const PLAY_SCREENS = { game: 1, vs: 1 };
   // the nav tab each screen belongs to (a player's page: the tab you opened it from)
-  const NAV_TAB = { title: 'title', profile: 'title', guide: 'home', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
+  const NAV_TAB = { title: 'title', profile: 'title', convert: 'title', guide: 'home', build: 'play', kbs: 'play', lobby: 'play', game: 'play', vs: 'play', user: 'friends' };
   const HINT_SOLO = $('#keysHint').innerHTML;
   const HINT_VS = '<span class="kbd">esc</span> pause &nbsp;·&nbsp; <span class="kbd">space</span> clear word &nbsp;·&nbsp; combos fill their overflow, misses lower it';
 
@@ -329,6 +329,7 @@
     // them restores yours
     if ((app.screen === 'kbs' || app.screen === 'user') && name !== app.screen) KK.keysound.setBuild(app.build);
     if (app.screen === 'guide' && name !== 'guide') KK.soundguide.left();
+    if (app.screen === 'convert' && name !== 'convert') KK.convert.left();
     app.screen = name;
     document.body.dataset.screen = name;
     document.body.classList.toggle('signed-out', !app.user);
@@ -351,6 +352,7 @@
     if (name === 'friends') KK.social.renderFriends();
     if (name === 'profile') KK.social.renderProfile();
     if (name === 'guide') KK.soundguide.render();
+    if (name === 'convert') KK.convert.render();
     if (name === 'market') KK.market.open();
     if (name === 'game') {
       app.gameKb.update(app.build);
@@ -690,7 +692,7 @@
 
   // a keyboard row: swatch, name and sound, price, win rate (+ make main / open)
   function kbCard(k, o) {
-    const b = C.sanitizeBuild(k.build), c = C.keycapById[b.keycap].colors, wr = winRate(k);
+    const b = C.sanitizeBuild(k.build), c = C.colorsOf(b), wr = winRate(k);
     const cur = app.settings.currency || 'usd';
     return `<div class="kb-card${o.open && k.id ? ' open' : ''}"${o.open && k.id ? ` data-id="${esc(k.id)}" role="button" tabindex="0"` : ''}>
       <span class="pswatch" style="background:${b.caseColor}"><i style="background:${c.a}"></i><i style="background:${c.m}"></i><i style="background:${c.x}"></i></span>
@@ -1137,6 +1139,7 @@
     },
     kbs: () => KK.kbs.open(),
     guide: () => KK.soundguide.open(),
+    convert: () => KK.convert.open(),
   };
   ['#dashActions', '#homeActs'].forEach((id) => $(id).addEventListener('click', (e) => {
     const b = e.target.closest('[data-home]');
@@ -1165,6 +1168,7 @@
   clearUser();
   KK.builder.init();
   KK.kbs.init();
+  KK.convert.init();
   app.show('title');
   // shown on the sign-in page and on home
   KK.online.watchCount((n) => ($('#homeCount').textContent = $('#feedCount').textContent = `${n.toLocaleString()} ${n === 1 ? 'player has' : 'players have'} signed up`));

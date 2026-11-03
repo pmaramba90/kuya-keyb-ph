@@ -153,6 +153,7 @@
               <button class="btn primary" data-home="build">build a new keyboard</button>
               <button class="btn primary" data-home="kbs">full keyboards</button>
               <button class="btn primary" data-home="guide">keyboard sound guide</button>
+              <button class="btn primary" data-home="convert">image converter</button>
             </div>
             <div class="feat" id="dashFeat" hidden>
               <div class="feat-head"><div class="feat-titles"><span class="grp-h">featured keyboard</span><b class="feat-name" id="featName"></b><span class="feat-tags" id="featTags"></span></div><span class="feat-heart" id="featHeart"></span><span class="feat-open">open summary →</span></div>
@@ -283,6 +284,16 @@
             <div class="profile-btns"><button class="btn primary" type="submit">save</button><span class="hint" id="pfMsg"></span></div>
           </form>
           <button class="link-btn" id="logoutBtn">log out</button>
+        </div>
+      </section>
+
+      <!-- image converter (js/convert.js): a keyboard photo → a custom board in its colors -->
+      <section class="screen" id="scr-convert">
+        <div class="cv">
+          <button class="link-btn back-link" id="cvBack">← your profile</button>
+          <div class="grp-h">image converter <span class="sub">upload a photo of a keyboard · it becomes a custom board in the same colors · then pick its parts</span></div>
+          <input type="file" id="cvFile" accept="image/*" hidden>
+          <div id="cvBody"></div>
         </div>
       </section>
 
@@ -516,6 +527,7 @@
   <script src="js/keyboard-view.js"></script>
   <script src="js/builder.js"></script>
   <script src="js/kbs.js"></script>
+  <script src="js/convert.js"></script>
   <script src="js/anticheat.js"></script>
   <script src="js/game.js"></script>
   <script src="js/online.js"></script>

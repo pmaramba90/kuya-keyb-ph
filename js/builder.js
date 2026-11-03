@@ -209,7 +209,7 @@
 
   function stepKeycaps() {
     const mats = ['all', 'pbt', 'abs', 'other'];
-    return `
+    return `${build().paint ? '<p class="hint kc-paint">this board keeps the colors from its photo (image converter): keycaps here change its sound and shape. <button class="link-btn" data-act="unpaint">use the keycaps\' colors instead</button></p>' : ''}
       <div class="filters">
         <input class="search" id="kcQ" placeholder="search ${C.keycaps.length} keycap sets…" value="${esc(kcF.q)}" autocomplete="off" spellcheck="false">
         <select class="select" id="kcProfile">${Object.keys(KC_GROUP_LABEL).map((g) => `<option value="${g}"${kcF.profile === g ? ' selected' : ''}>${KC_GROUP_LABEL[g]}</option>`).join('')}</select>
@@ -344,8 +344,13 @@
         break;
       case 'case':
         b.case = v;
-        b.caseColor = C.CASES[v].colors[0][1];
+        if (!b.paint) b.caseColor = C.CASES[v].colors[0][1]; // a photo board keeps its color
         break;
+      case 'unpaint':
+        delete b.paint;
+        B.changed(true);
+        renderStep();
+        return;
       case 'color':
         b.caseColor = v;
         break;

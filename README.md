@@ -72,7 +72,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
   - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Signing in on another device brings your bests down to it (and the welcome checklist sees your keyboards and games from any device); a device with less on it never lowers what's saved. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
-  - **edit profile**, plus **build a new keyboard · full keyboards · keyboard sound guide**
+  - **edit profile**, plus **build a new keyboard · full keyboards · keyboard sound guide · image converter** (see [Image converter](#image-converter))
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
   - **your posts**: everything you've posted (posts, reviews, new-keyboard and personal-best posts), newest first and 10 at a time, exactly as in the feed. You can react, reply and delete here too. Other players' pages show their posts the same way.
@@ -96,6 +96,14 @@ The home page is the logo, the wordmark, a count of players who have signed up, 
 - Each account has its own current build, saved builds, level progress and vs-AI record. Saving a build only saves it to the signed-in account.
 - Builds made before accounts existed are given to the first account created on that browser.
 - Each browser tab keeps its own sign-in, so two tabs can be two players.
+
+## Image converter
+
+On your profile, **image converter** turns a photo of a keyboard into a custom board. Upload the photo and the board appears beside it in the photo's colors:
+
+- **How the colors are read**: the photo's outer edge is taken as the background and dropped. The board is the densest block of rows and columns that's left, so captions, feature icons and shadows around it don't count. Its pixels are grouped into five colors: the **keys** (alphas) are the most common color in the middle of the board, the **case** is the color that hugs the board's edge but is rare in its middle (when the case is the same color as the keys, a darker shade of the keys), the **mods** are the next most common key color, and the **accent** is the most vivid of the rest (a red Esc, a blue Enter…). Each of the four has a color picker to fix it by hand.
+- **The parts** start from the board you're on and work like the builder's: **base** (size, case material, plate, mount), **switches** (all 586, grouped by type), **keycaps** (profile and material) and **mods & lube**. They change how it sounds (the sound line updates as you go, **▶ hear it** plays it) and its shape (size, keycap profile), never its colors.
+- **save to my builds** names it (optional) and saves it as a new build. Its colors go with it everywhere it's drawn: your featured keyboard, keyboard rows, posts, vs players. Opened in the builder, the keycaps step says the photo's colors are kept and offers **use the keycaps' colors instead**; a new case material keeps the photo's case color.
 
 ## Marketplace
 
@@ -382,6 +390,7 @@ js/sfx.js             game sound effects
 js/keyboard-view.js   keyboard renderer
 js/builder.js         build flow
 js/kbs.js             full (prebuilt) keyboards screen
+js/convert.js         image converter: a keyboard photo → a custom board in its colors
 js/feed.js            home: feed, composer, activity posts, hearts, this week, popular, top rated
 js/conference.js      home → conference: threads, votes, comments and replies
 js/market.js          marketplace: listings, the new-listing form, open / message / delete

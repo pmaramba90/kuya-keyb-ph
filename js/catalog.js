@@ -748,6 +748,11 @@
     return Object.assign(C.defaultBuild(), { layout: 'tkl', caseColor: '#ebeae4', keycap: kc.id });
   };
 
+  // a board made with the image converter keeps its photo's colors whatever keycaps it
+  // has: paint = { a, al, m, ml, x, xl } (alphas, mods, accents and their legends)
+  const PAINT = ['a', 'al', 'm', 'ml', 'x', 'xl'];
+  C.colorsOf = (b) => b.paint || C.keycapById[b.keycap].colors;
+
   C.sanitizeBuild = function (b) {
     const d = C.defaultBuild();
     if (!b || typeof b !== 'object') return d;
@@ -764,6 +769,9 @@
     if (!has(C.lubeById, out.lube)) out.lube = d.lube;
     out.mods = Array.isArray(out.mods) ? out.mods.filter((m) => has(C.modById, m)) : [];
     if (typeof out.caseColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(out.caseColor)) out.caseColor = C.CASES[out.case].colors[0][1];
+    const p = out.paint;
+    if (p && typeof p === 'object' && PAINT.every((k) => typeof p[k] === 'string' && /^#[0-9a-f]{6}$/i.test(p[k]))) out.paint = PAINT.reduce((o, k) => ((o[k] = p[k]), o), {});
+    else delete out.paint;
     const pre = has(C.keyboardById, out.prebuilt) && C.keyboardById[out.prebuilt];
     if (!pre) ['prebuilt', 'look', 'swIdx'].forEach((k) => delete out[k]);
     else {

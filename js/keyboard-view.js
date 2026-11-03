@@ -173,7 +173,7 @@
       const prof = C.KC_PROFILES[kc.profile];
       const lay = place(b.layout);
       view.layout = lay;
-      const c = kc.colors;
+      const c = C.colorsOf(b);
       const el = view.el;
       el.dataset.shape = prof.shape;
       el.dataset.finish = C.CASES[b.case].finish;
@@ -200,7 +200,7 @@
           const legend = o.legends ? legendHTML(key, st) : '';
           const h = key.h ? `;height:calc(var(--u)*${key.h})` : '';
           // stock boards: keys the photo shows in their own color (wasd, arrows, esc…)
-          const own = kc.keys && key.codes.map((cd) => kc.keys[cd]).find(Boolean);
+          const own = !b.paint && kc.keys && key.codes.map((cd) => kc.keys[cd]).find(Boolean);
           const tint = own ? `;--kc:${own};--kl:${U.readable(own)}` : '';
           return `<div class="k ${key.cls}" data-i="${i}" style="left:calc(var(--u)*${key.x});top:calc(var(--u)*${key.y});width:calc(var(--u)*${key.w})${h}${tint}"><div class="cap">${legend}</div></div>`;
         })
