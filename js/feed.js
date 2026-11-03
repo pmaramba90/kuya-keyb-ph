@@ -344,6 +344,34 @@
       : '<p class="hint">no scores yet. Play single player to get on the board.</p>';
   }
 
+  // the board beside a single-player game: the top 5 best totals, with you in it at your
+  // best or, once you pass it, your score as it climbs (KK.game redraws it as it changes);
+  // read when a level starts
+  let gameTop = null;
+  F.loadGameBoard = () => ((bests = null), highScores()).then(async (t) => {
+    // their names first, so the board never shows "…"
+    const need = t.slice(0, 6).filter((x) => x.uid !== ME() && !KK.social.nameOf(x.uid) && !names[x.uid]);
+    await Promise.all(need.map((x) => N.ref('users/' + x.uid).once().then((u) => (names[x.uid] = (u && (u.display || u.name)) || 'player')).catch(() => {})));
+    gameTop = t;
+  }).catch(() => (gameTop = []));
+  F.gameBoard = function (el, total) {
+    if (!el) return;
+    const head = '<div class="glb-h">top 5<span> · single player</span></div>';
+    if (!gameTop) return void (el.innerHTML = head + '<p class="hint">loading…</p>');
+    total = Math.floor(+total || 0);
+    const mine = me && gameTop.find((x) => x.uid === me.uid), best = mine ? mine.total : 0;
+    const you = me && Math.max(best, total) > 0 ? { uid: me.uid, total: Math.max(best, total), live: total > best } : null;
+    const all = gameTop.filter((x) => !me || x.uid !== me.uid).concat(you ? [you] : []).sort((a, b) => b.total - a.total);
+    const rank = you ? all.indexOf(you) + 1 : 0;
+    const row = (x, i) => `<div class="glb-row${you === x ? ' me' : ''}${x.live ? ' live' : ''}"><span class="glb-rank">${i}</span>${KK.social.avatarImg(x.uid, 'xs')}<b>${x === you ? 'you' : esc(nameOf(x.uid))}</b><span class="glb-n">${x.total.toLocaleString()}</span></div>`;
+    el.innerHTML = head + (all.length
+      ? all.slice(0, 5).map((x, i) => row(x, i + 1)).join('') + (you && rank > 5 ? '<div class="glb-gap">···</div>' + row(you, rank) : '')
+      : '<p class="hint">no scores yet: be the first</p>');
+    // phones show it as one sideways line: keep you in view
+    const m = el.querySelector('.glb-row.me');
+    if (m && el.scrollWidth > el.clientWidth) el.scrollLeft = m.offsetLeft - (el.clientWidth - m.offsetWidth) / 2;
+  };
+
   // a player's top-3 spots (Popular Keyboards, High Scores) as badges for their profile
   const MEDALS = ['🥇', '🥈', '🥉'];
   F.badges = async function (uid) {
