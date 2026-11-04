@@ -196,7 +196,7 @@
         "$nid": {
           ".write": "auth != null && (auth.uid === $uid ? !newData.exists() : (newData.exists() ? newData.child('from').val() === auth.uid && (!data.exists() || data.child('from').val() === auth.uid) : data.child('from').val() === auth.uid))",
           ".validate": "newData.hasChildren(['t', 'from', 'at'])",
-          "t": { ".validate": "newData.val() === 'react' || newData.val() === 'reply' || newData.val() === 'heart' || newData.val() === 'challenge' || newData.val() === 'friend' || newData.val() === 'thread' || (newData.val() === 'tag' && (root.child('friends').child($uid).child(auth.uid).exists() || auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com'))" },
+          "t": { ".validate": "newData.val() === 'react' || newData.val() === 'reply' || newData.val() === 'heart' || newData.val() === 'challenge' || newData.val() === 'friend' || newData.val() === 'thread' || (newData.val() === 'signup' && root.child('names').child('kuyakeybph').val() === $uid) || (newData.val() === 'tag' && (root.child('friends').child($uid).child(auth.uid).exists() || auth.token.email === 'akosipolnew1@players.kuyakeybph.com' || auth.token.email === 'kuyakeybph@players.kuyakeybph.com'))" },
           "from": { ".validate": "newData.isString() && newData.val().length <= 128" },
           "at": { ".validate": "newData.isNumber()" },
           "post": { ".validate": "newData.isString() && newData.val().length <= 40" },

@@ -858,6 +858,7 @@
       KK.feed.start();
       KK.conf.start();
       KK.notify.start();
+      if (authMode === 'signup') KK.notify.signedUp();
       KK.chat.start();
       app.pullScores().finally(() => app.publishScores());
       $('#authPass').value = $('#authPass2').value = '';

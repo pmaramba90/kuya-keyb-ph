@@ -8,7 +8,8 @@
   /*
    * The bell: someone reacted to or replied to your post, commented on your conference
    * thread (or answered your comment there), hearted your keyboard,
-   * challenged you or sent you a friend request.
+   * challenged you or sent you a friend request. The site's own account (kuyakeybph) also
+   * hears about every new sign-up.
    *
    *   notifs/{uid}/{id}   { t, from, at, post?, kind?, text?, pid?, name? } — written by
    *                       whoever did it (the rules check `from` is them); yours to clear
@@ -27,6 +28,15 @@
   };
   NT.unsend = (to, id) => {
     if (me && to && to !== me.uid) N.ref(`notifs/${to}/${id}`).remove().catch(() => {});
+  };
+
+  // a new account: the site's own account (kuyakeybph) gets told; nobody else can be
+  // (the database rules only take a sign-up notice for that account)
+  NT.signedUp = function () {
+    if (!me) return;
+    N.ref('names/' + KK.feed.OFFICIAL).once().then((uid) => {
+      if (typeof uid === 'string') NT.send(uid, { t: 'signup' }, 'su_' + me.uid);
+    }).catch(() => {});
   };
 
   NT.start = function () {
@@ -72,6 +82,7 @@
       case 'heart': return `hearted your keyboard${n.name ? ` <b>${esc(String(n.name).slice(0, 60))}</b>` : ''}`;
       case 'challenge': return 'challenged you to a match';
       case 'friend': return 'sent you a friend request';
+      case 'signup': return 'just signed up 🎉';
       case 'thread': return `${n.kind === 'reply' ? 'replied to your comment' : 'commented on your thread'}: “${esc(String(n.text || '').slice(0, 80))}”`;
       case 'tag': return n.kind === 'all' ? 'tagged <b class="mention all">@everyone</b> in a post' : n.kind === 'reply' ? 'mentioned you in a reply' : 'tagged you in a post';
       default: return 'did something';
@@ -122,6 +133,7 @@
     heart: () => KK.app.show('title'),
     challenge: () => KK.online.openLobby(),
     friend: () => KK.app.show('friends'),
+    signup: (from) => KK.app.showUser(from, 'home'),
     // pid: the thread
     thread: (from, pid) => KK.conf.open(pid),
     // the post is on its writer's page (pid: whose post it is)

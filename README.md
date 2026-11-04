@@ -68,6 +68,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
     - hearted your keyboard
     - challenged you
     - sent you a friend request
+    - **only for the kuyakeybph account**: "<name> just signed up 🎉" for every new account (tap it to open their profile). The database rules only accept a sign-up notice addressed to kuyakeybph, so nobody else gets them.
 
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
