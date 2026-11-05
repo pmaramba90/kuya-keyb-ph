@@ -238,6 +238,21 @@
         "$other": { ".validate": false }
       }
     },
+    "progress": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "unlocked": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100000" },
+        "bestTotal": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000" },
+        "vsBest": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000" },
+        "pvpBest": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000" },
+        "best": { "$level": { ".validate": "$level.matches(/^[0-9]{1,4}$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000" } },
+        "vs": { "$diff": { ".validate": "($diff === 'easy' || $diff === 'medium' || $diff === 'hard') && newData.hasChildren(['w', 'l'])", "w": { ".validate": "newData.isNumber() && newData.val() >= 0" }, "l": { ".validate": "newData.isNumber() && newData.val() >= 0" }, "$other": { ".validate": false } } },
+        "pvpDefault": { ".validate": "newData.hasChildren(['w', 'l'])", "w": { ".validate": "newData.isNumber() && newData.val() >= 0" }, "l": { ".validate": "newData.isNumber() && newData.val() >= 0" }, "$other": { ".validate": false } },
+        "at": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
     "stats": {
       ".read": "auth != null",
       "$uid": {

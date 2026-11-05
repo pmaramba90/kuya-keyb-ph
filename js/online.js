@@ -62,49 +62,87 @@
   }
 
   // keep the online copy of your builds in step with this browser
+  // your builds online, merged with what's there (another device's builds stay; records
+  // keep the higher count; the newer name/board wins; ones you deleted go)
   O.pushBuilds = function () {
     if (!me) return;
-    const out = {}, mainId = KK.app.mainBuildId();
-    KK.app.profiles.forEach((p) => (out[p.id] = { name: p.name, build: p.build, w: p.w || 0, l: p.l || 0, updated: p.updated || p.created || 0, main: p.id === mainId }));
-    const d = KK.app.progress.pvpDefault;
-    if (d) out.default = { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: d.w || 0, l: d.l || 0, updated: 0 };
-    N.ref('builds/' + me.uid).set(out);
+    const app = KK.app, mine = {}, mainId = app.mainBuildId(), dead = KK.store.uget('deadBuilds', []) || [];
+    app.profiles.forEach((p) => (mine[p.id] = { name: p.name, build: p.build, w: p.w || 0, l: p.l || 0, updated: p.updated || p.created || 0 }));
+    const d = app.progress.pvpDefault;
+    N.ref('builds/' + me.uid).transaction((cur) => {
+      const out = Object.assign({}, cur || {});
+      dead.forEach((id) => delete out[id]);
+      Object.keys(mine).forEach((id) => {
+        const m = mine[id], c = out[id] && out[id].build ? out[id] : null;
+        const base = c && (c.updated || 0) > m.updated ? c : m;
+        out[id] = Object.assign({}, base, { w: Math.max(m.w, (c && c.w) || 0), l: Math.max(m.l, (c && c.l) || 0) });
+      });
+      Object.keys(out).forEach((id) => id !== 'default' && out[id] && (out[id].main = id === mainId));
+      if (d) {
+        const c = out.default || {};
+        out.default = { name: C.PVP_DEFAULT_NAME, build: C.pvpDefaultBuild(), w: Math.max(d.w || 0, c.w || 0), l: Math.max(d.l || 0, c.l || 0), updated: 0 };
+      }
+      return out;
+    }).catch((e) => console.warn('kkph builds sync', e));
     beatNow();
   };
 
-  // on log in: builds saved from another device come down, records keep the higher count
-  async function pullBuilds() {
+  // your builds online changed (another device, or this one): new ones come down, records
+  // keep the higher count, the newer name/board wins, and one deleted on another device
+  // (online before, gone now) goes here too
+  function onBuilds(v) {
     const app = KK.app;
-    const cloud = (await N.ref('builds/' + me.uid).once()) || {};
-    let changed = false;
+    if (!me || !app.profiles) return;
+    const cloud = v || {}, dead = new Set(KK.store.uget('deadBuilds', []) || []);
+    let changed = false, push = [...dead].some((id) => cloud[id]);
+    app.profiles = app.profiles.filter((p) => {
+      if (p.synced && !cloud[p.id]) return void (changed = true);
+      return true;
+    });
+    if (app.profileId && !app.profiles.some((p) => p.id === app.profileId)) app.profileId = null;
     Object.keys(cloud).forEach((id) => {
       const c = cloud[id];
       if (!c || !c.build) return;
+      if (dead.has(id)) return;
       if (id === 'default') {
         const d = (app.progress.pvpDefault = app.progress.pvpDefault || { w: 0, l: 0 });
-        d.w = Math.max(d.w, c.w || 0);
-        d.l = Math.max(d.l, c.l || 0);
-        app.saveProgress();
+        if ((d.w || 0) > (c.w || 0) || (d.l || 0) > (c.l || 0)) push = true;
+        if ((c.w || 0) > (d.w || 0) || (c.l || 0) > (d.l || 0)) {
+          d.w = Math.max(d.w || 0, c.w || 0);
+          d.l = Math.max(d.l || 0, c.l || 0);
+          app.saveProgress();
+        }
         return;
       }
       const p = app.profiles.find((x) => x.id === id);
       if (!p) {
-        app.profiles.push({ id, name: c.name, build: c.build, w: c.w || 0, l: c.l || 0, created: c.updated || N.now(), updated: c.updated || 0, best: 0 });
+        app.profiles.push({ id, name: c.name, build: c.build, w: c.w || 0, l: c.l || 0, created: c.updated || N.now(), updated: c.updated || 0, best: 0, synced: true });
         changed = true;
         return;
       }
-      if ((c.updated || 0) > (p.updated || 0)) Object.assign(p, { name: c.name, build: c.build, updated: c.updated });
-      p.w = Math.max(p.w || 0, c.w || 0);
-      p.l = Math.max(p.l || 0, c.l || 0);
-      changed = true;
+      if (!p.synced) (p.synced = true), (changed = true);
+      if ((c.updated || 0) > (p.updated || 0)) Object.assign(p, { name: c.name, build: c.build, updated: c.updated }), (changed = true);
+      else if ((p.updated || 0) > (c.updated || 0) || p.name !== c.name) push = true;
+      if ((c.w || 0) > (p.w || 0) || (c.l || 0) > (p.l || 0)) {
+        p.w = Math.max(p.w || 0, c.w || 0);
+        p.l = Math.max(p.l || 0, c.l || 0);
+        changed = true;
+      }
+      if ((p.w || 0) > (c.w || 0) || (p.l || 0) > (c.l || 0)) push = true;
     });
+    // here but not online yet
+    if (app.profiles.some((p) => !cloud[p.id]) || (app.progress.pvpDefault && !cloud.default)) push = true;
     // the main keyboard you picked on another device
     const cloudMain = Object.keys(cloud).find((id) => id !== 'default' && cloud[id] && cloud[id].main);
-    if (cloudMain && app.profiles.some((p) => p.id === cloudMain)) KK.store.uset('mainBuild', cloudMain);
-    if (changed) app.storeProfiles();
-    O.pushBuilds();
-    if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
-    KK.feed.refreshWelcome();
+    if (cloudMain && app.profiles.some((p) => p.id === cloudMain) && cloudMain !== KK.store.uget('mainBuild', null)) KK.store.uset('mainBuild', cloudMain), (changed = true);
+    if (changed) {
+      KK.store.uset('profiles', app.profiles);
+      KK.store.uset('profileId', app.profileId);
+      if (app.publishScores) app.publishScores();
+      if (app.screen === 'title' || app.screen === 'play') app.show(app.screen);
+      KK.feed.refreshWelcome();
+    }
+    if (push) O.pushBuilds();
   }
 
   // after a match against a person: +1 win or loss on the build you played, and a line
@@ -178,7 +216,7 @@
     }));
     const recount = setInterval(countOnline, 10000); // drop players who went quiet
     offs.push(() => clearInterval(recount));
-    pullBuilds();
+    offs.push(N.ref('builds/' + me.uid).on(onBuilds)); // your builds, on every device
   };
 
   const isOnline = (p) => !!p && N.now() - (p.at || 0) < GONE_MS;

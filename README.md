@@ -72,7 +72,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
-  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. Signing in on another device brings your bests down to it (and the welcome checklist sees your keyboards and games from any device); a device with less on it never lowers what's saved. Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
+  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. **Everything syncs between your devices (web, phone, tablet), live**: your unlocked levels, your best score on every level, your best total and best rounds, your records against the AI, and your saved keyboards with their win–loss records. There's one copy online (`progress/{uid}` and `builds/{uid}`), and every device merges into it keeping the higher number of each, so a device that's behind (a phone you haven't opened in a while) can never lower what another device set. A game played on one shows on the other as soon as it ends, without a refresh. A keyboard saved, renamed or deleted on one device does the same on the others (the newer name wins; records keep the higher count). Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
   - **edit profile**, plus **build a new keyboard · full keyboards · keyboard sound guide · image converter** (see [Image converter](#image-converter))
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
@@ -415,6 +415,7 @@ js/anticheat.js       cheat detection: scripted / instant / machine-rhythm / inh
 js/game.js            game engine: Board (one field), solo, vs AI + AI typist, vs players
 database.rules.json   Firebase Realtime Database security rules
 js/main.js            screens, overlay, input, settings
+js/sync.js            your progress on every device (merged online, higher numbers kept)
 ```
 
 ## Publishing

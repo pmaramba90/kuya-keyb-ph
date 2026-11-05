@@ -22,6 +22,7 @@
   let cloudScores = {}; // your scores as saved online, maybe from another device
   app.saveProgress = () => {
     KK.store.uset('progress', app.progress);
+    KK.sync.push(); // your other devices get it too (js/sync.js)
     if (app.publishScores) app.publishScores();
   };
   app.userName = () => (app.user ? (KK.net.me && KK.net.me.display) || KK.auth.displayName(app.user) : 'you');
@@ -133,10 +134,13 @@
     const p = app.profiles.find((x) => x.id === id);
     if (!p || !String(name).trim()) return;
     p.name = String(name).trim().slice(0, 40);
+    p.updated = Date.now(); // the newer name wins on your other devices
     persistProfiles();
     renderProfiles();
   };
   app.deleteProfile = function (id) {
+    // remembered as deleted, so a device that still has it doesn't bring it back
+    KK.store.uset('deadBuilds', [...new Set([id, ...(KK.store.uget('deadBuilds', []) || [])])].slice(0, 200));
     app.profiles = app.profiles.filter((x) => x.id !== id);
     if (app.profileId === id) app.profileId = null;
     persistProfiles();
@@ -684,7 +688,11 @@
     const s = myScores(), sig = JSON.stringify(s);
     if (sig === scoresSig) return;
     scoresSig = sig;
-    KK.net.ref('scores/' + me.uid).set(Object.assign({ at: KK.net.now() }, s)).catch((err) => {
+    KK.net.ref('scores/' + me.uid).transaction((cur) => {
+      const out = { at: KK.net.now() };
+      Object.keys(s).forEach((k) => (out[k] = Math.max(Math.floor(+s[k] || 0), Math.floor(+(cur && cur[k]) || 0))));
+      return out;
+    }).then(() => KK.net.ref('scores/' + me.uid).once()).then((v) => v && (cloudScores = v)).catch((err) => {
       scoresSig = '';
       console.warn('kkph scores', err);
     });
@@ -860,6 +868,7 @@
       KK.notify.start();
       if (authMode === 'signup') KK.notify.signedUp();
       KK.chat.start();
+      KK.sync.start();
       app.pullScores().finally(() => app.publishScores());
       $('#authPass').value = $('#authPass2').value = '';
       KK.sfx.select();
@@ -879,6 +888,7 @@
     KK.feed.stop();
     KK.conf.stop();
     KK.market.stop();
+    KK.sync.stop();
     KK.notify.stop();
     KK.chat.stop();
     KK.net.logout();
@@ -1188,6 +1198,7 @@
       KK.conf.start();
       KK.notify.start();
       KK.chat.start();
+      KK.sync.start();
       app.pullScores().finally(() => app.publishScores());
     }
     if (app.screen === 'title') {
