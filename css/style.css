@@ -139,7 +139,7 @@ body:not(.signed-out) .home-count { margin: 0 0 2px; }
 .dash-hi { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
 .dash-name { font-size: 20px; color: var(--text); }
 .dash-hi .hint { margin: 0; }
-.dash-best { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
+.dash-best { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 30px; }
 .tile { display: flex; flex-direction: column; gap: 2px; background: var(--bg2); border-radius: var(--r); padding: 14px 16px; }
 .tile b { font-size: 26px; font-weight: 400; color: var(--main); line-height: 1.2; }
 .tile .hint { margin: 0; font-size: 11px; }
@@ -435,7 +435,7 @@ body:not(.signed-out) #scr-title .home-count { display: none; }
   .feed-side { position: static; order: -1; max-height: none; overflow: visible; padding-right: 0; }
 }
 @media (max-width: 700px) {
-  .dash-best { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 20px; }
+  .dash-best { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 20px; }
   .dash-best .tile { padding: 10px 10px 9px; }
   .dash-best .tile b { font-size: 19px; }
   .dash-best .hud-lbl, .dash-best .hint { font-size: 10px; }

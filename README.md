@@ -25,7 +25,7 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 - The **pause** button at the top right stands in for Esc.
 - Any card that opens (pause, results, an invite) puts the keyboard away so its buttons can be tapped.
 - The game screen is just the game: one row with your score, the clock and your combo beside the pause button, the overflow bar, active power-ups, the play area and what you've typed. The play area is sized from the smallest visible height so it all stays above the phone's keyboard. The drawn keyboard, the spec card and the footer step aside while you play.
-- **vs AI / vs players** show only your lane, full width. The other side keeps playing off screen; their name and score stay in the top row.
+- **vs players** shows only your lane, full width. The other side keeps playing off screen; their name and score stay in the top row.
 - Cards over the game are compact: results as a 2×2 grid of tiles, the main button full width, the rest in pairs, menu as a quiet link. The power-ups guide keeps its title and buttons on screen and scrolls the list between them. The countdown sits high, clear of the keyboard.
 - Cheat detection still applies: phone typing counts as real typing, and fake input events from a script are caught.
 
@@ -72,14 +72,14 @@ On a phone (all of this is phone-only; the desktop site is unchanged) the tabs m
 
     Opening it marks them seen, clicking one takes you to the right place, and **clear all** empties it. Taking back a reaction or a heart takes its notification back too.
 - **profile**: your dashboard.
-  - your best score in each mode: single player (best total), vs AI and vs players (best round), each with your win–loss record. **Everything syncs between your devices (web, phone, tablet), live**: your unlocked levels, your best score on every level, your best total and best rounds, your records against the AI, and your saved keyboards with their win–loss records. There's one copy online (`progress/{uid}` and `builds/{uid}`), and every device merges into it keeping the higher number of each, so a device that's behind (a phone you haven't opened in a while) can never lower what another device set. A game played on one shows on the other as soon as it ends, without a refresh. A keyboard saved, renamed or deleted on one device does the same on the others (the newer name wins; records keep the higher count). Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
+  - your best score in each mode: single player (best total) and vs players (best round, with your win–loss record). **Everything syncs between your devices (web, phone, tablet), live**: your unlocked levels, your best score on every level, your best total and best rounds, your records against the AI, and your saved keyboards with their win–loss records. There's one copy online (`progress/{uid}` and `builds/{uid}`), and every device merges into it keeping the higher number of each, so a device that's behind (a phone you haven't opened in a while) can never lower what another device set. A game played on one shows on the other as soon as it ends, without a refresh. A keyboard saved, renamed or deleted on one device does the same on the others (the newer name wins; records keep the higher count). Other players see these same three cards on your page (a copy is kept online and updated whenever your scores or records change).
   - **edit profile**, plus **build a new keyboard · full keyboards · keyboard sound guide · image converter** (see [Image converter](#image-converter))
   - your **featured keyboard**: your main keyboard drawn full size with its full spec sheet, estimated price, win rate and record; click it to open its summary
   - your other keyboards as rows (sound, price, win rate), each with **make main** to feature it instead; click a row to open it. If you have keyboards but haven't picked one, the first becomes your main. Your main keyboard is marked in the online copy of your builds, so it follows you to other devices and friends see it.
   - **your posts**: everything you've posted (posts, reviews, new-keyboard and personal-best posts), newest first and 10 at a time, exactly as in the feed. You can react, reply and delete here too. Other players' pages show their posts the same way.
   - **Badges** under a player's name (theirs and yours): **#1 / #2 / #3 most popular keyboard** for a keyboard in the top 3 of Popular Keyboards, and **#1 / #2 / #3 single player high score** for a top-3 spot in High Scores, each with a 🥇 gold, 🥈 silver or 🥉 bronze medal. On phones only the medal shows (the description is its tooltip).
   - **Hearts**: every keyboard on a player's page has a ♥ with its count. Click it to heart someone else's keyboard, and click again to take the heart back. On your own keyboards you just see the count, since you can't heart your own.
-- **play**: the game modes (single player, vs AI, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
+- **play**: the game modes (single player, vs players), your saved builds (load, rename, delete), and your **match history** against players (not the AI). Each match shows who it was against, the keyboard you used, win or loss, the round score, and how it ended if it wasn't by rounds (they left, you were away, cheating…). Click one to open that player's page.
 - **Anyone's profile**: you can open any player's page, friend or not. Type a username on friends and press **view profile**, or click someone in popular keyboards, the vs players list or your match history. If you're not friends, the page has an **add friend** button. Once you've sent a request it shows **request sent**; if they've asked you, it shows **accept friend request**; once you're friends it shows **✓ friends**.
 - **friends**: add a friend by username. They get a request (a red badge on "friends") and accept or decline. The page has two separate sections: **your friends** (with how many are online; offline friends are faded to 50% so the online ones stand out) and **friend requests** (not friends yet), in its own outlined panel with **received** / **sent** tabs (cancel takes back one you sent). The requests panel always sits above your friends. It turns gold while someone is waiting on you, and a new request switches it to received. Click a request to open that player's profile. The list shows how many friends are online, each friend's picture with an online dot, their optional nickname and city/country, and a **challenge** button when they're online. ✕ removes a friend (click twice). Click a friend to open **their page**: their picture, nickname and location, whether they're online (with a challenge button), their featured main keyboard drawn full size with its sound profile and details, and their other keyboards. **▶ hear it** plays their main keyboard, and while you're on their page your typing sounds like their board (yours comes back when you leave).
 - **marketplace**: players buying and selling keyboards, switches and other keyboard gear. See [Marketplace](#marketplace).
@@ -169,29 +169,9 @@ The link on each board goes to the store it came from, except where the same boa
 - **Topre** (HHKB, Realforce) gets its own rubber-dome sound: rounded, muted, no spring ping, with a stronger upstroke.
 - The data is in `js/data-keyboards.js`. For store boards, specs are parsed from the product descriptions and colors are sampled from each color variant's photo. Hand-entered boards have hand-picked colors.
 
-## vs AI
+## vs AI (removed)
 
-Pick **vs AI** next to **single player** on the home page or the build summary, then choose a difficulty:
-
-| difficulty | word speed | AI typist |
-|---|---|---|
-| easy | level 3 | ≈40 wpm, makes typos |
-| medium | level 4 | ≈60 wpm, steady |
-| hard | level 5 | ≈90 wpm, rarely slips |
-
-- You play on the left and the AI on the right. Both fields get the same words at the same moments.
-- The AI behaves like a person: a reaction delay before each word, uneven typing rhythm, typos that it backspaces, occasional lapses, and it sometimes grabs power-ups.
-- When a side overflows, its screen is destroyed:
-  - cracks spread from an impact point and glass shards burst out
-  - the remaining words tumble off the screen
-  - the page quakes, and the field turns dark and glitchy
-  - a huge diagonal **OVERFLOW** slams in; the explosion and breaking glass hit first, then the announcer shouts "OVERFLOOOW!" in the clear, through a clean vocal chain
-  - the round result appears after the moment plays out (about 2.6 s)
-- A match is **best of 3**, with 1:30 rounds. A round ends when someone's overflow bar fills. If both survive the 90 seconds, the higher score wins.
-- The field is busier than single player at the same speed: words arrive about 1.5x as often, and up to 8 more can be on screen at once.
-- **Your overflow bar only fills from the other side's combos.** Missing a word doesn't fill your own bar in vs modes. Instead it lowers your **opponent's** bar by about 5% (half a miss's damage), so every miss helps the other side.
-- **Combo attacks**: every 5x combo milestone fires at the opponent and raises their overflow bar. A 5x combo does 1.2× a missed word's damage (about 12% of the bar at medium speed), rising by 0.3× each tier to 2.4× at WOW (about 25%). The AI's combos hit you the same way.
-- Your win/loss record per difficulty is saved to your account.
+The vs AI mode was taken out (Nov 2026): there's no vs AI button on play, no mode choice in the build summary or on full keyboards, and no vs AI card on profiles. Single player and vs players remain. Its game code still sits in `js/game.js` (vs players shares that screen) but nothing opens it; records and best rounds people had against the AI stay in their saved progress, unshown.
 
 ## vs players
 
@@ -201,7 +181,7 @@ Pick **vs AI** next to **single player** on the home page or the build summary, 
 
 - Choose **your keyboard** at the top: any saved build, or the default if you have none (a creamy TKL: white aluminum case, black-on-white cherry PBT caps, NK Creams).
 - **Challenge** someone. They hear an arcade alarm, a two-tone siren then a sword-clash "shing", with a softer reminder at 5 seconds, and their tab title flashes "⚔ challenged!" if they're elsewhere. They get an overlay on whatever screen they're on (a running single-player game pauses), showing your name and build, a picker for their own build, and a 10-second timer. If they don't accept in time, the challenge expires. Enter accepts, Esc declines.
-- Same rules as vs AI at medium speed (level 4): best of 3, 1:30 rounds, combos attack the other player's overflow bar.
+- Word speed level 4: best of 3, 1:30 rounds, combos attack the other player's overflow bar.
 - Before round 1 a **VS card** plays (about 4 seconds). Each player's selected keyboard is the main image: the store photo for a full keyboard, otherwise the build drawn large. Both sweep in from opposite sides, VS slams down with a flash, a screen shake, a boom and the announcer's "VERSUS!". Then the countdown runs, ending in "FIGHT!". Both calls use the clean vocal path (like OVERFLOW), not the gritty combo chain, and come in after the slam's crash so they're easy to make out. The takes were chosen by running Windows speech recognition on the candidates against soundalike words.
 - During the match both keyboards sit under the lanes, each with its owner's name and full setup. Your opponent's keys light up as they type.
 - Both players get the same words in the same order (a shared seed). Your field runs on your machine. The right lane is a live view of theirs, updated about 7 times a second.
@@ -248,7 +228,7 @@ The config values are public by design. The database rules are what keep each pl
    - Every word that reaches the bottom fills the **overflow bar** (half as much as it used to), and finishing words drains it: 1.5% a word, plus 0.1% more for every word of your current combo (a 10x combo drains 2.5% a word, up to 5.5% at 40x). If the bar fills, it's game over. Survive the level's time to unlock the next level.
    - A game over always sends you back to level 1 with a fresh total. Only "next level" continues a run.
    - **Top 5 beside the field**: the site's five best single-player totals (the same list as High Scores, read fresh when each level starts), with you in it. You're shown at your best; once your total in this run passes it, your row climbs live as you score (your rank shows under the five, after "···", until you make it in). On phones it's one slim line under the field, scrolled so you're in view.
-   - **Play → single player / vs AI** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.
+   - **Play → single player** starts with your **main keyboard** (the one featured on your profile), not whatever was last left in the builder. With no saved keyboards yet, it uses the builder's current one.
    - **Word length grows with the level**: level 1 is 3-letter words, then the longest word grows by a letter every two levels. The levels in between add some words a letter longer:
 
      | level | words |
@@ -262,7 +242,7 @@ The config values are public by design. The database rules are what keep each pl
 
      The shortest words also grow, staying within 2 letters of the longest. Glowing power-up words are never longer than the level's longest.
    - **Power-ups come more often as levels get harder**: about 1 in 10 words glows on level 1, rising by 2 points per level to about 1 in 4 by level 10 (the cap is 28%). From level 6, two glowing words can be on screen at once.
-   - These lengths are for single player only. **vs AI and vs players** use short words: 3–5 letters, mostly 3 and 4 (about two thirds), with about 1 in 10 being 6 letters. Words come about 20% less often than before (a word every ~0.8s at medium), with at most 22 on screen.
+   - These lengths are for single player only. **vs players** uses short words: 3–5 letters, mostly 3 and 4 (about two thirds), with about 1 in 10 being 6 letters. Words come about 20% less often than before (a word every ~0.8s at medium), with at most 22 on screen.
    - As the bar fills, the field's border turns redder and flickers faster. From 75% the whole box shakes, faster and harder until it overflows. This applies in vs mode too.
    - Your **combo** only suffers when you mistype: a wrong letter halves it. A word that falls off the bottom doesn't touch it.
    - The **combo meter** (top right) shows your combo count, which catches fire and burns hotter at each tier (5x creamy → 10x double → 15x triple → 20x ultra → 25x WOW). It also shows the current tier name, progress to the next tier, and the score multiplier.
@@ -310,7 +290,7 @@ While a round runs, `js/anticheat.js` watches the keys that reach the game and c
 - **inhuman speed**: 60 keys averaging under 35 ms apart (about 340 wpm, sustained)
 
 What happens when it's caught:
-- **Single player and vs AI**: the run stops and doesn't count, so no scores, records or unlocks.
+- **Single player**: the run stops and doesn't count, so no scores, records or unlocks.
 - **vs players**: the cheater forfeits. It counts as a loss for them, and the other player is told why and gets the win.
 
 The limits are generous so a fast typist never trips them. It runs in the player's browser, so it stops bots, macros and auto-typers. Someone who edits the game's code in their own browser could still get round it; making that impossible would need scores checked on a server.
@@ -360,7 +340,7 @@ Clicks are mixed outside the keycap low-pass, so they cut through: MX-style clic
 
 ## Music
 
-The music plays only while you're playing (single player, vs AI and vs players), starting on that level's track, and stops when you leave the game. The rest of the site is quiet; key sounds still play everywhere.
+The music plays only while you're playing (single player and vs players), starting on that level's track, and stops when you leave the game. The rest of the site is quiet; key sounds still play everywhere.
 
 A procedural **lo-fi chill radio** with six tracks:
 

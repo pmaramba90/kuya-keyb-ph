@@ -6,27 +6,11 @@
   const esc = U.esc;
 
   const B = (KK.builder = { step: 0, level: 0, mode: 'solo' });
-  const VS_INFO = {
-    easy: { speed: 3, ai: 'types ≈40 wpm, makes typos' },
-    medium: { speed: 4, ai: 'types ≈60 wpm, steady' },
-    hard: { speed: 5, ai: 'types ≈90 wpm, rarely slips' },
-  };
-
-  function vsBlock(app, prog) {
-    const d = app.settings.vsDiff || 'medium';
-    const rec = (prog.vs || {})[d];
-    return `
-      <div class="grp"><div class="grp-h">difficulty</div><div class="chips">${Object.keys(VS_INFO).map((k) => `<button class="chip${d === k ? ' on' : ''}" data-act="diff" data-v="${k}">${k}</button>`).join('')}</div>
-        <p class="hint" style="margin-top:8px">ai ${VS_INFO[d].ai} · word speed: level ${VS_INFO[d].speed}${rec ? ` · your record ${rec.w}–${rec.l}` : ''}</p></div>
-      <button class="btn primary big" data-act="start">start vs AI · ${d} →</button>
-      <p class="hint" style="margin-top:12px">best of 3 · 1:30 rounds · every 5x combo attacks the AI's overflow bar (bigger combos hit harder)</p>`;
-  }
-
-  const startLabel = () => (B.mode === 'vs' ? `start vs AI · ${KK.app.settings.vsDiff || 'medium'} →` : `start level ${B.level} →`);
+  const startLabel = () => `start level ${B.level} →`;
   // phones: the summary's start button again, right under the keyboard (the one in the
   // summary is far down the page)
   const syncStart = () => ($('#stageStart').innerHTML = B.step === 4 ? `<button class="btn primary big" data-act="start">${startLabel()}</button>` : '');
-  const startPlay = () => (B.mode === 'vs' ? KK.app.startVs(KK.app.settings.vsDiff || 'medium') : KK.app.startGame(B.level));
+  const startPlay = () => KK.app.startGame(B.level);
   const STEPS = ['base', 'switches', 'keycaps', 'mods & lube', 'summary'];
 
   const swF = { q: '', type: 'all', brand: 'all' };
@@ -303,14 +287,9 @@
           <section class="sum-play">
             <div class="price-box"><span class="hud-lbl">estimated build cost</span><b>${C.money(bom.total, cur)}</b><span class="hud-lbl">${bom.rows.length} parts · see the list below</span></div>
             <div class="grp"><div class="grp-h">words</div><div class="chips">${langs.map(([id, n]) => `<button class="chip${app.settings.lang === id ? ' on' : ''}" data-act="lang" data-v="${id}">${n}</button>`).join('')}</div></div>
-            <div class="grp"><div class="grp-h">mode</div><div class="chips">
-              <button class="chip${B.mode !== 'vs' ? ' on' : ''}" data-act="mode" data-v="solo">single player</button>
-              <button class="chip${B.mode === 'vs' ? ' on' : ''}" data-act="mode" data-v="vs">vs AI</button>
-            </div></div>
-            ${B.mode === 'vs' ? vsBlock(app, prog) : `
             <div class="grp"><div class="grp-h">level</div><div class="chips">${levels.join('')}</div></div>
             <button class="btn primary big" data-act="start">start level ${B.level} →</button>
-            <p class="hint" style="margin-top:12px">survive ${KK.game.levelSeconds(B.level) === 60 ? '1 minute' : KK.game.levelSeconds(B.level) + ' seconds'} · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>`}
+            <p class="hint" style="margin-top:12px">survive ${KK.game.levelSeconds(B.level) === 60 ? '1 minute' : KK.game.levelSeconds(B.level) + ' seconds'} · each missed word fills the overflow bar${prog.bestTotal ? ` · best total ${prog.bestTotal.toLocaleString()}` : ''}</p>
           </section>
         </div>
         <section class="sum-parts">
@@ -401,14 +380,7 @@
         renderStep();
         return;
       case 'level':
-      case 'mode':
-      case 'diff':
-        if (act === 'level') B.level = +v;
-        if (act === 'mode') B.mode = v;
-        if (act === 'diff') {
-          KK.app.settings.vsDiff = v;
-          KK.app.saveSettings();
-        }
+        B.level = +v;
         renderStep();
         $('#nextStep').textContent = startLabel();
         syncStart();

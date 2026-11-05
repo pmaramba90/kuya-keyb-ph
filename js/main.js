@@ -671,14 +671,14 @@
     if (app.screen === 'title') renderHome();
     KK.feed.refreshWelcome();
   };
-  // the three cards: single player (best total), vs AI and vs players (best round + record)
+  // the two cards: single player (best total) and vs players (best round + record)
   function scoreTiles(s) {
     s = s || {};
     const num = (v) => (+v > 0 ? Math.floor(+v).toLocaleString() : '—');
     // phones show the record on its own line ("2–1 record"); elsewhere " · 2–1"
     const rec = (w, l) => (+w || 0) + (+l || 0) ? `<span class="rec"><i> · </i>${Math.floor(+w || 0)}–${Math.floor(+l || 0)}<em> record</em></span>` : '';
     const tile = (label, best, sub) => `<div class="tile"><span class="hud-lbl">${label}</span><b>${num(best)}</b><span class="hint">${sub}</span></div>`;
-    return tile('single player', s.solo, 'best total') + tile('vs ai', s.vs, 'best round' + rec(s.vsW, s.vsL)) + tile('vs players', s.pvp, 'best round' + rec(s.pvpW, s.pvpL));
+    return tile('single player', s.solo, 'best total') + tile('vs players', s.pvp, 'best round' + rec(s.pvpW, s.pvpL));
   }
   // a copy online (scores/{uid}) so they show on your page for other players; only
   // written when something changed
@@ -813,9 +813,7 @@
 
   // play: the modes, your saved builds, your matches against players
   function renderPlay() {
-    const vs = app.progress.vs || {};
-    const rec = ['easy', 'medium', 'hard'].filter((d) => vs[d]).map((d) => `${d} ${vs[d].w}–${vs[d].l}`).join(' · ');
-    $('#homeHi').innerHTML = rec ? `vs ai ${rec}` : '';
+    $('#homeHi').innerHTML = '';
     renderProfiles();
     renderHistory();
   }
@@ -1158,16 +1156,15 @@
     b.blur();
     HOME_BTN[b.dataset.home]();
   }));
-  // single player / vs AI: you play your main keyboard (its summary opens, ready to
-  // start); with no saved keyboards yet, whatever's in the builder
-  const playMain = (mode) => {
-    KK.builder.mode = mode;
+  // single player: you play your main keyboard (its summary opens, ready to start); with
+  // no saved keyboards yet, whatever's in the builder
+  const playMain = () => {
+    KK.builder.mode = 'solo';
     const id = app.mainBuildId();
     if (id) app.loadProfile(id);
     else KK.builder.open(4);
   };
-  $('#btnSolo').addEventListener('click', () => playMain('solo'));
-  $('#btnVs').addEventListener('click', () => playMain('vs'));
+  $('#btnSolo').addEventListener('click', () => playMain());
   $('#btnPvp').addEventListener('click', () => KK.online.openLobby());
   $('#btnGuide').addEventListener('click', () => {
     $('#btnGuide').blur();

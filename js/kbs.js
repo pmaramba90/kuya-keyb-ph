@@ -342,16 +342,9 @@
   }
 
   function renderActions() {
-    const mode = KK.builder.mode === 'vs' ? 'vs' : 'solo';
-    const d = KK.app.settings.vsDiff || 'medium';
     $('#kbActions').innerHTML = `
-      <div class="chips">
-        <button class="chip${mode === 'solo' ? ' on' : ''}" data-act="mode" data-v="solo">single player</button>
-        <button class="chip${mode === 'vs' ? ' on' : ''}" data-act="mode" data-v="vs">vs AI</button>
-        ${mode === 'vs' ? ['easy', 'medium', 'hard'].map((x) => `<button class="chip${x === d ? ' on' : ''}" data-act="diff" data-v="${x}">${x}</button>`).join('') : ''}
-      </div>
       <div class="kbd-btns">
-        <button class="btn primary" data-act="play">${mode === 'vs' ? `play vs AI · ${d}` : 'play level 1'} with this keyboard →</button>
+        <button class="btn primary" data-act="play">play level 1 with this keyboard →</button>
         <button class="btn" data-act="save">save to my builds</button>
       </div>
       <div class="kbd-btns kbd-quick">
@@ -441,12 +434,9 @@
       case 'review': reviewPanel(!rev); break;
       case 'revCancel': reviewPanel(false); break;
       case 'revPost': postReview(el); break;
-      case 'mode': KK.builder.mode = v; renderActions(); break;
-      case 'diff': KK.app.settings.vsDiff = v; KK.app.saveSettings(); renderActions(); break;
       case 'play':
         useThis();
-        if (KK.builder.mode === 'vs') KK.app.startVs(KK.app.settings.vsDiff || 'medium');
-        else KK.app.startGame(1);
+        KK.app.startGame(1);
         break;
       case 'save': {
         useThis();
