@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
   <!-- keycap legend fonts, one per maker style (see LEGEND_STYLES in js/catalog.js) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Arimo:wght@400;700&family=Montserrat:wght@600&family=Rajdhani:wght@600;700&family=Fredoka:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611052331">
+  <link rel="stylesheet" href="css/style.css?v=202611080108">
 </head>
 <body data-screen="title">
   <div id="app">
@@ -257,7 +257,6 @@
       <section class="screen" id="scr-market">
         <div class="mk">
           <div class="mk-head">
-            <div class="grp-h">marketplace <span class="sub">buy and sell keyboards, switches and parts · message the seller to deal</span></div>
             <button class="mk-add" id="mkAdd" title="post a listing" aria-label="post a listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
           <div class="filters mk-filters">
@@ -318,7 +317,6 @@
       <!-- full keyboards: prebuilt boards as sold, no mods -->
       <section class="screen" id="scr-kbs">
         <div class="kbs-head">
-          <div class="grp-h">full keyboards <span class="sub">prebuilt and gaming boards from mechanicalkeyboards.com and the makers' stores · pick one, pick its switch, play</span></div>
           <div class="filters kbs-filters">
             <span class="ac"><input class="search" id="kbQ" autocomplete="off" spellcheck="false"><span class="ac-ghost" id="kbGhost" aria-hidden="true"></span><button class="ac-tab" id="kbTab" type="button" tabindex="-1" title="take the suggestion (Tab)" hidden>tab ⇥</button></span>
             <select class="select" id="kbBrand"></select>
@@ -343,7 +341,6 @@
       <!-- vs players: who's online, their builds, challenge -->
       <section class="screen" id="scr-lobby">
         <div class="lobby">
-          <div class="grp-h">vs players <span class="sub">1v1: challenge anyone online, best of 3 · lobbies: 2–4 players, last one standing · wins count for the keyboard you pick</span></div>
           <div class="lobby-me">
             <span class="hud-lbl">your keyboard</span>
             <select class="select" id="lobbyPick"></select>
@@ -352,9 +349,7 @@
           <div class="chips lobby-tabs" id="lobbyTabs"><button class="chip on" data-lt="1v1">1v1 match</button><button class="chip" data-lt="parties">lobbies</button></div>
           <!-- 1v1: everyone online, challenge one -->
           <div id="lt1v1">
-            <div class="grp-h">online now <span class="sub" id="lobbyCount"></span></div>
             <div class="lobby-list" id="lobbyList"></div>
-            <p class="hint" id="lobbyHint"></p>
           </div>
           <!-- lobbies (js/party.js): create one or ask to join; the host accepts or rejects -->
           <div id="ltParties" hidden>
@@ -510,40 +505,40 @@
     </div>
   </div>
 
-  <script src="js/util.js?v=202611052331"></script>
-  <script src="js/auth.js?v=202611052331"></script>
-  <script src="js/net-config.js?v=202611052331"></script>
-  <script src="js/net.js?v=202611052331"></script>
-  <script src="js/data-switches.js?v=202611052331"></script>
-  <script src="js/data-keycaps.js?v=202611052331"></script>
-  <script src="js/data-keycap-colors.js?v=202611052331"></script>
-  <script src="js/data-keyboards.js?v=202611052331"></script>
-  <script src="js/data-words.js?v=202611052331"></script>
-  <script src="js/data-announcer.js?v=202611052331"></script>
-  <script src="js/catalog.js?v=202611052331"></script>
-  <script src="js/audio-core.js?v=202611052331"></script>
-  <script src="js/keysound.js?v=202611052331"></script>
-  <script src="js/music.js?v=202611052331"></script>
-  <script src="js/sfx.js?v=202611052331"></script>
-  <script src="js/keyboard-view.js?v=202611052331"></script>
-  <script src="js/builder.js?v=202611052331"></script>
-  <script src="js/kbs.js?v=202611052331"></script>
-  <script src="js/kbread.js?v=202611052331"></script>
-  <script src="js/convert.js?v=202611052331"></script>
-  <script src="js/anticheat.js?v=202611052331"></script>
-  <script src="js/game.js?v=202611052331"></script>
-  <script src="js/online.js?v=202611052331"></script>
-  <script src="js/social.js?v=202611052331"></script>
-  <script src="js/giphy-config.js?v=202611052331"></script>
-  <script src="js/feed.js?v=202611052331"></script>
-  <script src="js/notify.js?v=202611052331"></script>
-  <script src="js/mention.js?v=202611052331"></script>
-  <script src="js/chat.js?v=202611052331"></script>
-  <script src="js/party.js?v=202611052331"></script>
-  <script src="js/soundguide.js?v=202611052331"></script>
-  <script src="js/conference.js?v=202611052331"></script>
-  <script src="js/market.js?v=202611052331"></script>
-  <script src="js/sync.js?v=202611052331"></script>
-  <script src="js/main.js?v=202611052331"></script>
+  <script src="js/util.js?v=202611080108"></script>
+  <script src="js/auth.js?v=202611080108"></script>
+  <script src="js/net-config.js?v=202611080108"></script>
+  <script src="js/net.js?v=202611080108"></script>
+  <script src="js/data-switches.js?v=202611080108"></script>
+  <script src="js/data-keycaps.js?v=202611080108"></script>
+  <script src="js/data-keycap-colors.js?v=202611080108"></script>
+  <script src="js/data-keyboards.js?v=202611080108"></script>
+  <script src="js/data-words.js?v=202611080108"></script>
+  <script src="js/data-announcer.js?v=202611080108"></script>
+  <script src="js/catalog.js?v=202611080108"></script>
+  <script src="js/audio-core.js?v=202611080108"></script>
+  <script src="js/keysound.js?v=202611080108"></script>
+  <script src="js/music.js?v=202611080108"></script>
+  <script src="js/sfx.js?v=202611080108"></script>
+  <script src="js/keyboard-view.js?v=202611080108"></script>
+  <script src="js/builder.js?v=202611080108"></script>
+  <script src="js/kbs.js?v=202611080108"></script>
+  <script src="js/kbread.js?v=202611080108"></script>
+  <script src="js/convert.js?v=202611080108"></script>
+  <script src="js/anticheat.js?v=202611080108"></script>
+  <script src="js/game.js?v=202611080108"></script>
+  <script src="js/online.js?v=202611080108"></script>
+  <script src="js/social.js?v=202611080108"></script>
+  <script src="js/giphy-config.js?v=202611080108"></script>
+  <script src="js/feed.js?v=202611080108"></script>
+  <script src="js/notify.js?v=202611080108"></script>
+  <script src="js/mention.js?v=202611080108"></script>
+  <script src="js/chat.js?v=202611080108"></script>
+  <script src="js/party.js?v=202611080108"></script>
+  <script src="js/soundguide.js?v=202611080108"></script>
+  <script src="js/conference.js?v=202611080108"></script>
+  <script src="js/market.js?v=202611080108"></script>
+  <script src="js/sync.js?v=202611080108"></script>
+  <script src="js/main.js?v=202611080108"></script>
 </body>
 </html>

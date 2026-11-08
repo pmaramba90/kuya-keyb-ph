@@ -287,9 +287,6 @@
     $('#lobbyPick').innerHTML = list.map((p) => `<option value="${esc(p.pid)}"${p.pid === cur.pid ? ' selected' : ''}>${esc(p.name)} · ${recText(p.rec)}</option>`).join('');
     const d = describe(cur.build);
     $('#lobbyDesc').innerHTML = `${swatch(d)}<span><b>${esc(d.head)}</b><br>${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</span>`;
-    $('#lobbyHint').textContent = N.online()
-      ? 'everyone signed in on kuyakeybph shows up here'
-      : 'online play isn’t connected yet — the players listed are other tabs open in this browser';
   }
 
   function renderLobby() {
@@ -297,11 +294,10 @@
     const list = Object.entries(players)
       .filter(([uid, p]) => uid !== me.uid && isOnline(p))
       .sort((a, b) => (a[1].state === 'idle' ? 0 : 1) - (b[1].state === 'idle' ? 0 : 1) || String(a[1].display).localeCompare(b[1].display));
-    $('#lobbyCount').textContent = list.length ? `${list.length} online` : '';
     $('#lobbyList').innerHTML = list.length
       ? list.map(([uid, p]) => playerCard(uid, p)).join('')
       : N.online()
-        ? '<p class="hint">nobody else is online right now — send your brother the link and keep this page open.</p>'
+        ? ''
         : '<p class="lobby-off">online play isn’t switched on yet, so only other tabs of this same browser window show up here — not other devices, other browsers or incognito windows. It turns on once the site is connected to Firebase (README → “Going online”).</p>';
   }
 
