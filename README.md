@@ -1,6 +1,6 @@
 # Kuya Keyb PH
 
-A minimalist typing game: build a mechanical keyboard, then type the falling words. Every keystroke is synthesized live from the parts you picked. The look is deep navy with gold, set in JetBrains Mono.
+A minimalist typing game: build a mechanical keyboard, then type the falling words. Every keystroke is synthesized live from the parts you picked. The look is a slab of machined aluminum on a light desk: the content sits in dark anodized wells cut into it, buttons and tabs are keycaps (the brass one is the main action or the tab you are on), scores and stats show on LCD read-outs, all set in JetBrains Mono.
 
 ## Run it locally
 
@@ -13,7 +13,7 @@ Click or press any key once the page opens. Browsers block audio until you inter
 
 ## Sections
 
-The top bar stays put at the top while the page scrolls under it (like a frozen pane), with a soft shadow once something is beneath it. It has **home · profile · play · friends · marketplace**, plus your picture and name. Clicking your name opens a small drop-down. At the top is your current profile picture: click it (or **change photo**) to pick a new one and crop it, the same as on edit profile. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
+On a computer the tabs are a column of keys down the left of the slab that stays in view while the page scrolls: **home · profile · play · friends · marketplace**. The logo, the message and bell keys and your picture and name run along the top, and step aside while you play so the field, what you type and your keyboard fit one window. On tablets and phones the top bar stays put while the page scrolls under it (like a frozen pane). Clicking your name opens a small drop-down. At the top is your current profile picture: click it (or **change photo**) to pick a new one and crop it, the same as on edit profile. Your nickname, city and country show in a box; the small **edit** above its right corner makes them editable (save or cancel). **log out** is below. Click outside it or press Esc to close it. Signed out, the site shows the logo with sign in / sign up; signed in, it opens on home.
 
 **Back button**: every screen is a step in the browser's history, so Back and Forward move between screens (home, profile, play, friends, a player's page, …) instead of leaving the site, and a refresh comes back to the screen you were on. A game isn't a step of its own: Back after a game goes to where you started it, and Back in the middle of a game pauses it (in vs players it asks before forfeiting) instead of leaving. Back on the first page you opened leaves the site, as usual.
 
@@ -277,7 +277,7 @@ The config values are public by design. The database rules are what keep each pl
      - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
-Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the site's colours: dark blue (default), dark green, dark grey or dark red. It's remembered on that browser. Clicking the tabs (top bar, feed / conference, friend requests, the sound guide) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
+Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the anodized colour of the wells and keys: dark blue (default), dark green, dark grey or dark red. The aluminum stays the same. It's remembered on that browser. Clicking the tabs (top bar, feed / conference, friend requests, the sound guide) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
 
 ## Cheat detection
 
