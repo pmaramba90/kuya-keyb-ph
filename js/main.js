@@ -970,8 +970,8 @@
   headH();
   addEventListener('scroll', () => head.classList.toggle('stuck', scrollY > 4), { passive: true });
 
-  // the site's colours: dark blue (default), dark green, dark grey or dark red
-  const THEME_BG = { blue: '#0f1a2e', green: '#0c1d16', grey: '#17181b', red: '#1f0d11' };
+  // the site's colours: blue (default), green, grey or red; each anodizes the slab and the wells
+  const THEME_BG = { blue: '#bcc7db', green: '#bccfc2', grey: '#c9cacd', red: '#dcc0c4' }; // the slab's colour, for the phone's browser bar
   const applyTheme = () => {
     const t = THEME_BG[app.settings.theme] ? app.settings.theme : 'blue';
     if (t === 'blue') delete document.documentElement.dataset.theme;

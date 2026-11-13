@@ -2,9 +2,9 @@
    brass keys and LCD read-outs, set in JetBrains Mono */
 :root {
   /* the slab, and the desk it sits on */
-  --desk: #e4e7ec;
-  --metal: #c7ccd4;
-  --metal-lo: #8d949f; /* its lower edge */
+  --metal: #bcc7db; /* anodized to match the theme */
+  --desk: color-mix(in srgb, var(--metal) 42%, #fff);
+  --metal-lo: color-mix(in srgb, var(--metal) 70%, #000); /* its lower edge */
   --brush: repeating-linear-gradient(90deg, rgba(255, 255, 255, .08) 0 1px, transparent 1px 3px);
   --screw: #6b7280 0 1.5px, #a3a9b4 2px 6px, rgba(255, 255, 255, .65) 6.5px 7px, transparent 7.5px;
   --ink: #1b2233; /* engraved text */
@@ -24,24 +24,26 @@
   --r: 8px;
   /* the surface you are on. Metal by default; wells and LCDs swap these (end of this file) */
   --bg: var(--metal);
-  --bg2: #d6dae0; /* a pocket milled into the metal */
-  --bg3: #adb3bd; /* tracks, hover, lines */
+  --bg2: color-mix(in srgb, var(--metal) 70%, #fff); /* a pocket milled into the metal */
+  --bg3: color-mix(in srgb, var(--metal) 86%, #000); /* tracks, hover, lines */
   --text: var(--ink);
   --sub: var(--ink2);
-  --main-t: #6b5200; /* the accent as text */
-  --err-t: #a3202d;
+  --main-t: #5f4900; /* the accent as text */
+  --err-t: #931a28;
   --line: rgba(27, 34, 51, .16);
   --line2: rgba(27, 34, 51, .32);
   --edge: rgba(255, 255, 255, .75); /* the lit lip under anything cut into the surface */
   --key: color-mix(in srgb, var(--w2) 82%, #000); /* a keycap, its lower edge, and the shadow under it */
   --key-lo: color-mix(in srgb, var(--w2) 46%, #000);
-  --key-drop: #7b828e;
+  --key-drop: color-mix(in srgb, var(--metal) 62%, #000);
   --opp: #1c5a9e; /* your opponent's colour */
 }
-/* themes (picked at the bottom of the page): the anodized colour of the wells and keys */
-:root[data-theme='green'] { --w0: #081510; --w1: #0c1d16; --w2: #1f3c2e; --wsub: #8fae9c; }
-:root[data-theme='grey'] { --w0: #0f1012; --w1: #17181b; --w2: #313338; --wsub: #a0a3ab; }
-:root[data-theme='red'] { --w0: #16080b; --w1: #1f0d11; --w2: #45202a; --wsub: #bd9aa1; --err: #ff6b7a; }
+/* themes (picked at the bottom of the page): the anodized colour of the slab, and of the wells
+   and keys cut into it. Each dot in the picker carries its own theme, so it can show both */
+.theme-dot[data-theme='blue'] { --metal: #bcc7db; --w1: #0f1a2e; }
+:root[data-theme='green'], .theme-dot[data-theme='green'] { --metal: #bccfc2; --w0: #081510; --w1: #0c1d16; --w2: #1f3c2e; --wsub: #8fae9c; }
+:root[data-theme='grey'], .theme-dot[data-theme='grey'] { --metal: #c9cacd; --w0: #0f1012; --w1: #17181b; --w2: #313338; --wsub: #a0a3ab; }
+:root[data-theme='red'], .theme-dot[data-theme='red'] { --metal: #dcc0c4; --w0: #16080b; --w1: #1f0d11; --w2: #45202a; --wsub: #bd9aa1; --err: #ff6b7a; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--desk); color: var(--text); font-family: var(--font); font-variant-numeric: lining-nums; }
@@ -52,7 +54,7 @@ button { font: inherit; color: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-#app { position: relative; max-width: 1380px; margin: 24px auto; padding: 0 36px; min-height: calc(100vh - 48px); display: flex; flex-direction: column; border-radius: 22px; background: radial-gradient(circle at 20px 20px, var(--screw)), radial-gradient(circle at calc(100% - 20px) 20px, var(--screw)), radial-gradient(circle at 20px calc(100% - 20px), var(--screw)), radial-gradient(circle at calc(100% - 20px) calc(100% - 20px), var(--screw)), var(--brush) var(--metal); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .85), inset 0 -4px 0 var(--metal-lo), 0 2px 0 #6f7682, 0 30px 50px rgba(30, 40, 60, .28); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+#app { position: relative; max-width: 1380px; margin: 24px auto; padding: 0 36px; min-height: calc(100vh - 48px); display: flex; flex-direction: column; border-radius: 22px; background: radial-gradient(circle at 20px 20px, var(--screw)), radial-gradient(circle at calc(100% - 20px) 20px, var(--screw)), radial-gradient(circle at 20px calc(100% - 20px), var(--screw)), radial-gradient(circle at calc(100% - 20px) calc(100% - 20px), var(--screw)), var(--brush) var(--metal); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .85), inset 0 -4px 0 var(--metal-lo), 0 2px 0 color-mix(in srgb, var(--metal) 55%, #000), 0 30px 50px rgba(30, 40, 60, .28); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
 main { flex: 1; }
 
 /* ---------------------------------- header ---------------------------------- */
@@ -1386,9 +1388,10 @@ input[type='range']::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .foot-btn:hover { color: var(--text); }
 .foot-toggle { display: none; }
 .themes { display: flex; align-items: center; gap: 6px; }
-.theme-dot { width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 2px solid var(--bg3); background: var(--sw); cursor: pointer; transition: border-color .15s; }
+/* each dot shows what it gives you: the metal on one half, the wells on the other */
+.theme-dot { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid var(--line2); background: linear-gradient(135deg, var(--metal) 50%, var(--w1) 50%); cursor: pointer; transition: border-color .15s; }
 .theme-dot:hover { border-color: var(--sub); }
-.theme-dot.on { border-color: var(--main); }
+.theme-dot.on { border-color: var(--main); box-shadow: 0 0 0 1px var(--main-d); }
 .foot-credit { text-decoration: none; opacity: .6; }
 .foot-credit[hidden] { display: none; }
 .foot-credit:hover { opacity: 1; }

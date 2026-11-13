@@ -277,7 +277,7 @@ The config values are public by design. The database rules are what keep each pl
      - "Crowded" means at least 6 words on screen (more on faster levels: 45% of the level's word limit).
    - `space` / `enter` clears what you've typed, `esc` pauses.
 
-Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the anodized colour of the wells and keys: dark blue (default), dark green, dark grey or dark red. The aluminum stays the same. It's remembered on that browser. Clicking the tabs (top bar, feed / conference, friend requests, the sound guide) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
+Two volume sliders (filled yellow up to their level, like the sound meters) in the footer control the music and the sfx (keyboard, game sounds and announcer). On phones the footer folds into one **♫ sound & theme** button. Next to the sliders, **theme** switches the anodized colour of the whole board, the slab as well as the wells and keys cut into it: blue (default), green, grey or red. Each dot shows what it gives you, the metal on one half and the wells on the other. It's remembered on that browser. Clicking the tabs (top bar, feed / conference, friend requests, the sound guide) plays a clicky green switch, like a Razer Green. The footer stays along the bottom of the window while you scroll (on phones it sits at the end of the page instead, so it doesn't cover the screen).
 
 ## Cheat detection
 
