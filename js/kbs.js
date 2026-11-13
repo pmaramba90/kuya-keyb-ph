@@ -140,7 +140,7 @@
     $('#kbBrand').innerHTML = '<option value="all">all brands</option>' + C.keyboardBrands.map((b) => `<option>${esc(b)}</option>`).join('');
     $('#kbSizes').innerHTML = SIZES.map(([v, n]) => `<button class="chip${v === 'all' ? ' on' : ''}" data-f="size" data-v="${v}">${n}</button>`).join('');
     $('#kbTypes').innerHTML = TYPES.map((t) => `<button class="chip${t === 'all' ? ' on' : ''}" data-f="type" data-v="${t}">${t}</button>`).join('');
-    $('#kbQ').placeholder = `search ${C.keyboards.length.toLocaleString()} keyboards… e.g. keychron k8`;
+    $('#kbQ').placeholder = `search ${C.keyboards.length.toLocaleString()} keyboards`;
     K.view = KK.kbview.create($('#kbRender'), { maxU: 30 });
     K.limit = PAGE[viewMode()];
     renderTools();
@@ -348,8 +348,8 @@
         <button class="btn" data-act="save">save to my builds</button>
       </div>
       <div class="kbd-btns kbd-quick">
-        <button class="btn primary" data-act="test">Test It Out</button>
-        <button class="btn" data-act="save">Save Keyboard</button>
+        <button class="btn primary" data-act="test">test it out</button>
+        <button class="btn" data-act="save">save keyboard</button>
       </div>`;
   }
 

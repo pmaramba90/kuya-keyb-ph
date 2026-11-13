@@ -1940,7 +1940,7 @@
     const ord = (k) => ['1st', '2nd', '3rd', '4th'][k - 1] || k + 'th';
     const again = KK.party.canAgain(); // the host: ask everyone to play again
     KK.ui.open(
-      `<div class="ov-h">${won ? 'you win the lobby! 🏆' : `you're ${ord(place)} of ${n}`}</div>
+      `<div class="ov-h">${won ? 'you win the lobby' : `you're ${ord(place)} of ${n}`}</div>
        <div class="ov-sub">${all[0].dead ? 'everyone was walled in' : all.filter((x) => !x.dead).length > 1 ? 'time · highest score still in' : 'last one standing'} · ${rec}</div>
        <div class="party-res">${all.map((x, i) => `<div class="pr${x.you ? ' me' : ''}"><span class="pr-place">${i + 1}</span>${KK.social.avatarImg(x.uid, 'xs')}
          <span class="pr-who"><b>${esc(x.display)}${x.you ? ' (you)' : ''}</b><span>${esc(x.pname || '')}</span></span>

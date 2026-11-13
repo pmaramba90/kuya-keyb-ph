@@ -466,7 +466,7 @@
     KK.sfx.challenge();
     const title = document.title;
     let blink = 0;
-    const titleBlink = setInterval(() => (document.title = blink++ % 2 ? title : '⚔ challenged!'), 700);
+    const titleBlink = setInterval(() => (document.title = blink++ % 2 ? title : 'challenged'), 700);
     const remind = setTimeout(() => incoming && KK.sfx.challenge(true), Math.max(0, ch.at + 5000 - N.now()));
     const end = () => {
       clearInterval(titleBlink);
@@ -476,9 +476,9 @@
       closeCh();
     };
     openCh(
-      `<div class="ch-tag">⚔ you've been challenged</div>
+      `<div class="ch-tag">you've been challenged</div>
        ${KK.social.avatarImg(from, 'lg ch-av')}
-       <div class="ov-h"><b>${esc(ch.fromName)}</b> challenges you!</div>
+       <div class="ov-h"><b>${esc(ch.fromName)}</b> challenges you</div>
        <div class="ch-build">${swatch(d)}<span><b>${esc(ch.pname)}</b> · ${esc(d.head)}<br>${esc(d.board)} · ${esc(d.sw)} · ${esc(d.caps)}</span></div>
        <label class="ch-pick"><span class="hud-lbl">play with</span><select class="select" id="chPick">${opts}</select></label>
        <div class="ch-time"><i></i></div>

@@ -393,7 +393,7 @@
     $('#partyRoom').innerHTML = `
       <div class="pt-room-h"><b>${lobbyName(pt)}${pt.locked ? LOCK : ''}</b><span class="sub">${host ? 'your lobby' : `host ${esc(pt.hostName || 'player')}`} · ${ms.length} / ${max} players${pt.locked ? ' · password protected' : ''}${pt.status === 'playing' ? ' · in a match' : ''}</span></div>
       <div class="pt-members">${ms.map(([uid, m]) => `<div class="pt-mem${uid === me.uid ? ' me' : ''}">${KK.social.avatarImg(uid, 'sm')}
-          <span class="pt-who"><b>${esc(m.display || 'player')}${uid === pt.host ? ' <i class="pt-crown" title="host">👑</i>' : ''}${uid === me.uid ? ' <em>(you)</em>' : ''}</b><span>${esc(m.pname || 'keyboard')} · ${esc(d(m.build))}</span></span></div>`).join('')}
+          <span class="pt-who"><b>${esc(m.display || 'player')}${uid === pt.host ? ' <em>host</em>' : ''}${uid === me.uid ? ' <em>(you)</em>' : ''}</b><span>${esc(m.pname || 'keyboard')} · ${esc(d(m.build))}</span></span></div>`).join('')}
         ${Array.from({ length: Math.max(0, max - ms.length) }, () => '<div class="pt-mem empty"><span class="pt-slot">open slot</span></div>').join('')}</div>
       ${host && reqs.length ? `<div class="grp-h">want to join</div><div class="pt-reqs">${reqs.map(([uid, r]) => `<div class="pt-req">${KK.social.avatarImg(uid, 'sm')}
           <span class="pt-who"><b>${esc(r.display || 'player')}</b><span>${esc(r.pname || 'keyboard')} · ${esc(d(r.build))}</span></span>

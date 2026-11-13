@@ -68,7 +68,7 @@
     .map(([id, n]) => Object.assign({ id }, n))
     .sort((a, b) => (+b.at || 0) - (+a.at || 0));
 
-  const REACT = { heart: '♥', laugh: '😂' };
+  const REACT = { heart: '♥', laugh: 'haha' };
   // what they did (everything from the database is escaped)
   function what(n) {
     switch (n.t) {
@@ -82,7 +82,7 @@
       case 'heart': return `hearted your keyboard${n.name ? ` <b>${esc(String(n.name).slice(0, 60))}</b>` : ''}`;
       case 'challenge': return 'challenged you to a match';
       case 'friend': return 'sent you a friend request';
-      case 'signup': return 'just signed up 🎉';
+      case 'signup': return 'just signed up';
       case 'thread': return `${n.kind === 'reply' ? 'replied to your comment' : 'commented on your thread'}: “${esc(String(n.text || '').slice(0, 80))}”`;
       case 'tag': return n.kind === 'all' ? 'tagged <b class="mention all">@everyone</b> in a post' : n.kind === 'reply' ? 'mentioned you in a reply' : 'tagged you in a post';
       default: return 'did something';

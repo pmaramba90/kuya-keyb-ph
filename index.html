@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
   <!-- keycap legend fonts, one per maker style (see LEGEND_STYLES in js/catalog.js) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Arimo:wght@400;700&family=Montserrat:wght@600&family=Rajdhani:wght@600;700&family=Fredoka:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202611080108">
+  <link rel="stylesheet" href="css/style.css?v=202611121200">
 </head>
 <body data-screen="title">
   <div id="app">
@@ -89,7 +89,7 @@
             <!-- friends online right now, one tap to challenge -->
             <div class="online-strip" id="feedOnlineStrip"></div>
             <!-- build a keyboard or pick a full one (the first glows until you've saved one) -->
-            <div class="home-acts" id="homeActs"><button class="btn primary" data-home="build" id="homeBuild">build a new keyboard</button><button class="btn primary" data-home="kbs">full keyboards</button><button class="btn primary" data-home="guide">keyboard sound guide</button></div>
+            <div class="home-acts" id="homeActs"><button class="btn primary" data-home="build" id="homeBuild">build a new keyboard</button><button class="btn" data-home="kbs">full keyboards</button><button class="btn" data-home="guide">keyboard sound guide</button></div>
             <!-- what's on your mind: post, review, GIF, keyboard, photo -->
             <div class="whats" id="feedWhats">
               <span id="whatsAv"></span>
@@ -113,13 +113,13 @@
           <aside class="feed-side">
             <p class="feed-count" id="feedCount"></p>
             <p class="feed-count" id="feedOnline"></p>
-            <div class="pop-h">Popular Keyboards</div>
+            <div class="pop-h">popular keyboards</div>
             <div class="pop-list" id="feedPopular"></div>
-            <div class="pop-h">Top Rated</div>
+            <div class="pop-h">top rated</div>
             <div class="rated" id="feedRated"></div>
-            <div class="pop-h">High Scores</div>
+            <div class="pop-h">high scores</div>
             <div class="board" id="feedHigh"></div>
-            <div class="pop-h">This Week</div>
+            <div class="pop-h">this week</div>
             <div class="board" id="feedBoard"></div>
           </aside>
         </div>
@@ -154,9 +154,9 @@
             <div class="dash-best" id="dashBest"></div>
             <div class="title-actions dash-actions" id="dashActions">
               <button class="btn primary" data-home="build">build a new keyboard</button>
-              <button class="btn primary" data-home="kbs">full keyboards</button>
-              <button class="btn primary" data-home="guide">keyboard sound guide</button>
-              <button class="btn primary" data-home="convert">image converter</button>
+              <button class="btn" data-home="kbs">full keyboards</button>
+              <button class="btn" data-home="guide">keyboard sound guide</button>
+              <button class="btn" data-home="convert">image converter</button>
             </div>
             <div class="feat" id="dashFeat" hidden>
               <div class="feat-head"><div class="feat-titles"><span class="grp-h">featured keyboard</span><b class="feat-name" id="featName"></b><span class="feat-tags" id="featTags"></span></div><span class="feat-heart" id="featHeart"></span><span class="feat-open">open summary →</span></div>
@@ -176,7 +176,7 @@
         <div class="sg">
           <div class="sg-head">
             <button class="link-btn back-link" id="sgBack">← back</button>
-            <div class="grp-h">keyboard sound guide <span class="sub">MECHANICAL KEYBOARD SOUND PROFILES: THE COMPLETE GUIDE</span></div>
+            <div class="grp-h">keyboard sound guide <span class="sub">mechanical keyboard sound profiles: the complete guide</span></div>
             <p class="hint sg-howto"><span class="sg-desk">browse with ‹ › or the <span class="kbd">←</span> <span class="kbd">→</span> keys</span><span class="sg-mob">swipe left or right to browse</span> · ▶ hear it plays a board built that way</p>
           </div>
           <div class="sg-tabs" id="sgTabs"></div>
@@ -194,7 +194,7 @@
           <p class="home-hi" id="homeHi"></p>
           <div class="title-actions">
             <button class="btn primary" id="btnSolo">single player</button>
-            <button class="btn primary" id="btnPvp">vs players</button>
+            <button class="btn" id="btnPvp">vs players</button>
           </div>
           <button class="link-btn guide-link" id="btnGuide">power-ups guide</button>
           <div class="saved" id="savedWrap" hidden>
@@ -260,7 +260,7 @@
             <button class="mk-add" id="mkAdd" title="post a listing" aria-label="post a listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
           <div class="filters mk-filters">
-            <input class="search" id="mkQ" autocomplete="off" spellcheck="false" placeholder="search listings…">
+            <input class="search" id="mkQ" autocomplete="off" spellcheck="false" placeholder="search listings">
             <div class="chips" id="mkKinds"></div>
           </div>
           <div class="mk-grid" id="mkList"></div>
@@ -485,7 +485,7 @@
   <div class="overlay" id="overlay" hidden><div class="ov-card" id="ovCard"></div></div>
   <!-- phones: a hidden text box holds the on-screen keyboard open while you play -->
   <input id="mobileType" class="mobile-type" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="type here" tabindex="-1">
-  <button class="btn primary type-btn" id="typeBtn" hidden>⌨ tap here to type</button>
+  <button class="btn primary type-btn" id="typeBtn" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 10h1M10 10h1M13.5 10h1M17 10h1M8 13.8h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>tap here to type</button>
   <button class="pad-pause" id="padPause" hidden aria-label="pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
   <div class="app-toast" id="appToast" role="status" aria-live="polite" hidden></div>
   <!-- conversations (js/chat.js): a chat box each, side by side along the bottom right -->
@@ -500,45 +500,45 @@
       <p class="hint">drag to reposition · slide to zoom</p>
       <div class="av-pick-h">pick a cat</div>
       <div class="av-cats" id="avCats"></div>
-      <button class="btn av-upload" id="avUpload">📷 upload your own photo</button>
+      <button class="btn av-upload" id="avUpload"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3.2l1.6-2.5h6.4L16.8 8H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.2" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg>upload your own photo</button>
       <div class="ov-btns"><button class="btn primary" id="avSave">save</button><button class="btn ghost" id="avCancel">cancel</button></div>
     </div>
   </div>
 
-  <script src="js/util.js?v=202611080108"></script>
-  <script src="js/auth.js?v=202611080108"></script>
-  <script src="js/net-config.js?v=202611080108"></script>
-  <script src="js/net.js?v=202611080108"></script>
-  <script src="js/data-switches.js?v=202611080108"></script>
-  <script src="js/data-keycaps.js?v=202611080108"></script>
-  <script src="js/data-keycap-colors.js?v=202611080108"></script>
-  <script src="js/data-keyboards.js?v=202611080108"></script>
-  <script src="js/data-words.js?v=202611080108"></script>
-  <script src="js/data-announcer.js?v=202611080108"></script>
-  <script src="js/catalog.js?v=202611080108"></script>
-  <script src="js/audio-core.js?v=202611080108"></script>
-  <script src="js/keysound.js?v=202611080108"></script>
-  <script src="js/music.js?v=202611080108"></script>
-  <script src="js/sfx.js?v=202611080108"></script>
-  <script src="js/keyboard-view.js?v=202611080108"></script>
-  <script src="js/builder.js?v=202611080108"></script>
-  <script src="js/kbs.js?v=202611080108"></script>
-  <script src="js/kbread.js?v=202611080108"></script>
-  <script src="js/convert.js?v=202611080108"></script>
-  <script src="js/anticheat.js?v=202611080108"></script>
-  <script src="js/game.js?v=202611080108"></script>
-  <script src="js/online.js?v=202611080108"></script>
-  <script src="js/social.js?v=202611080108"></script>
-  <script src="js/giphy-config.js?v=202611080108"></script>
-  <script src="js/feed.js?v=202611080108"></script>
-  <script src="js/notify.js?v=202611080108"></script>
-  <script src="js/mention.js?v=202611080108"></script>
-  <script src="js/chat.js?v=202611080108"></script>
-  <script src="js/party.js?v=202611080108"></script>
-  <script src="js/soundguide.js?v=202611080108"></script>
-  <script src="js/conference.js?v=202611080108"></script>
-  <script src="js/market.js?v=202611080108"></script>
-  <script src="js/sync.js?v=202611080108"></script>
-  <script src="js/main.js?v=202611080108"></script>
+  <script src="js/util.js?v=202611121200"></script>
+  <script src="js/auth.js?v=202611121200"></script>
+  <script src="js/net-config.js?v=202611121200"></script>
+  <script src="js/net.js?v=202611121200"></script>
+  <script src="js/data-switches.js?v=202611121200"></script>
+  <script src="js/data-keycaps.js?v=202611121200"></script>
+  <script src="js/data-keycap-colors.js?v=202611121200"></script>
+  <script src="js/data-keyboards.js?v=202611121200"></script>
+  <script src="js/data-words.js?v=202611121200"></script>
+  <script src="js/data-announcer.js?v=202611121200"></script>
+  <script src="js/catalog.js?v=202611121200"></script>
+  <script src="js/audio-core.js?v=202611121200"></script>
+  <script src="js/keysound.js?v=202611121200"></script>
+  <script src="js/music.js?v=202611121200"></script>
+  <script src="js/sfx.js?v=202611121200"></script>
+  <script src="js/keyboard-view.js?v=202611121200"></script>
+  <script src="js/builder.js?v=202611121200"></script>
+  <script src="js/kbs.js?v=202611121200"></script>
+  <script src="js/kbread.js?v=202611121200"></script>
+  <script src="js/convert.js?v=202611121200"></script>
+  <script src="js/anticheat.js?v=202611121200"></script>
+  <script src="js/game.js?v=202611121200"></script>
+  <script src="js/online.js?v=202611121200"></script>
+  <script src="js/social.js?v=202611121200"></script>
+  <script src="js/giphy-config.js?v=202611121200"></script>
+  <script src="js/feed.js?v=202611121200"></script>
+  <script src="js/notify.js?v=202611121200"></script>
+  <script src="js/mention.js?v=202611121200"></script>
+  <script src="js/chat.js?v=202611121200"></script>
+  <script src="js/party.js?v=202611121200"></script>
+  <script src="js/soundguide.js?v=202611121200"></script>
+  <script src="js/conference.js?v=202611121200"></script>
+  <script src="js/market.js?v=202611121200"></script>
+  <script src="js/sync.js?v=202611121200"></script>
+  <script src="js/main.js?v=202611121200"></script>
 </body>
 </html>

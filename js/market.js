@@ -173,7 +173,7 @@
     $('#mkItemF').hidden = t === 'other';
     if (t === 'other') return;
     $('#mkItemL').textContent = t === 'keyboard' ? 'which keyboard' : 'which switch';
-    $('#mkItemQ').placeholder = `search ${t === 'keyboard' ? C.keyboards.length.toLocaleString() + ' keyboards' : C.switches.length.toLocaleString() + ' switches'}…`;
+    $('#mkItemQ').placeholder = `search ${t === 'keyboard' ? C.keyboards.length.toLocaleString() + ' keyboards' : C.switches.length.toLocaleString() + ' switches'}`;
     const picked = comp.item !== null;
     $('#mkPick').hidden = picked;
     $('#mkChosen').hidden = !picked;

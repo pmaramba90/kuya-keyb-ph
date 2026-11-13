@@ -147,7 +147,7 @@
     const types = ['all', 'linear', 'tactile', 'clicky', 'silent', 'magnetic'];
     return `
       <div class="filters">
-        <input class="search" id="swQ" placeholder="search ${C.switches.length} switches…" value="${esc(swF.q)}" autocomplete="off" spellcheck="false">
+        <input class="search" id="swQ" placeholder="search ${C.switches.length} switches" value="${esc(swF.q)}" autocomplete="off" spellcheck="false">
         <select class="select" id="swBrand"><option value="all">all brands</option>${C.switchBrands.map((b) => `<option${swF.brand === b ? ' selected' : ''}>${esc(b)}</option>`).join('')}</select>
         <div class="chips">${types.map((t) => `<button class="chip${swF.type === t ? ' on' : ''}" data-act="swType" data-v="${t}">${t}</button>`).join('')}</div>
         <span class="count" id="swCount"></span>
@@ -195,7 +195,7 @@
     const mats = ['all', 'pbt', 'abs', 'other'];
     return `${build().paint ? '<p class="hint kc-paint">this board keeps the colors from its photo (image converter): keycaps here change its sound and shape. <button class="link-btn" data-act="unpaint">use the keycaps\' colors instead</button></p>' : ''}
       <div class="filters">
-        <input class="search" id="kcQ" placeholder="search ${C.keycaps.length} keycap sets…" value="${esc(kcF.q)}" autocomplete="off" spellcheck="false">
+        <input class="search" id="kcQ" placeholder="search ${C.keycaps.length} keycap sets" value="${esc(kcF.q)}" autocomplete="off" spellcheck="false">
         <select class="select" id="kcProfile">${Object.keys(KC_GROUP_LABEL).map((g) => `<option value="${g}"${kcF.profile === g ? ' selected' : ''}>${KC_GROUP_LABEL[g]}</option>`).join('')}</select>
         <div class="chips">${mats.map((m) => `<button class="chip${kcF.material === m ? ' on' : ''}" data-act="kcMat" data-v="${m}">${m}</button>`).join('')}</div>
         <span class="count" id="kcCount"></span>
@@ -258,7 +258,7 @@
     for (let i = 1; i <= maxShow; i++) {
       const locked = i > prog.unlocked;
       const best = prog.best[i];
-      levels.push(`<button class="chip${B.level === i ? ' on' : ''}" data-act="level" data-v="${i}"${locked ? ' disabled title="survive the previous level to unlock"' : best ? ` title="best level score: ${best}"` : ''}>${locked ? '🔒 ' : ''}${i}</button>`);
+      levels.push(`<button class="chip${B.level === i ? ' on' : ''}" data-act="level" data-v="${i}"${locked ? ' disabled title="survive the previous level to unlock"' : best ? ` title="best level score: ${best}"` : ''}>${i}</button>`);
     }
     const langs = [['en', 'english'], ['tl', 'tagalog'], ['mix', 'halo-halo']];
     const linkHtml = (ls) => ls.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(n)}</a>`).join('');
@@ -269,7 +269,7 @@
       <div class="summary">
         <div class="sum-name">
           <input class="search name-input" id="buildName" maxlength="40" placeholder="name your build" value="${esc(prof ? prof.name : app.suggestName())}" spellcheck="false" autocomplete="off">
-          <button class="btn sm${dirty ? ' primary nudge' : ''}" data-act="save">${prof ? (dirty ? 'save changes' : 'saved ✓') : 'save build'}</button>
+          <button class="btn sm${dirty ? ' primary' : ''}" data-act="save">${prof ? (dirty ? 'save changes' : 'saved ✓') : 'save build'}</button>
           ${prof ? '<button class="btn sm ghost" data-act="saveNew">save as new</button>' : ''}
           <span class="hint">${prof ? (dirty ? 'unsaved changes' : 'saved builds appear on the home screen') : 'not saved yet'}</span>
         </div>

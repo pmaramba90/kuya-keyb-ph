@@ -373,12 +373,13 @@
   };
 
   // a player's top-3 spots (Popular Keyboards, High Scores) as badges for their profile
-  const MEDALS = ['🥇', '🥈', '🥉'];
+  // a medal with the place in it; gold, silver or bronze comes from the badge's colour
+  const medal = (n) => `<svg class="medal" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 2.5l3.5 5 3.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><text x="12" y="17.6" text-anchor="middle" font-size="9" fill="currentColor">${n}</text></svg>`;
   F.badges = async function (uid) {
     const [pop, high] = await Promise.all([popTop(3), highScores()]);
     const out = [];
-    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}"><i class="medal">${MEDALS[i]}</i><span class="badge-txt">#${i + 1} most popular keyboard</span></span>`));
-    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}"><i class="medal">${MEDALS[i]}</i><span class="badge-txt">#${i + 1} single player high score</span></span>`));
+    pop.forEach((x, i) => x.owner === uid && out.push(`<span class="badge r${i + 1}" title="${esc(x.k.name || 'keyboard')} · ${x.n} heart${x.n > 1 ? 's' : ''}">${medal(i + 1)}<span class="badge-txt">#${i + 1} most popular keyboard</span></span>`));
+    high.slice(0, 3).forEach((x, i) => x.uid === uid && out.push(`<span class="badge r${i + 1}" title="best total ${x.total.toLocaleString()}">${medal(i + 1)}<span class="badge-txt">#${i + 1} single player high score</span></span>`));
     return out.join('');
   };
   // fill the badge row on whichever profile is showing
@@ -521,11 +522,8 @@
     F.showTab(b.dataset.ft);
   });
 
-  // "build a new keyboard" on home glows until you've saved a keyboard
-  const buildNudge = () => $('#homeBuild').classList.toggle('nudge', !KK.app.profiles.length);
   function renderWhats() {
     if (!me) return;
-    buildNudge();
     $('#whatsAv').innerHTML = KK.social.avatarImg(me.uid, 'sm');
     $('#whatsIn').textContent = `what's on your mind, ${me.display}?`;
   }
@@ -548,7 +546,7 @@
       <div class="welcome-steps">${steps.map(([k, label, ok]) => `<button class="wstep${ok ? ' ok' : ''}" data-wel="${k}"><i>${ok ? '✓' : ''}</i>${label}</button>`).join('')}</div>`;
   }
   // your builds / scores came down from another device: the checklist may be done now
-  F.refreshWelcome = () => me && KK.app.screen === 'home' && (renderWelcome(), buildNudge());
+  F.refreshWelcome = () => me && KK.app.screen === 'home' && renderWelcome();
   $('#feedWelcome').addEventListener('click', (e) => {
     const b = e.target.closest('[data-wel]');
     if (!b) return;
@@ -710,7 +708,7 @@
     const shown = all.slice(0, limit);
     box.innerHTML = all.length
       ? shown.map((x) => postHtml(x)).join('')
-      : `<p class="hint feed-empty">nobody has posted yet. Be the first!</p>`;
+      : `<p class="hint feed-empty">nobody has posted yet. Be the first.</p>`;
     $('#feedMore').hidden = tab === 'conf' || all.length <= limit;
     placeKeyboards(box, shown);
     const back = typing && box.querySelector(`[data-reply-in="${CSS.escape(typing)}"]`);
@@ -782,7 +780,7 @@
     const n = (v) => Math.floor(+v || 0).toLocaleString();
     switch (p.act) {
       case 'build': return { head: 'built a new keyboard', body: '' };
-      case 'top': return { head: 'made the popular keyboards', body: `<div class="act-card"><span class="act-ico">🏆</span><span>this keyboard is <b>#${Math.min(3, Math.max(1, Math.floor(+p.rank || 1)))}</b> in Popular Keyboards</span></div>` };
+      case 'top': return { head: 'made the popular keyboards', body: `<div class="act-card"><svg class="act-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>this keyboard is <b>#${Math.min(3, Math.max(1, Math.floor(+p.rank || 1)))}</b> in Popular Keyboards</span></div>` };
       case 'best': return { head: 'set a new best', body: `<div class="act-card"><span class="act-ico">★</span><span>new personal best: <b>${n(p.total)}</b> points in single player</span></div>` };
       default: return null;
     }
@@ -799,6 +797,7 @@
   const SOUNDS = () => Object.keys(KK.soundguide.SHORT);
   const LEGACY = { fire: 'thocky', cream: 'creamy' }; // the old 🔥 / 🍦 reactions
   const KB_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 10h1M10 10h1M13.5 10h1M17 10h1M8 13.8h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const PHOTO_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3.2l1.6-2.5h6.4L16.8 8H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.2" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
   let pickOpen = null; // the post whose sound picker is open
   // who reacted with each sound (old fire / cream folded into thocky / creamy)
   function soundWho(rx) {
@@ -1132,7 +1131,7 @@
           <input class="search" id="gifLink" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="${GIPHY_KEY ? 'or paste' : 'paste'} a GIPHY link (giphy.com → a GIF → copy link)">
           <div class="gif-attr">powered by <b>GIPHY</b></div>
         </div>` : ''}
-      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm" data-new="review">★ review</button><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">⌨ keyboard</button><button type="button" class="btn sm" data-comp="photo">📷 photo</button></span>' : ''}<span class="hint" id="compMsg"></span>${mode === 'post' ? '<button type="button" class="btn ghost sm" data-comp="close">cancel</button>' : ''}<button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
+      <div class="comp-foot">${mode === 'post' ? '<span class="comp-atts"><button type="button" class="btn sm" data-new="review">★ review</button><button type="button" class="btn sm gif-btn" data-comp="gif">GIF</button><button type="button" class="btn sm" data-comp="kb">' + KB_ICON + 'keyboard</button><button type="button" class="btn sm" data-comp="photo">' + PHOTO_ICON + 'photo</button></span>' : ''}<span class="hint" id="compMsg"></span>${mode === 'post' ? '<button type="button" class="btn ghost sm" data-comp="close">cancel</button>' : ''}<button class="btn primary" type="submit">${mode === 'review' ? 'post review' : 'post'}</button></div>`;
     (mode === 'review' ? form.querySelector('.rev-kinds .chip') : $('#compText')).focus();
   }
 
@@ -1166,7 +1165,7 @@
     $('#kbPick').hidden = true;
     const el = $('#kbChosen');
     el.hidden = false;
-    el.innerHTML = `<span class="att-ico">⌨</span><span class="kb-text"><b>${esc(comp.kb.name)}</b><span>${esc(KK.keysound.writeup(comp.kb.build).headline)}</span></span><button type="button" class="picon" data-comp="nokb" title="remove">✕</button>`;
+    el.innerHTML = `${KB_ICON.replace('<svg', '<svg class="att-ico"')}<span class="kb-text"><b>${esc(comp.kb.name)}</b><span>${esc(KK.keysound.writeup(comp.kb.build).headline)}</span></span><button type="button" class="picon" data-comp="nokb" title="remove">✕</button>`;
     compMsg('');
   }
 
@@ -1295,7 +1294,7 @@
     $('#revPick').hidden = false;
     const q = $('#revQ');
     q.value = '';
-    q.placeholder = `search ${itemsOf(kind).length} ${KINDS[kind].what}…`;
+    q.placeholder = `search ${itemsOf(kind).length} ${KINDS[kind].what}`;
     renderResults();
     q.focus();
   }

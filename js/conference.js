@@ -119,9 +119,9 @@
           <div class="cf-main">
             <div class="cf-title">${tagHtml(t.tag)}<b>${esc(String(t.title).slice(0, 120))}</b></div>
             ${t.text ? `<p class="cf-snip">${esc(String(t.text).slice(0, 160))}${String(t.text).length > 160 ? '…' : ''}</p>` : ''}
-            <div class="cf-meta">${KK.social.avatarImg(t.uid, 'xs')}${KK.feed.nameHtml(t.uid)}<span>· ${KK.feed.ago(t.at)}</span><span class="cf-n">💬 ${plural(n, 'comment')}</span></div>
+            <div class="cf-meta">${KK.social.avatarImg(t.uid, 'xs')}${KK.feed.nameHtml(t.uid)}<span>· ${KK.feed.ago(t.at)}</span><span class="cf-n">${plural(n, 'comment')}</span></div>
           </div></div>`;
-      }).join('') : `<p class="hint cf-empty">${tagF === 'all' ? 'no threads yet. Start the first conversation!' : `no ${esc(TAGS[tagF])} threads yet.`}</p>`}</div>`;
+      }).join('') : `<p class="hint cf-empty">${tagF === 'all' ? 'no threads yet. Start the first conversation.' : `no ${esc(TAGS[tagF])} threads yet.`}</p>`}</div>`;
   }
 
   function composeHtml() {
@@ -163,11 +163,11 @@
             ${mineT || isMod() ? delBtn('data-cf="delt"', mineT) : ''}</div>
           <h3 class="cf-h">${esc(String(t.title).slice(0, 120))}</h3>
           ${t.text ? `<div class="cf-body">${body(t.text, 4000)}</div>` : ''}
-          <div class="cf-count">💬 ${plural(all.length, 'comment')}</div>
+          <div class="cf-count">${plural(all.length, 'comment')}</div>
         </div>
       </article>
       ${cbox(tid, 'add a comment…')}
-      <div class="cf-comments">${top.length ? top.map((c) => cHtml(c, false)).join('') : '<p class="hint">no comments yet. Say something!</p>'}</div>`;
+      <div class="cf-comments">${top.length ? top.map((c) => cHtml(c, false)).join('') : '<p class="hint">no comments yet. Say something.</p>'}</div>`;
   }
 
   /* ---------------------------------- actions ---------------------------------- */

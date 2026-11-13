@@ -188,10 +188,10 @@
         <div class="sg-kb" id="sgKb"></div>
         <p class="sg-demo"><span>this demo</span> ${esc(sw ? sw.name : p.demo.sw)} · ${esc(C.PLATES[b.plate] ? C.PLATES[b.plate].name || b.plate : b.plate)} plate · ${esc(C.MOUNTS[b.mount] ? C.MOUNTS[b.mount].name : b.mount + ' mount')} · ${esc(kc ? kc.profile + ' ' + kc.material : '')} keycaps${b.mods.length ? ' · ' + b.mods.map((m) => (C.MODS.find((x) => x.id === m) || { name: m }).name).join(', ') : ' · no foam'} <em>· sounds ${esc(head)}</em></p>
         <ul class="sg-points">
-          ${fold('The Sound', p.sound)}
-          ${fold("How It's Achieved", p.how)}
-          <li><b>Popular Switches</b>${names(p.switches)}</li>
-          <li><b>Popular Keyboards</b>${names(p.boards)}</li>
+          ${fold('the sound', p.sound)}
+          ${fold("how it's achieved", p.how)}
+          <li><b>popular switches</b>${names(p.switches)}</li>
+          <li><b>popular keyboards</b>${names(p.boards)}</li>
         </ul>
       </div>`;
     // the board, drawn small in this profile's build

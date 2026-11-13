@@ -521,7 +521,8 @@
   C.money = function (usd, cur) {
     const c = C.CURRENCIES[cur] || C.CURRENCIES.usd;
     const v = usd * c.rate;
-    return c.sym + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(v < 10 ? 2 : 0));
+    // cents only where they say something ($0.84 each), so $6 sits beside $12 in one format
+    return c.sym + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(v < 10 && Math.round(v * 100) % 100 ? 2 : 0));
   };
 
   const q = encodeURIComponent;
