@@ -183,10 +183,9 @@
     root.className = 'cmeter t-' + heat + (root.dataset.mini ? ' mini' : '');
     root.style.setProperty('--heat', heat);
     root.querySelector('.cm-count').textContent = c + 'x';
-    root.querySelector('.cm-tier').textContent = heat ? KK.voice.label(b.word, tier).replace(/!+$/, '') : c ? 'warming up…' : 'no combo yet';
+    const tierEl = root.querySelector('.cm-tier'); // single player shows the count alone
+    if (tierEl) tierEl.textContent = heat ? KK.voice.label(b.word, tier).replace(/!+$/, '') : c ? 'warming up…' : 'no combo yet';
     root.querySelector('.cm-fill').style.width = (heat === 5 ? 100 : ((c % 5) / 5) * 100) + '%';
-    const cb = comboBonus(c), m = 'x' + b.mult().toFixed(2).replace(/\.?0+$/, '') + ' score' + (cb ? ` · +${cb} a word` : '');
-    root.querySelector('.cm-next').textContent = heat === 5 ? `${m} · max heat` : `${m} · next: ${KK.voice.label(b.word, heat + 1 === 5 ? 'wow' : heat + 1).replace(/!+$/, '')} at ${(heat + 1) * 5}x`;
     if (bump) {
       root.classList.remove('bump');
       void root.offsetWidth;
@@ -920,8 +919,8 @@
 
   function soloHud(force) {
     const b = run.board, h = run.hud;
-    const vals = { time: U.fmtTime(run.time), total: (run.startTotal + b.score).toLocaleString(), score: b.score.toLocaleString(), acc: b.acc() + '%' };
-    [['time', '#hudTime'], ['total', '#hudTotal'], ['score', '#hudScore'], ['acc', '#hudAcc']].forEach(([k, id]) => {
+    const vals = { time: U.fmtTime(run.time), total: (run.startTotal + b.score).toLocaleString() };
+    [['time', '#hudTime'], ['total', '#hudTotal']].forEach(([k, id]) => {
       if (force || h[k] !== vals[k]) $(id).textContent = h[k] = vals[k];
     });
     $('#hudTime').classList.toggle('warn', run.time <= 10);

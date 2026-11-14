@@ -938,18 +938,15 @@ body.mk-locked { overflow: hidden; }
 body.no-game-kb .game-kb { display: none; }
 
 /* combo meter: the count catches fire, and the fire grows with each tier (--heat 0–5) */
-.hud-mini { font-size: 12px; color: var(--sub); margin-top: 2px; }
-.hud-mini span { color: var(--text); }
 .cmeter { --heat: 0; display: flex; flex-direction: column; align-items: flex-end; min-width: 230px; transform-origin: right center; }
 .cmeter.bump { animation: cbump .25s ease-out; }
 @keyframes cbump { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
 .cm-main { position: relative; display: flex; align-items: baseline; gap: 8px; }
-.cm-count { position: relative; z-index: 1; font-size: calc(30px + var(--heat) * 3px); font-weight: 700; line-height: 1; color: var(--text); transition: font-size .2s; }
+.cm-count { position: relative; z-index: 1; font-size: calc(40px + var(--heat) * 3px); font-weight: 700; line-height: 1; color: var(--text); transition: font-size .2s; }
 .cm-x { font-size: 11px; color: var(--sub); }
 .cm-tier { font-size: 13px; color: var(--sub); margin-top: 3px; white-space: nowrap; }
 .cm-bar { width: 190px; height: 4px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin: 6px 0 3px; }
 .cm-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb300, #ff5a00); border-radius: 4px; transition: width .25s ease; }
-.cm-next { font-size: 10px; color: var(--sub); white-space: nowrap; }
 
 .cmeter.t-1 .cm-count { color: #ffd27a; text-shadow: 0 0 8px rgba(255, 170, 40, .45); }
 .cmeter.t-1 .cm-tier { color: #ffd27a; }
@@ -1008,7 +1005,6 @@ body.no-game-kb .game-kb { display: none; }
 .cmeter.mini .cm-count { font-size: calc(18px + var(--heat) * 2px); }
 .cmeter.mini .cm-tier { font-size: 11px; margin-top: 1px; }
 .cmeter.mini .cm-bar { width: 110px; height: 3px; margin: 3px 0 0; }
-.cmeter.mini .cm-next { display: none; }
 .cmeter.mini.t-5 .cm-tier { font-size: 13px; }
 .cmeter.mini .cm-fire i { width: calc(4px + var(--heat) * 1.6px); height: calc(6px + var(--heat) * 2.6px); }
 
@@ -1092,7 +1088,10 @@ body.no-game-kb .game-kb { display: none; }
 
 /* survival HUD */
 .hud-total { display: flex; flex-direction: column; }
-.hud-total #hudTotal { font-size: 26px; color: var(--main-t); line-height: 1.1; }
+/* the level and the running total are the whole read-out now, so they carry the corner
+   unlabelled: both are big enough to read as what they are */
+#hudLevel { font-size: 24px; line-height: 1.2; }
+.hud-total #hudTotal { font-size: 34px; color: var(--main-t); line-height: 1.1; }
 .hud-r > div { display: flex; flex-direction: column; }
 .meter-row { display: grid; grid-template-columns: auto 1fr 44px; align-items: center; gap: 12px; margin: 4px 0 6px; }
 .overflow { height: 12px; background: var(--w0); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .6), 0 1px 0 var(--edge); }
@@ -1839,7 +1838,7 @@ body.touch .keys-hint { display: none; }
   body.touch[data-screen='game'] #app, body.touch[data-screen='vs'] #app { padding-top: 8px; }
   body.touch[data-screen='game'] .bottom, body.touch[data-screen='vs'] .bottom { display: none; }
   body.touch #scr-game .game-bottom, body.touch #scr-vs .game-bottom { display: none; }
-  body.touch #hudLevel, body.touch #scr-game .hud-mini, body.touch .cm-bar, body.touch .cm-next { display: none; }
+  body.touch #hudLevel, body.touch .cm-bar { display: none; }
   body.touch .powers .hint { display: none; }
   body.touch .powers { min-height: 20px; }
   body.touch .hud-time, body.touch #scr-game .hud-time { font-size: 30px; }
@@ -1853,8 +1852,6 @@ body.touch .keys-hint { display: none; }
   body.touch #scr-game .cmeter { min-width: 0; }
   body.touch #scr-game .cm-main { gap: 4px; }
   body.touch #scr-game .cm-count { font-size: calc(22px + var(--heat) * 2px); }
-  body.touch #scr-game .cm-tier { font-size: 10px; margin-top: 1px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-  body.touch #scr-game .cmeter.t-5 .cm-tier { font-size: 12px; }
   body.touch #scr-game > .meter-row { margin: 2px 0; }
   body.touch #scr-game > .meter-row .overflow { height: 18px; padding: 3px 10px 3px 3px; }
   body.touch #scr-game > .meter-row .overflow::before { inset: 3px 10px 3px 3px; }
