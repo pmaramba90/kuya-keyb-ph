@@ -21,8 +21,11 @@
   const PENTA = { maj: [0, 2, 4, 7, 9], min: [0, 3, 5, 7, 10] };
 
   const TRACKS = [
-    // the game's theme: a café trio — piano comping off the beat, brushes and a ride,
-    // an upright walking the I–vi–II–V, over room murmur and cups
+    // the game's theme: a recorded track, played as it is (src) rather than arranged here.
+    // lp is open and the ambience beds stay down, so nothing is laid over it
+    { name: 'rain against the glass', src: 'audio/music/rain-against-the-glass.mp3', gain: 0.6, lp: 18000 },
+    // a café trio — piano comping off the beat, brushes and a ride, an upright walking
+    // the I–vi–II–V, over room murmur and cups
     { name: 'corner cafe', bpm: 92, swing: 0.66, swing8: true, key: 5, scale: 'maj', prog: [['F', 'maj9'], ['D', 'm9'], ['G', '13'], ['C', 'maj9']], keys: 'piano', lead: 'vibes', pad: false, amb: 'cafe', drums: 'swing', bass: 'walk4', comp: [[2, 0.9, 6], [6, 0.5, 3], [10, 0.8, 5], [14, 0.45, 3]], lp: 5200, loops: 10 },
     { name: 'rainy window', bpm: 72, swing: 0.58, key: 0, scale: 'maj', prog: [['F', 'maj9'], ['E', 'm7'], ['D', 'm9'], ['C', 'maj9']], keys: 'ep', lead: 'kalimba', pad: true, amb: 'rain', drums: 'boombap', bass: 'walk', comp: [[0, 1, 14], [10, 0.55, 6]], lp: 3600, loops: 9 },
     { name: 'late night ramen', bpm: 80, swing: 0.6, key: 0, scale: 'maj', prog: [['D', 'm9'], ['G', '13'], ['C', 'maj9'], ['A', '7b9']], keys: 'ep', lead: 'vibes', pad: false, amb: 'vinyl', drums: 'busy', bass: 'busy', comp: [[0, 0.9, 7], [7, 0.7, 5], [12, 0.6, 4]], lp: 4200, loops: 9 },
@@ -402,19 +405,57 @@
     return mel;
   }
 
+  /* a recorded track: fetched once, then looped straight into the music bus, so the
+     volume sliders, ducking and the radio button all work on it as they do on the rest */
+  let fileSrc = null;
+  const fileBuf = {};
+  // `after` lets the bus fade out first, so stopping the music isn't a cut
+  function stopFile(after) {
+    if (!fileSrc) return;
+    const s = fileSrc;
+    fileSrc = null;
+    try { s.stop(A.ctx.currentTime + (after || 0)); } catch (e) { /* already stopped */ }
+    if (after) s.onended = () => s.disconnect();
+    else s.disconnect();
+  }
+  function playFile(t) {
+    const start = (buf) => {
+      if (tr !== t || !M.playing) return; // the track changed while it loaded
+      stopFile();
+      const s = A.ctx.createBufferSource();
+      s.buffer = buf;
+      s.loop = true;
+      const g = A.ctx.createGain();
+      g.gain.value = t.gain || 0.5;
+      s.connect(g).connect(musicIn);
+      s.start();
+      fileSrc = s;
+    };
+    if (fileBuf[t.src]) return start(fileBuf[t.src]);
+    fetch(t.src)
+      .then((r) => r.arrayBuffer())
+      .then((b) => A.ctx.decodeAudioData(b))
+      .then((buf) => ((fileBuf[t.src] = buf), start(buf)))
+      .catch(() => {}); // offline or missing: the rest of the playlist still plays
+  }
+
   function setTrack(i) {
     trIdx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
     tr = TRACKS[trIdx];
-    melA = makeMelody(tr, 100 + trIdx * 13);
-    const b = {};
-    Object.entries(makeMelody(tr, 500 + trIdx * 17)).forEach(([k, v]) => (k < 32 ? null : (b[k] = v)));
-    Object.entries(melA).forEach(([k, v]) => k < 32 && (b[k] = v)); // B: same opening, new answer
-    melB = b;
     step = 0;
     loop = 0;
     const now = A.ctx.currentTime;
+    stopFile();
     lp.frequency.setTargetAtTime(tr.lp, now, 0.8);
-    M._echo.delayTime.setValueAtTime((60 / tr.bpm) * 0.75, now);
+    if (tr.src) playFile(tr);
+    else {
+      melA = makeMelody(tr, 100 + trIdx * 13);
+      const b = {};
+      Object.entries(makeMelody(tr, 500 + trIdx * 17)).forEach(([k, v]) => (k < 32 ? null : (b[k] = v)));
+      Object.entries(melA).forEach(([k, v]) => k < 32 && (b[k] = v)); // B: same opening, new answer
+      melB = b;
+      M._echo.delayTime.setValueAtTime((60 / tr.bpm) * 0.75, now);
+    }
     ['rain', 'vinyl', 'night', 'cafe'].forEach((k) => {
       if (!ambSrc[k]) {
         const s = A.ctx.createBufferSource();
@@ -426,7 +467,7 @@
         s.start();
         ambSrc[k] = g;
       }
-      const target = k === tr.amb ? 0.55 * (tr.ambLevel || 1) : k === 'vinyl' ? 0.25 : 0;
+      const target = tr.src ? 0 : k === tr.amb ? 0.55 * (tr.ambLevel || 1) : k === 'vinyl' ? 0.25 : 0;
       ambSrc[k].gain.setTargetAtTime(target, now, 1.2);
     });
     if (M.onTrack) M.onTrack(tr.name, trIdx);
@@ -492,6 +533,9 @@
   }
 
   function advance(until) {
+    // a recorded track plays itself; the grid stays level with now, so switching back to an
+    // arranged one doesn't dump every step it "missed" into the present
+    if (tr.src) return void (nextTime = A.ctx.currentTime + 0.15);
     while (nextTime < until) {
       // the lo-fi tracks swing the 16ths; the jazz one swings the 8ths (a triplet feel)
       const swing = tr.swing8
@@ -515,6 +559,7 @@
     // starting with a game: that level's track (it only plays while you play)
     if (M.mode === 'game' && M.level) setTrack((M.level - 1) % TRACKS.length);
     else if (!tr) setTrack(Math.floor(Math.random() * TRACKS.length));
+    else if (tr.src && !fileSrc) playFile(tr); // stopped and started again on a recorded track
     nextTime = A.ctx.currentTime + 0.15;
     timer = setInterval(tick, 25);
     const now = A.ctx.currentTime;
@@ -526,6 +571,7 @@
     if (!M.playing) return;
     M.playing = false;
     clearInterval(timer);
+    stopFile(0.8);
     const now = A.ctx.currentTime;
     musicIn.gain.setTargetAtTime(0, now, 0.2);
     ambBus.gain.setTargetAtTime(0, now, 0.3);
