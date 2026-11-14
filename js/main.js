@@ -298,7 +298,7 @@
 
   /* --------------------------------- screens --------------------------------- */
   const views = [];
-  app.gameKb = KK.kbview.create($('#gameKb'), { maxU: 26 });
+  app.gameKb = KK.kbview.create($('#gameKb'), { maxU: 40 });
   app.vsKb = KK.kbview.create($('#vsKb'), { maxU: 22 });
   views.push(app.gameKb, app.vsKb);
   // featured keyboards: yours on home and a friend's on their page — both light up as
@@ -360,7 +360,6 @@
     if (name === 'market') KK.market.open();
     if (name === 'game') {
       app.gameKb.update(app.build);
-      renderGameBuild($('#gameBuild'));
       $('#keysHint').innerHTML = HINT_SOLO;
     }
     if (name === 'vs') {

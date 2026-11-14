@@ -645,7 +645,7 @@
         .filter(([, v]) => v > 0)
         .map(([k, v]) => (k === 'slow' ? this.slows.slice().sort((a, b) => b - a).map((t) => chip(k, t)).join('') : chip(k, v)))
         .join('');
-      const out = html || (this.ai ? '' : '<span class="hint">type a glowing word to grab its power-up</span>');
+      const out = html;
       if (this.powersEl.innerHTML !== out) this.powersEl.innerHTML = out;
     }
 
