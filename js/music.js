@@ -4,12 +4,11 @@
   const U = KK.util, D = KK.dsp, A = KK.audio;
 
   /*
-   * Lo-fi chill radio. Six procedurally arranged tracks, each with its own tempo,
-   * chord loop, keys + lead instrument, drum feel and ambience (rain, vinyl, night).
-   * Everything is synthesized: FM Rhodes, felt piano, nylon guitar (Karplus-Strong),
-   * kalimba, vibraphone, warm sine bass, soft pads and dusty drums — then swung,
-   * kick-pumped, tape-wobbled and low-passed. Tracks play as a playlist; each new
-   * track starts with a drum-less intro and melodies come and go between loops.
+   * Lo-fi chill radio. Every track is a recording from audio/music, and each level draws
+   * one at random (never the one already playing). They go through the same music bus as
+   * the rest, so the volume slider, ducking and the radio's skip button all work on them.
+   * The arranger further down — synth instruments, drum kits, melodies, ambience beds —
+   * is no longer reached: it only ever ran for tracks arranged here, and there are none.
    */
   const M = (KK.music = { playing: false, mode: 'menu', level: 1, onTrack: null });
 
@@ -20,20 +19,11 @@
   };
   const PENTA = { maj: [0, 2, 4, 7, 9], min: [0, 3, 5, 7, 10] };
 
-  const TRACKS = [
-    // the game's theme: a recorded track, played as it is (src) rather than arranged here.
-    // lp is open and the ambience beds stay down, so nothing is laid over it
-    { name: 'rain against the glass', src: 'audio/music/rain-against-the-glass.mp3', gain: 0.6, lp: 18000 },
-    // a café trio — piano comping off the beat, brushes and a ride, an upright walking
-    // the I–vi–II–V, over room murmur and cups
-    { name: 'corner cafe', bpm: 92, swing: 0.66, swing8: true, key: 5, scale: 'maj', prog: [['F', 'maj9'], ['D', 'm9'], ['G', '13'], ['C', 'maj9']], keys: 'piano', lead: 'vibes', pad: false, amb: 'cafe', drums: 'swing', bass: 'walk4', comp: [[2, 0.9, 6], [6, 0.5, 3], [10, 0.8, 5], [14, 0.45, 3]], lp: 5200, loops: 10 },
-    { name: 'rainy window', bpm: 72, swing: 0.58, key: 0, scale: 'maj', prog: [['F', 'maj9'], ['E', 'm7'], ['D', 'm9'], ['C', 'maj9']], keys: 'ep', lead: 'kalimba', pad: true, amb: 'rain', drums: 'boombap', bass: 'walk', comp: [[0, 1, 14], [10, 0.55, 6]], lp: 3600, loops: 9 },
-    { name: 'late night ramen', bpm: 80, swing: 0.6, key: 0, scale: 'maj', prog: [['D', 'm9'], ['G', '13'], ['C', 'maj9'], ['A', '7b9']], keys: 'ep', lead: 'vibes', pad: false, amb: 'vinyl', drums: 'busy', bass: 'busy', comp: [[0, 0.9, 7], [7, 0.7, 5], [12, 0.6, 4]], lp: 4200, loops: 9 },
-    { name: 'jeepney sunset', bpm: 86, swing: 0.56, key: 3, scale: 'maj', prog: [['Eb', 'maj9'], ['C', 'm9'], ['F', 'm9'], ['Bb', '13']], keys: 'guitar', lead: 'ep', pad: false, amb: 'vinyl', drums: 'boombap', bass: 'walk', comp: [[0, 1, 6], [6, 0.6, 4], [10, 0.75, 4], [14, 0.5, 2]], lp: 5000, loops: 10 },
-    { name: 'sari-sari dusk', bpm: 74, swing: 0.6, key: 9, scale: 'min', prog: [['A', 'm9'], ['F', 'maj9'], ['C', 'maj9'], ['G', '6']], keys: 'piano', lead: 'vibes', pad: true, amb: 'night', drums: 'halftime', bass: 'long', comp: [[0, 0.9, 16]], lp: 3400, loops: 9 },
-    { name: 'study session', bpm: 70, swing: 0.62, key: 7, scale: 'maj', prog: [['G', 'maj9'], ['B', 'm7'], ['E', 'm9'], ['C', 'maj9#11']], keys: 'piano', lead: 'ep', pad: false, amb: 'rain', ambLevel: 0.6, drums: 'boombap', bass: 'walk', comp: [[0, 0.95, 10], [10, 0.6, 6]], lp: 3200, loops: 10 },
-    { name: 'typhoon season', bpm: 66, swing: 0.58, key: 0, scale: 'min', prog: [['C', 'm9'], ['Ab', 'maj9'], ['Eb', 'maj9'], ['G', '7alt']], keys: 'ep', lead: 'kalimba', pad: true, amb: 'rain', ambLevel: 1.3, drums: 'halftime', bass: 'long', comp: [[0, 1, 16]], lp: 3000, loops: 8 },
-  ];
+  /* the playlist is the audio/music folder: a file name per line, and the name on the radio
+     button is read off it. All four are mastered to the same -14.3 dB mean, so one gain
+     suits them all; a track that turns up louder or quieter needs its own. */
+  const TRACKS = ['rain-against-the-glass', 'coffee-on-a-rainy-day', 'rainy-window-seat', 'sunday-morning-coffee-and-rain']
+    .map((f) => ({ name: f.replace(/-/g, ' '), src: 'audio/music/' + f + '.mp3', gain: 0.6, lp: 18000 }));
   M.tracks = TRACKS.map((t) => t.name);
 
   const DRUMS = {
@@ -439,13 +429,22 @@
       .catch(() => {}); // offline or missing: the rest of the playlist still plays
   }
 
+  // each level draws a track at random, but never the one already playing
+  function pickTrack() {
+    let i = Math.floor(Math.random() * TRACKS.length);
+    while (tr && TRACKS.length > 1 && i === trIdx) i = Math.floor(Math.random() * TRACKS.length);
+    return i;
+  }
+
   function setTrack(i) {
     trIdx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
     tr = TRACKS[trIdx];
     step = 0;
     loop = 0;
     const now = A.ctx.currentTime;
-    stopFile();
+    // a recording swaps itself in once it has decoded, so the old one covers the fetch
+    // instead of leaving a gap at the start of the level
+    if (!tr.src) stopFile();
     lp.frequency.setTargetAtTime(tr.lp, now, 0.8);
     if (tr.src) playFile(tr);
     else {
@@ -458,6 +457,7 @@
     }
     ['rain', 'vinyl', 'night', 'cafe'].forEach((k) => {
       if (!ambSrc[k]) {
+        if (tr.src) return; // a recording brings its own room: don't render a bed for it
         const s = A.ctx.createBufferSource();
         s.buffer = ambLoop(k).buf;
         s.loop = true;
@@ -556,10 +556,9 @@
     if (!A.ready || M.playing) return;
     setupBus();
     M.playing = true;
-    // starting with a game: that level's track (it only plays while you play)
-    if (M.mode === 'game' && M.level) setTrack((M.level - 1) % TRACKS.length);
-    else if (!tr) setTrack(Math.floor(Math.random() * TRACKS.length));
-    else if (tr.src && !fileSrc) playFile(tr); // stopped and started again on a recorded track
+    // turned on during a game: draw a track for the level you're on
+    if (!tr || (M.mode === 'game' && M.level)) setTrack(pickTrack());
+    else if (!fileSrc) playFile(tr); // stopped and started again on the same track
     nextTime = A.ctx.currentTime + 0.15;
     timer = setInterval(tick, 25);
     const now = A.ctx.currentTime;
@@ -584,7 +583,7 @@
     if (level) M.level = level;
     if (!changed || !M.playing) return;
     if (mode === 'game') {
-      setTrack((M.level - 1) % TRACKS.length);
+      setTrack(pickTrack());
       nextTime = A.ctx.currentTime + 0.15;
     }
   };

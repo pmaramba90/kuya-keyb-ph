@@ -340,26 +340,23 @@ Clicks are mixed outside the keycap low-pass, so they cut through: MX-style clic
 
 ## Music
 
-The music plays only while you're playing (single player and vs players), starting on that level's track, and stops when you leave the game. The rest of the site is quiet; key sounds still play everywhere.
+The music plays only while you're playing (single player and vs players) and stops when you leave the game. The rest of the site is quiet; key sounds still play everywhere.
 
-A procedural **lo-fi chill radio** with six tracks:
+Four recorded **lo-fi** tracks live in `audio/music`, and each level draws one of them at random — never the one already playing:
 
-| track | BPM | chords | keys / lead | drums | ambience |
-|---|---|---|---|---|---|
-| rainy window | 72 | Fmaj9 Em7 Dm9 Cmaj9 | Rhodes + pad / kalimba | boom-bap | rain |
-| late night ramen | 80 | Dm9 G13 Cmaj9 A7♭9 | Rhodes / vibraphone | busy, swung | vinyl |
-| jeepney sunset | 86 | E♭maj9 Cm9 Fm9 B♭13 | nylon guitar / Rhodes | boom-bap | vinyl |
-| sari-sari dusk | 74 | Am9 Fmaj9 Cmaj9 G6 | felt piano + pad / vibes | half-time | night crickets |
-| study session | 70 | Gmaj9 Bm7 Em9 Cmaj9♯11 | felt piano / Rhodes | boom-bap | light rain |
-| typhoon season | 66 | Cm9 A♭maj9 E♭maj9 G7alt | Rhodes + pad / kalimba | half-time | heavy rain |
+| track | file |
+|---|---|
+| rain against the glass | `rain-against-the-glass.mp3` |
+| coffee on a rainy day | `coffee-on-a-rainy-day.mp3` |
+| rainy window seat | `rainy-window-seat.mp3` |
+| sunday morning coffee and rain | `sunday-morning-coffee-and-rain.mp3` |
 
-Everything is synthesized:
-
-- **Instruments:** FM Rhodes, felt piano, Karplus-Strong nylon guitar, kalimba, vibraphone, a warm sine bass, soft pads, and dusty drums.
-- **Lo-fi treatment:** swung drums, a kick-pumped "sidechain", tape wow and flutter, saturation, a warm low-pass, and vinyl crackle.
-- **Structure:** each track opens with a drum-less intro, and its melody comes and goes between loops.
-- **Playlist:** tracks play in order. Each new level or vs round switches to a different one.
+- **Adding one:** drop the mp3 into `audio/music` and add its file name to the list at the top of `js/music.js`. The name shown on the footer button is read off the file name.
+- **Mix:** each track is fetched once, decoded and looped into the music bus, so the volume slider and the ducking under the announcer and the big hits apply to it. All four are mastered to the same −14.3 dB mean, so they share one gain; a louder or quieter track needs its own.
+- **Switching:** the track that is playing carries on until the next one has decoded, so a new level never starts on silence.
 - **Footer:** **♫ track name** shows what's playing. Click it to skip to the next track.
+
+`js/music.js` still carries the procedural arranger that used to be the radio — synth instruments, drum kits, melodies and ambience beds — but nothing reaches it now that every track is a recording.
 
 ## Files
 
