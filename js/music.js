@@ -21,6 +21,9 @@
   const PENTA = { maj: [0, 2, 4, 7, 9], min: [0, 3, 5, 7, 10] };
 
   const TRACKS = [
+    // the game's theme: a café trio — piano comping off the beat, brushes and a ride,
+    // an upright walking the I–vi–II–V, over room murmur and cups
+    { name: 'corner cafe', bpm: 92, swing: 0.66, swing8: true, key: 5, scale: 'maj', prog: [['F', 'maj9'], ['D', 'm9'], ['G', '13'], ['C', 'maj9']], keys: 'piano', lead: 'vibes', pad: false, amb: 'cafe', drums: 'swing', bass: 'walk4', comp: [[2, 0.9, 6], [6, 0.5, 3], [10, 0.8, 5], [14, 0.45, 3]], lp: 5200, loops: 10 },
     { name: 'rainy window', bpm: 72, swing: 0.58, key: 0, scale: 'maj', prog: [['F', 'maj9'], ['E', 'm7'], ['D', 'm9'], ['C', 'maj9']], keys: 'ep', lead: 'kalimba', pad: true, amb: 'rain', drums: 'boombap', bass: 'walk', comp: [[0, 1, 14], [10, 0.55, 6]], lp: 3600, loops: 9 },
     { name: 'late night ramen', bpm: 80, swing: 0.6, key: 0, scale: 'maj', prog: [['D', 'm9'], ['G', '13'], ['C', 'maj9'], ['A', '7b9']], keys: 'ep', lead: 'vibes', pad: false, amb: 'vinyl', drums: 'busy', bass: 'busy', comp: [[0, 0.9, 7], [7, 0.7, 5], [12, 0.6, 4]], lp: 4200, loops: 9 },
     { name: 'jeepney sunset', bpm: 86, swing: 0.56, key: 3, scale: 'maj', prog: [['Eb', 'maj9'], ['C', 'm9'], ['F', 'm9'], ['Bb', '13']], keys: 'guitar', lead: 'ep', pad: false, amb: 'vinyl', drums: 'boombap', bass: 'walk', comp: [[0, 1, 6], [6, 0.6, 4], [10, 0.75, 4], [14, 0.5, 2]], lp: 5000, loops: 10 },
@@ -34,6 +37,12 @@
     boombap: (bar) => ({ kick: bar % 2 ? [0, 7, 10] : [0, 10], snare: [4, 12], rim: [], hats: [0, 2, 4, 6, 8, 10, 12, 14], ghost: [15], open: bar === 3 ? [14] : [] }),
     busy: (bar) => ({ kick: bar % 2 ? [0, 3, 10] : [0, 10, 13], snare: [4, 12], rim: [7, 15], hats: [...Array(16).keys()], ghost: [], open: bar % 2 ? [] : [6] }),
     halftime: (bar) => ({ kick: [0, 11], snare: [8], rim: bar % 2 ? [14] : [], hats: [0, 2, 4, 6, 8, 10, 12, 14], ghost: [7], open: [] }),
+    // jazz kit: the ride carries the time (ding · ding-da), brushes mark 2 and 4 and the
+    // kick is only feathered underneath
+    swing: (bar) => ({
+      kick: bar % 2 ? [0] : [0, 10], snare: [], rim: bar % 2 ? [14] : [], hats: [], ghost: [], open: [],
+      ride: bar === 3 ? [0, 4, 6, 8, 12] : [0, 4, 6, 8, 12, 14], brush: [4, 12], kv: 0.4,
+    }),
   };
 
   /* -------------------------------- instruments -------------------------------- */
@@ -164,6 +173,29 @@
     D.resonate(ex, o, 3300, 0.008, 0.35, SR);
     D.filter(o, D.biquad('lowpass', 5000, 0.7, SR));
   }, 0.5);
+  // ride cymbal: inharmonic partials, a bright ping over a long shimmer
+  const ride = () => make('ride', 1.9, (o, SR, len) => {
+    const R = U.rng(21), fs = [312, 448, 563, 697, 823, 1134];
+    for (let i = 0; i < len; i++) {
+      const t = i / SR;
+      let s = 0;
+      for (let j = 0; j < fs.length; j++) s += Math.sin(2 * Math.PI * fs[j] * t) > 0 ? 1 : -1;
+      s = s / fs.length + (R() * 2 - 1) * 0.55;
+      o[i] = s * (0.55 * Math.exp(-t * 24) + 0.45 * Math.exp(-t * 2.6)) * Math.min(1, t / 0.001);
+    }
+    D.filter(o, D.biquad('highpass', 5200, 0.7, SR));
+    D.filter(o, D.biquad('lowpass', 12000, 0.7, SR));
+  }, 0.33);
+  // wire brushes on the snare head: a swish, not a crack
+  const brush = () => make('brush', 0.55, (o, SR, len) => {
+    const R = U.rng(17);
+    for (let i = 0; i < len; i++) {
+      const t = i / SR;
+      o[i] = (R() * 2 - 1) * Math.min(1, t / 0.035) * Math.exp(-t * 8.5);
+    }
+    D.filter(o, D.biquad('bandpass', 2500, 0.55, SR));
+    D.filter(o, D.biquad('highpass', 800, 0.7, SR));
+  }, 0.5);
   const hat = (open) => make(open ? 'hatO' : 'hatC', open ? 0.45 : 0.12, (o, SR, len) => {
     const R = U.rng(open ? 9 : 8);
     for (let i = 0; i < len; i++) o[i] = (R() * 2 - 1) * Math.exp(-(i / SR) * (open ? 8 : 55));
@@ -180,7 +212,7 @@
         const w = R() * 2 - 1;
         // pinkish noise bed
         b0 = 0.997 * b0 + w * 0.03; b1 = 0.985 * b1 + w * 0.032; b2 = 0.95 * b2 + w * 0.048;
-        o[i] = (b0 + b1 + b2 + w * 0.02) * (kind === 'rain' ? 1 : kind === 'night' ? 0.35 : 0.25);
+        o[i] = (b0 + b1 + b2 + w * 0.02) * ({ rain: 1, night: 0.35, cafe: 0.5 }[kind] || 0.25);
       }
       if (kind === 'rain') {
         D.filter(o, D.biquad('bandpass', 2200, 0.5, SR));
@@ -188,7 +220,26 @@
         for (let k = 0; k < 8 * 28; k++) ex[Math.floor(R() * len)] = (R() * 0.6 + 0.2) * (R() < 0.5 ? -1 : 1);
         D.resonate(ex, o, 3200, 0.004, 0.25, SR);
         D.resonate(ex, o, 5200, 0.003, 0.15, SR);
-      } else D.filter(o, D.biquad('lowpass', kind === 'night' ? 1200 : 3000, 0.7, SR));
+      } else D.filter(o, D.biquad('lowpass', kind === 'night' ? 1200 : kind === 'cafe' ? 900 : 3000, 0.7, SR));
+      if (kind === 'cafe') {
+        // the room: talk you can't make out (slow swells of voice-band noise), and now and
+        // then a cup set down or a spoon against a saucer
+        const v = new Float32Array(len);
+        for (let i = 0; i < len; i++) v[i] = R() * 2 - 1;
+        D.filter(v, D.biquad('bandpass', 620, 0.6, SR));
+        let env = 0.25;
+        for (let i = 0; i < len; i++) {
+          if (i % 1024 === 0) env += (0.12 + R() * 0.45 - env) * 0.22;
+          o[i] += v[i] * env * 0.55;
+        }
+        for (let c = 0; c < 6; c++) {
+          const st = Math.floor(R() * (len - SR * 0.4)), f = 1500 + R() * 2800;
+          for (let i = 0; i < SR * 0.3 && st + i < len; i++) {
+            const t = i / SR;
+            o[st + i] += 0.07 * (Math.sin(2 * Math.PI * f * t) * Math.exp(-t * 16) + 0.5 * Math.sin(2 * Math.PI * f * 2.76 * t) * Math.exp(-t * 24));
+          }
+        }
+      }
       if (kind === 'night') {
         // crickets: chirp trains around 4.6 kHz
         for (let s = R() * 0.4; s < 7.6; s += 0.7 + R() * 0.6) {
@@ -364,7 +415,7 @@
     const now = A.ctx.currentTime;
     lp.frequency.setTargetAtTime(tr.lp, now, 0.8);
     M._echo.delayTime.setValueAtTime((60 / tr.bpm) * 0.75, now);
-    ['rain', 'vinyl', 'night'].forEach((k) => {
+    ['rain', 'vinyl', 'night', 'cafe'].forEach((k) => {
       if (!ambSrc[k]) {
         const s = A.ctx.createBufferSource();
         s.buffer = ambLoop(k).buf;
@@ -402,7 +453,10 @@
     // bass (enters after the intro)
     if (!intro) {
       const r = bassRoot(ch), nr = bassRoot(next);
-      const pat = { walk: [[0, r, 9], [10, r, 3], [14, nr - 1 === r ? nr + 2 : nr - 1, 2]], busy: [[0, r, 3], [3, r + 12, 2], [7, r + 7, 3], [10, r, 3], [14, nr + 2, 2]], long: [[0, r, 13], [14, nr - 1, 2]] }[tr.bass];
+      // walk4: an upright walking the bar — root, 3rd, 5th or 7th, then a half step into
+      // the next chord
+      const low = (n) => (n > 50 ? n - 12 : n);
+      const pat = { walk: [[0, r, 9], [10, r, 3], [14, nr - 1 === r ? nr + 2 : nr - 1, 2]], busy: [[0, r, 3], [3, r + 12, 2], [7, r + 7, 3], [10, r, 3], [14, nr + 2, 2]], long: [[0, r, 13], [14, nr - 1, 2]], walk4: [[0, r, 4], [4, low(r + (ch.q[1] || 4)), 4], [8, low(r + (ch.q[2] || 7)), 4], [12, nr > r ? nr - 1 : nr + 1, 4]] }[tr.bass];
       pat.forEach(([st, n, len]) => st === k && play(bass(n), t, 0.33, tonal, len * dur, 0.08));
     }
 
@@ -410,7 +464,7 @@
     if (!intro) {
       const p = DRUMS[tr.drums](bar);
       if (p.kick.includes(k)) {
-        play(kick(), t, 0.42 * drumVol, musicIn);
+        play(kick(), t, 0.42 * (p.kv == null ? 1 : p.kv) * drumVol, musicIn);
         // sidechain-style pump on the tonal bus
         pump.gain.cancelScheduledValues(t);
         pump.gain.setValueAtTime(0.7, t);
@@ -421,6 +475,8 @@
       if (p.open.includes(k)) play(hat(true), t, 0.06 * drumVol, musicIn);
       else if (p.hats.includes(k)) play(hat(false), t, (k % 4 === 0 ? 0.08 : 0.05) * (0.7 + R() * 0.4) * drumVol, musicIn);
       else if (p.ghost.includes(k) && R() < 0.35) play(hat(false), t, 0.03 * drumVol, musicIn);
+      if (p.ride && p.ride.includes(k)) play(ride(), t + R() * 0.006, (k % 8 === 0 ? 0.08 : 0.055) * (0.8 + R() * 0.35) * drumVol, musicIn);
+      if (p.brush && p.brush.includes(k)) play(brush(), t + 0.01, 0.17 * (0.85 + R() * 0.3) * drumVol, musicIn);
     }
 
     // lead melody: A, B, rest, A, B, … so the hook comes and goes
@@ -437,7 +493,10 @@
 
   function advance(until) {
     while (nextTime < until) {
-      const swing = step % 2 ? (tr.swing - 0.5) * 2 * d16() : 0;
+      // the lo-fi tracks swing the 16ths; the jazz one swings the 8ths (a triplet feel)
+      const swing = tr.swing8
+        ? (step % 4 === 2 ? (tr.swing - 0.5) * 4 * d16() : 0)
+        : (step % 2 ? (tr.swing - 0.5) * 2 * d16() : 0);
       scheduleStep(step, nextTime + swing);
       nextTime += d16();
       step++;

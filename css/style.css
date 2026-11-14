@@ -2174,6 +2174,10 @@ body.touch .keys-hint { display: none; }
   /* while you play the top row steps aside, so the field, what you type and your board fit one window */
   body[data-screen='game'] .logo, body[data-screen='vs'] .logo, body[data-screen='game'] .bell-wrap, body[data-screen='vs'] .bell-wrap, body[data-screen='game'] .nav-user-wrap, body[data-screen='vs'] .nav-user-wrap { display: none; }
   body[data-screen='game'] #app, body[data-screen='vs'] #app { margin-top: 10px; padding-top: 18px; min-height: calc(100vh - 34px); }
+  /* single player: the key rail steps aside too (esc → quit leaves), so the game has the
+     whole slab and stays centred in it */
+  body[data-screen='game'] .nav { display: none; }
+  body[data-screen='game'] main { grid-column: 1 / -1; margin-left: 0; }
 }
 
 /* ---------------------------------- surfaces ---------------------------------- */
