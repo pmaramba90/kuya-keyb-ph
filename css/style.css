@@ -866,6 +866,8 @@ body.mk-locked { overflow: hidden; }
 
 /* ----------------------------------- game ----------------------------------- */
 .hud { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 16px; margin-bottom: 10px; padding: 10px 20px; border-radius: 14px; }
+/* the clock is the tallest thing in the header: it runs its full height */
+#scr-game .hud-time { align-self: stretch; display: flex; align-items: center; justify-content: center; font-size: clamp(44px, 5.4vw, 68px); }
 .hud-lbl { display: block; font-size: 11px; color: var(--sub); }
 .hud-score { font-size: 22px; color: var(--main-t); }
 .hud-score .sub { font-size: 14px; }
@@ -874,35 +876,33 @@ body.mk-locked { overflow: hidden; }
 @keyframes pulse { 50% { opacity: .6; } }
 .hud-r { display: flex; justify-content: flex-end; gap: 22px; font-size: 18px; text-align: right; }
 
-.field { position: relative; height: 48vh; min-height: 300px; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--w1) 78%, var(--w2)) 0%, var(--w0) 78%); }
-/* single player: the field, and the top 5 beside it */
-.game-play { display: grid; grid-template-columns: minmax(0, 1fr) 196px; gap: 14px; align-items: start; }
-.game-lb { background: var(--bg2); border-radius: var(--r); padding: 12px 12px 8px; font-size: 12px; }
-.glb-h { color: var(--sub); font-size: 11px; margin-bottom: 6px; }
-.glb-row { display: grid; grid-template-columns: 14px 20px minmax(0, 1fr) auto; gap: 7px; align-items: center; padding: 5px 0; color: var(--text); }
-.glb-row .av { width: 20px; height: 20px; }
-.glb-row b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.glb-rank { color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
-.glb-n { font-variant-numeric: tabular-nums; color: var(--sub); }
-.glb-row.me b, .glb-row.me .glb-n { color: var(--main-t); font-weight: 700; }
-.glb-row.live .glb-n { animation: glb-up .6s ease-out; }
-@keyframes glb-up { from { opacity: .4; } to { opacity: 1; } }
-.glb-gap { color: var(--sub); text-align: center; line-height: 1; }
-.game-lb .hint { margin: 4px 0; font-size: 11px; }
+.field { position: relative; height: 48vh; min-height: 300px; overflow: hidden; }
+/* the site's best totals, rolling across the width of the screen */
+.score-ticker { overflow: hidden; height: 24px; margin: 2px 0 4px; font-size: 12px; color: var(--sub); -webkit-mask: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+.score-ticker:empty { display: none; }
+.st-track { display: flex; width: max-content; animation: st-roll 48s linear infinite; }
+.st-run { display: flex; gap: 26px; padding-right: 26px; white-space: nowrap; }
+.st-i { display: inline-flex; align-items: baseline; gap: 6px; line-height: 24px; }
+.st-i i { font-style: normal; color: var(--sub); opacity: .7; }
+.st-i b { font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
+.st-i.me, .st-i.me b { color: var(--main-t); font-weight: 700; }
+/* the words read left to right, so the line travels that way too */
+@keyframes st-roll { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .st-track { animation: none; } }
 .field.shake { animation: shake .3s; }
 @keyframes shake { 20% { transform: translateX(-5px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 .deadline { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--err) 15%, var(--err) 85%, transparent); opacity: .45; }
 .fw { position: absolute; left: 0; top: 0; font-size: calc(22px * var(--fs, 1)); color: var(--sub); white-space: nowrap; will-change: transform; letter-spacing: .02em; }
 .fw .t { color: var(--main-t); }
 .fw.hit .r { color: var(--text); }
-.fw.gold .r { color: #c9a94a; text-shadow: 0 0 14px rgba(226, 183, 20, .35); }
+.fw.gold .r { color: #523e00; }
 .fw.low .r { color: color-mix(in srgb, var(--err) 70%, var(--sub)); }
 .fw.done { animation: done .35s ease-out forwards; }
 .fw.dead { animation: dead .35s ease-in forwards; }
 /* explode: a thin white ring grows out, and the words in it pop */
-.boom { position: absolute; width: var(--r); height: var(--r); margin: calc(var(--r) / -2) 0 0 calc(var(--r) / -2); border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9); pointer-events: none; animation: boom .5s ease-out forwards; }
+.boom { position: absolute; width: var(--r); height: var(--r); margin: calc(var(--r) / -2) 0 0 calc(var(--r) / -2); border-radius: 50%; border: 2px solid rgba(16, 24, 12, .85); pointer-events: none; animation: boom .5s ease-out forwards; }
 @keyframes boom { from { transform: scale(.1); opacity: 1; } to { transform: scale(1); opacity: 0; } }
-.fw.popped { animation: popped .32s ease-out forwards; color: #ffb347; }
+.fw.popped { animation: popped .32s ease-out forwards; color: #8a4a00; }
 @keyframes popped { 0% { transform: var(--tr) scale(1); } 35% { transform: var(--tr) scale(1.35); opacity: 1; filter: brightness(1.6); } 100% { transform: var(--tr) scale(.3); opacity: 0; } }
 .shard { position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #ffb347; pointer-events: none; animation: shard .45s ease-out forwards; }
 @keyframes shard { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
@@ -910,7 +910,7 @@ body.mk-locked { overflow: hidden; }
 @keyframes dead { to { opacity: 0; transform: var(--tr) translateY(16px); } }
 .pop { position: absolute; font-size: 14px; color: var(--main-t); pointer-events: none; animation: rise .9s ease-out forwards; }
 .pop.neg { color: var(--err-t); }
-.pop.relief { color: #5fd38a; font-weight: 700; }
+.pop.relief { color: #14562f; font-weight: 700; }
 @keyframes rise { to { opacity: 0; transform: translateY(-38px); } }
 .toast { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); font-size: 22px; color: var(--main-t); opacity: 0; pointer-events: none; }
 .toast.show { animation: toast 1.4s ease-out; }
@@ -1007,10 +1007,10 @@ body.no-game-kb .game-kb { display: none; }
 .cmeter.mini .cm-fire i { width: calc(4px + var(--heat) * 1.6px); height: calc(6px + var(--heat) * 2.6px); }
 
 /* combo attacks fly across the gap and slam the other field */
-.attack { position: absolute; top: 34%; z-index: 20; pointer-events: none; font-weight: 700; font-size: 18px; color: #ffb347; text-shadow: 0 0 12px rgba(255, 110, 0, .8); white-space: nowrap; }
-.attack.t-4, .attack.t-5 { font-size: 24px; color: #ff7a1a; }
+.attack { position: absolute; top: 34%; z-index: 20; pointer-events: none; font-weight: 700; font-size: 18px; color: #7a3d00; white-space: nowrap; }
+.attack.t-4, .attack.t-5 { font-size: 24px; color: #8c2d22; }
 .attack.to-r { left: 22%; animation: fly-r .45s ease-in forwards; }
-.attack.to-l { right: 22%; color: #7fd1ff; text-shadow: 0 0 12px rgba(127, 209, 255, .7); animation: fly-l .45s ease-in forwards; }
+.attack.to-l { right: 22%; color: #0f3b57; animation: fly-l .45s ease-in forwards; }
 @keyframes fly-r { 0% { transform: translateX(0) scale(.8); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateX(42vw) scale(1.3); opacity: 1; } }
 @keyframes fly-l { 0% { transform: translateX(0) scale(.8); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateX(-42vw) scale(1.3); opacity: 1; } }
 .field.hit { animation: hit .5s ease-out; }
@@ -1095,33 +1095,48 @@ body.no-game-kb .game-kb { display: none; }
 .overflow.danger .ofill { background: var(--err); animation: pulse .6s infinite; }
 .opct { font-size: 12px; color: var(--sub); text-align: right; }
 .overflow.danger + .opct { color: var(--err-t); }
+/* single player: the overflow runs the full width as an analog battery gauge — a cased
+   meter of ten cells that fill up, with its terminal at the right end */
+#scr-game > .meter-row { display: block; margin: 6px 0 8px; }
+#scr-game > .meter-row .overflow {
+  position: relative; height: 26px; padding: 4px 13px 4px 4px; border-radius: 7px; overflow: visible;
+  background: var(--w0); box-shadow: inset 0 3px 7px rgba(0, 0, 0, .65), inset 0 0 0 1px rgba(0, 0, 0, .5), 0 1px 0 var(--edge);
+}
+#scr-game > .meter-row .ofill { border-radius: 2px; }
+/* the cells, and the gap the terminal sits in */
+#scr-game > .meter-row .overflow::before {
+  content: ''; position: absolute; inset: 4px 13px 4px 4px; z-index: 1; pointer-events: none; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), var(--w0) calc(10% - 3px) 10%);
+}
+#scr-game > .meter-row .overflow::after { content: ''; position: absolute; right: 4px; top: 50%; width: 6px; height: 11px; margin-top: -5.5px; border-radius: 0 3px 3px 0; background: var(--w2); }
+/* the read-out sits over both the empty trough and the fill, so it carries its own shadow */
+#scr-game > .meter-row .opct { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; font-size: 12px; color: #fff; letter-spacing: .08em; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 .powers { min-height: 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12px; }
-.pchip { padding: 2px 10px; border-radius: 4px; background: var(--w1); text-shadow: none; color: var(--pc); }
-.pchip b { font-weight: 400; color: #fff; margin-left: 4px; }
-.pw-freeze { --pc: #7fd1ff; } .pw-slow { --pc: #b48ae8; } .pw-double { --pc: #e2b714; } .pw-erase { --pc: #ff7a6b; } .pw-subtract { --pc: #5fd38a; } .pw-explode { --pc: #ff9f43; } .pw-reset { --pc: #4fd1c5; }
+/* no panel behind a live power-up: it's engraved on the metal, a shade darker than on the field */
+.pchip { padding: 2px 0; color: color-mix(in srgb, var(--pc) 42%, #000); }
+.pchip b { font-weight: 400; color: var(--text); margin-left: 4px; }
+.pw-freeze { --pc: #14557f; } .pw-slow { --pc: #54308a; } .pw-double { --pc: #63470a; } .pw-erase { --pc: #8c2d22; } .pw-subtract { --pc: #14562f; } .pw-explode { --pc: #7a3d00; } .pw-reset { --pc: #125450; }
 
 /* power-up words */
-.fw.pw .r, .fw.pw .t { text-shadow: 0 0 12px color-mix(in srgb, var(--pc) 55%, transparent); }
 .fw.pw .r { color: var(--pc); }
-/* on a power-up word the letters you've typed go white, so they stand out from its colour
-   (double's yellow included) */
-.fw.pw .t { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, .7), 0 0 14px color-mix(in srgb, var(--pc) 60%, transparent); }
+/* on a power-up word the letters you've typed go near-black, so they stand out from its colour */
+.fw.pw .t { color: #0d120a; }
 .fw.pw.hit.typo .t { color: var(--err-t); text-shadow: none; }
-/* power-up words flicker like a neon sign: steady glow, a couple of quick dips */
+/* power-up words flicker like a failing LCD segment: solid, with a couple of quick dips */
 .fw.pw:not(.done):not(.dead):not(.crash) { animation: pw-flicker 2.2s linear infinite; }
 @keyframes pw-flicker {
-  0%, 40%, 47%, 62%, 100% { opacity: 1; filter: brightness(1.15) drop-shadow(0 0 5px color-mix(in srgb, var(--pc) 70%, transparent)); }
-  43% { opacity: .55; filter: brightness(.85) drop-shadow(0 0 0 transparent); }
-  45% { opacity: 1; filter: brightness(1.35) drop-shadow(0 0 9px var(--pc)); }
-  58% { opacity: .7; filter: brightness(.95) drop-shadow(0 0 2px color-mix(in srgb, var(--pc) 40%, transparent)); }
-  80% { opacity: 1; filter: brightness(1.25) drop-shadow(0 0 8px var(--pc)); }
+  0%, 40%, 47%, 62%, 100% { opacity: 1; }
+  43% { opacity: .35; }
+  45% { opacity: 1; }
+  58% { opacity: .55; }
+  80% { opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) { .fw.pw:not(.done):not(.dead):not(.crash) { animation: none; filter: brightness(1.15) drop-shadow(0 0 5px var(--pc)); } }
+@media (prefers-reduced-motion: reduce) { .fw.pw:not(.done):not(.dead):not(.crash) { animation: none; } }
 .fw.pw .pl { position: absolute; left: 0; top: -15px; font-size: 10px; letter-spacing: .05em; color: var(--pc); opacity: .9; white-space: nowrap; }
-.field.frozen { box-shadow: inset 0 0 60px rgba(127, 209, 255, .14); }
-.field.frozen .fw:not(.pw) .r { color: #9fc7dc; }
-.field.slowed { box-shadow: inset 0 0 60px rgba(180, 138, 232, .12); }
-.field.exploding { box-shadow: inset 0 0 60px rgba(255, 159, 67, .16); }
+.field.frozen { box-shadow: inset 0 0 70px rgba(20, 85, 127, .4), inset 0 3px 8px rgba(0, 0, 0, .4); }
+.field.frozen .fw:not(.pw) .r { color: #2d5a73; }
+.field.slowed { box-shadow: inset 0 0 70px rgba(84, 48, 138, .32), inset 0 3px 8px rgba(0, 0, 0, .4); }
+.field.exploding { box-shadow: inset 0 0 70px rgba(133, 67, 0, .35), inset 0 3px 8px rgba(0, 0, 0, .4); }
 .field.doubled .deadline { background: linear-gradient(90deg, transparent, var(--main) 15%, var(--main) 85%, transparent); }
 .field.flash { animation: flash .45s ease-out; }
 @keyframes flash { 0% { background: rgba(255, 122, 107, .18); } 100% { background: transparent; } }
@@ -1417,13 +1432,8 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   .nav-user span { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vs-lanes { gap: 10px; }
   .kbs-wrap { grid-template-columns: 1fr; position: relative; }
-  /* single player: the top 5 as one line under the field */
-  .game-play { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .game-lb { position: relative; display: flex; align-items: center; gap: 14px; padding: 5px 10px; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
-  .game-lb .glb-h { margin: 0; }
-  .glb-h span { display: none; }
-  .glb-row { display: flex; gap: 5px; padding: 0; }
-  .glb-row .av { display: none; }
+  .score-ticker { height: 20px; font-size: 11px; }
+  .st-i { line-height: 20px; }
   /* one column: a tap opens the keyboard in a speech bubble at the row (js/kbs.js) */
   .kbs-detail { display: none; }
   .kbs-detail.bubble { display: block; position: absolute; left: 0; right: 0; z-index: 30; max-height: min(74vh, 680px); overflow-y: auto; overscroll-behavior: contain; padding: 16px 14px 14px; border: 2px solid var(--main); border-radius: 22px; box-shadow: 5px 6px 0 rgba(0, 0, 0, .4); animation: kb-pop .16s ease-out; }
@@ -1455,7 +1465,7 @@ body:not([data-screen='game']):not([data-screen='vs']) .keys-hint { visibility: 
   #app { padding: 0 16px; }
   .hero { font-size: 26px; }
   .fw { font-size: calc(20px * var(--fs, 1)); }
-  .hud-time { font-size: 30px; }
+  .hud-time, #scr-game .hud-time { font-size: 30px; }
   .type-hint { display: none; }
 }
 
@@ -1828,7 +1838,7 @@ body.touch .keys-hint { display: none; }
   body.touch #hudLevel, body.touch #scr-game .hud-mini, body.touch .cm-bar, body.touch .cm-next { display: none; }
   body.touch .powers .hint { display: none; }
   body.touch .powers { min-height: 20px; }
-  body.touch .hud-time { font-size: 30px; }
+  body.touch .hud-time, body.touch #scr-game .hud-time { font-size: 30px; }
   body.touch .typed { height: 34px; margin: 4px 0; font-size: 24px; }
   /* sized from the smallest visible height (browser bars showing), so what you type stays
      above the on-screen keyboard on short phones too */
@@ -1841,8 +1851,12 @@ body.touch .keys-hint { display: none; }
   body.touch #scr-game .cm-count { font-size: calc(22px + var(--heat) * 2px); }
   body.touch #scr-game .cm-tier { font-size: 10px; margin-top: 1px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   body.touch #scr-game .cmeter.t-5 .cm-tier { font-size: 12px; }
-  body.touch #scr-game > .meter-row { grid-template-columns: auto minmax(0, 1fr) 36px; gap: 8px; margin: 2px 0 2px; }
-  body.touch #scr-game > .meter-row .hud-lbl { font-size: 10px; }
+  body.touch #scr-game > .meter-row { margin: 2px 0; }
+  body.touch #scr-game > .meter-row .overflow { height: 18px; padding: 3px 10px 3px 3px; }
+  body.touch #scr-game > .meter-row .overflow::before { inset: 3px 10px 3px 3px; }
+  body.touch #scr-game > .meter-row .opct { font-size: 10px; }
+  body.touch .score-ticker { height: 18px; margin: 0 0 2px; font-size: 10px; }
+  body.touch .st-i { line-height: 18px; }
   /* vs AI / vs players: your lane only, full width. The other lane keeps running at full
      size off screen (the game measures it); their score stays in the top row */
   body.touch .vs-lanes { grid-template-columns: minmax(0, 1fr); }
@@ -2161,7 +2175,7 @@ body.touch .keys-hint { display: none; }
 /* ---------------------------------- surfaces ---------------------------------- */
 /* wells: anodized pockets that hold the content. Inside one the palette flips to light on
    dark, so everything written for --bg / --text / --sub just works */
-.post, .feat, .pop-card, .rated-row, .online-strip, .whats, .composer, .welcome, .sw-detail, .kbs-detail, .kbs-list.as-list, .lobby-me, .pl-card, .pt-card, .pt-room, .pt-create, .rv, .cf-row, .cf-thread, .cf-c, .cf-cbox, .cf-compose, .pg-row, .mk-card, .sg-card, .stage, .hud, .vs-top, .lane-head, .typed, .field, .pf,
+.post, .feat, .pop-card, .rated-row, .online-strip, .whats, .composer, .welcome, .sw-detail, .kbs-detail, .kbs-list.as-list, .lobby-me, .pl-card, .pt-card, .pt-room, .pt-create, .rv, .cf-row, .cf-thread, .cf-c, .cf-cbox, .cf-compose, .pg-row, .mk-card, .sg-card, .stage, .hud, .vs-top, .lane-head, .typed, .pf,
 .user-menu, .bell-menu, .chatbox, .mention-pop, .cf-dd-menu, .sx-pick, .cb-tab-list, .cb-tab-btn, .mk-sheet, .ch-card, .app-toast, .badge, .ac,
 .overlay, .mk-modal, .vsi {
   --bg: var(--w0); --bg2: var(--w1); --bg3: var(--w2); --text: var(--wtext); --sub: var(--wsub); --main-t: var(--main); --err-t: var(--err);
@@ -2171,11 +2185,11 @@ body.touch .keys-hint { display: none; }
   & * { --edge: rgba(255, 255, 255, .07); }
 }
 /* the ones cut into the surface: shadowed inside, a lit lip below */
-.post, .feat, .pop-card, .rated-row, .online-strip, .whats, .composer, .welcome, .sw-detail, .kbs-detail, .kbs-list.as-list, .lobby-me, .pl-card, .pt-card, .pt-room, .pt-create, .rv, .cf-row, .cf-thread, .cf-c, .cf-cbox, .cf-compose, .pg-row, .mk-card, .sg-card, .stage, .hud, .vs-top, .lane-head, .typed, .field, .pf { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .6), 0 2px 0 var(--edge); }
+.post, .feat, .pop-card, .rated-row, .online-strip, .whats, .composer, .welcome, .sw-detail, .kbs-detail, .kbs-list.as-list, .lobby-me, .pl-card, .pt-card, .pt-room, .pt-create, .rv, .cf-row, .cf-thread, .cf-c, .cf-cbox, .cf-compose, .pg-row, .mk-card, .sg-card, .stage, .hud, .vs-top, .lane-head, .typed, .pf { box-shadow: inset 0 3px 8px rgba(0, 0, 0, .6), 0 2px 0 var(--edge); }
 .stage, .hud, .vs-top, .lane-head, .typed { background: var(--bg2); }
 .cf-c.kid, .cf-c .cf-cbox { box-shadow: none; }
 /* LCD read-outs: scores, stats, prices and your name */
-.tile, .board, .price-box, .game-lb, .nav-user {
+.tile, .board, .price-box, .nav-user {
   --bg: #a8b49b; --bg2: #b7c2aa; --bg3: #9ba88e; --text: #1c2618; --sub: #3c4a36; --main-t: #1c2618; --err-t: #7a1f1a;
   --line: rgba(28, 38, 24, .22); --line2: rgba(28, 38, 24, .4);
   background: var(--bg2); color: var(--text); border: 0; text-shadow: none;
@@ -2183,6 +2197,17 @@ body.touch .keys-hint { display: none; }
   & * { --edge: rgba(255, 255, 255, .35); }
 }
 .tile b { font-weight: 700; }
+/* the play field is an LCD read-out too: the words are etched into the glass, and they
+   darken as you type them (idle → the word you're on → the letters you've typed) */
+.field {
+  --bg: #a8b49b; --bg2: #b7c2aa; --bg3: #9ba88e; --text: #232e1d; --sub: #36412f; --main-t: #0d120a;
+  --err: #8f1f15; --err-t: #7d1b12; --opp: #0f3b57;
+  --line: rgba(20, 27, 16, .22); --line2: rgba(20, 27, 16, .4);
+  background: radial-gradient(ellipse at 50% 40%, #bcc7ae 0%, #a2af94 78%);
+  color: var(--text); border: 0; text-shadow: none;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .4), inset 0 0 0 1px rgba(0, 0, 0, .28), 0 2px 0 var(--edge);
+  & * { --edge: rgba(255, 255, 255, .35); }
+}
 /* pockets: things you pick from, milled shallow into the metal */
 .card, .kc, .kbc, .kb-card, .pcard, .fr-card, .cv-grp { box-shadow: inset 0 2px 4px rgba(30, 40, 60, .28), 0 1px 0 var(--edge); }
 .card.sel, .kc.sel, .kbc.sel { box-shadow: inset 0 2px 4px rgba(30, 40, 60, .28), 0 0 0 2px var(--main); }

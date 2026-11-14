@@ -913,15 +913,14 @@
     };
     $('#hudLevel').textContent = 'level ' + level;
     soloHud(true);
-    KK.feed.gameBoard($('#gameLb'), run.startTotal);
-    KK.feed.loadGameBoard().then(() => run && run.kind === 'solo' && KK.feed.gameBoard($('#gameLb'), run.startTotal + run.board.score));
+    KK.feed.gameTicker($('#gameLb'));
+    KK.feed.loadGameBoard().then(() => run && run.kind === 'solo' && KK.feed.gameTicker($('#gameLb')));
     KK.ui.countdown(begin, `type the falling words · don't let misses overflow the bar · survive ${U.fmtTime(levelSeconds(level))} for a clear bonus · fewer words left on screen = more bonus`);
   };
 
   function soloHud(force) {
     const b = run.board, h = run.hud;
     const vals = { time: U.fmtTime(run.time), total: (run.startTotal + b.score).toLocaleString(), score: b.score.toLocaleString(), acc: b.acc() + '%' };
-    if (!force && h.total !== vals.total) KK.feed.gameBoard($('#gameLb'), run.startTotal + b.score); // the side board
     [['time', '#hudTime'], ['total', '#hudTotal'], ['score', '#hudScore'], ['acc', '#hudAcc']].forEach(([k, id]) => {
       if (force || h[k] !== vals[k]) $(id).textContent = h[k] = vals[k];
     });

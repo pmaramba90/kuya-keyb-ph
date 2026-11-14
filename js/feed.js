@@ -348,28 +348,21 @@
   // best or, once you pass it, your score as it climbs (KK.game redraws it as it changes);
   // read when a level starts
   let gameTop = null;
+  const TICKER_MAX = 20; // names are read ahead for these, so none of them shows as "…"
   F.loadGameBoard = () => ((bests = null), highScores()).then(async (t) => {
     // their names first, so the board never shows "…"
-    const need = t.slice(0, 6).filter((x) => x.uid !== ME() && !KK.social.nameOf(x.uid) && !names[x.uid]);
+    const need = t.slice(0, TICKER_MAX).filter((x) => x.uid !== ME() && !KK.social.nameOf(x.uid) && !names[x.uid]);
     await Promise.all(need.map((x) => N.ref('users/' + x.uid).once().then((u) => (names[x.uid] = (u && (u.display || u.name)) || 'player')).catch(() => {})));
     gameTop = t;
   }).catch(() => (gameTop = []));
-  F.gameBoard = function (el, total) {
+  // the ticker above a single-player game: the best totals rolling past. Drawn once a level
+  // (the list doesn't change mid-level), so the roll never jumps
+  F.gameTicker = function (el) {
     if (!el) return;
-    const head = '<div class="glb-h">top 5<span> · single player</span></div>';
-    if (!gameTop) return void (el.innerHTML = head + '<p class="hint">loading…</p>');
-    total = Math.floor(+total || 0);
-    const mine = me && gameTop.find((x) => x.uid === me.uid), best = mine ? mine.total : 0;
-    const you = me && Math.max(best, total) > 0 ? { uid: me.uid, total: Math.max(best, total), live: total > best } : null;
-    const all = gameTop.filter((x) => !me || x.uid !== me.uid).concat(you ? [you] : []).sort((a, b) => b.total - a.total);
-    const rank = you ? all.indexOf(you) + 1 : 0;
-    const row = (x, i) => `<div class="glb-row${you === x ? ' me' : ''}${x.live ? ' live' : ''}"><span class="glb-rank">${i}</span>${KK.social.avatarImg(x.uid, 'xs')}<b>${x === you ? 'you' : esc(nameOf(x.uid))}</b><span class="glb-n">${x.total.toLocaleString()}</span></div>`;
-    el.innerHTML = head + (all.length
-      ? all.slice(0, 5).map((x, i) => row(x, i + 1)).join('') + (you && rank > 5 ? '<div class="glb-gap">···</div>' + row(you, rank) : '')
-      : '<p class="hint">no scores yet: be the first</p>');
-    // phones show it as one sideways line: keep you in view
-    const m = el.querySelector('.glb-row.me');
-    if (m && el.scrollWidth > el.clientWidth) el.scrollLeft = m.offsetLeft - (el.clientWidth - m.offsetWidth) / 2;
+    const items = (gameTop || []).slice(0, TICKER_MAX)
+      .map((x, i) => `<span class="st-i${me && x.uid === me.uid ? ' me' : ''}"><i>#${i + 1}</i>${esc(nameOf(x.uid))}<b>${x.total.toLocaleString()}</b></span>`).join('');
+    const html = items ? `<div class="st-track"><span class="st-run">${items}</span><span class="st-run">${items}</span></div>` : '';
+    if (el.innerHTML !== html) el.innerHTML = html; // redrawing restarts the roll
   };
 
   // a player's top-3 spots (Popular Keyboards, High Scores) as badges for their profile

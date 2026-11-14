@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-14T04:12:03.513Z",
+        "reason": "user confirmed: asked for the high scores as a moving bar between the header and the overflow bar"
+      }
+    ]
+  }
+}
